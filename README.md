@@ -1,32 +1,84 @@
-git push# Qr_Generator
-generate qr using a link
+# 📦 Secure Encrypted QR Code Tool
 
-# 🔗 URL to QR Code Generator
-
-This Node.js CLI tool allows users to:
-
-1. Input a URL using the `inquirer` package.
-2. Generate a QR code image from the URL using `qr-image`.
-3. Save the entered URL to a `.txt` file using Node's native `fs` module.
+**A developer-focused open-source app for sharing secrets and sensitive data securely using encrypted QR codes.**
 
 ---
 
 ## 🚀 Features
 
-- Interactive command-line prompt for URL input
-- PNG QR code generation
-- URL logging to `url.txt` for record-keeping
+- **AES-encrypted data**—no secret leaves your browser or server without encryption
+- **Stateless and open**—server never stores any secret or key
+- **Frontend + API included** for quick use, fork, or integration
+- **Extensible**—ready for QR camera scan, batch encode, and more
+- **MIT License** for commercial and educational use
 
 ---
 
-## 📦 Dependencies
+## 🔒 Why encrypted QR codes?
 
-Make sure you have the following packages installed:
+Traditional (raw) QR codes make secrets visible to anyone with a scanner. This tool lets you input any sensitive data, encrypt it with a passphrase, and generate a QR that can only be decrypted with the correct key.
 
-```bash
-npm install inquirer qr-image
-```
+**Use cases:**
+
+- Developer/devops credential exchange on-site or at a distance
+- Securing Wi-Fi, keys, API tokens, config values for field devices
+- Safe event invitation or access codes
+
+---
+
+## 🛠️ Setup
+
+1. **Clone the repo**
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+3. **Run the server**
+   ```bash
+   node index.js
+   ```
+   By default, it will run on `http://localhost:3000/`.
+
+---
+
+## 🖥️ Usage
+
+1. Open [http://localhost:3000](http://localhost:3000) in your browser.
+2. In the **Generate** section:
+   - Enter your secret text and a passphrase.
+   - Click "Generate QR" to receive a sharable, encrypted QR image.
+3. In the **Decrypt** section:
+   - Paste the ciphertext (from QR scan or copy).
+   - Enter the passphrase to reveal your original secret.
+4. **No data is ever stored on the server**.
+
+---
+
+## ⚡ Roadmap
+
+- [ ] Add in-browser QR code camera scanning
+- [ ] Batch QR encode/decode
+- [ ] Add secure file encryption and QR transmission
+- [ ] PWA/mobile mode for field use
+- [ ] i18n/localization
+
+---
+
+## 🤝 Contributing
+
+Contributions, bug reports, and feature requests welcome!
+
+- Fork, branch, and submit a pull request.
+- For camera QR scan (next step), consider using [jsQR](https://github.com/cozmo/jsQR) or [html5-qrcode](https://github.com/mebjas/html5-qrcode).
+
+---
 
 ## 📜 License
 
-This project is licensed under the [MIT License](LICENSE). You are free to use, modify, and distribute it with proper attribution.
+MIT
+
+---
+
+## ⭐ Credits
+
+Built using [Express.js](https://expressjs.com), [crypto-js](https://github.com/brix/crypto-js), and [qr-image](https://github.com/alexeyten/qr-image).

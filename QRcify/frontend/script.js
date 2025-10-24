@@ -29,3 +29,35 @@ btn.addEventListener("click", async () => {
     output.innerHTML = `<p>Request failed: ${err.message}</p>`;
   }
 });
+
+function generate() {
+  const secretText = document.getElementById("secretText").value;
+  const passphrase = document.getElementById("passphrase").value;
+  fetch("/api/generate-encrypted", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ secretText, passphrase }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.error) return alert(data.error);
+      document.getElementById(
+        "qrOutput"
+      ).innerHTML = `<img src="${data.qrCode}" alt="Encrypted QR"><br>
+      <label>Raw Ciphertext:</label>
+      <textarea rows="2" cols="40">${data.encrypted}</textarea>`;
+    });
+}
+function decrypt() {
+  const ciphertext = document.getElementById("qrCipher").value;
+  const passphrase = document.getElementById("userPassphrase").value;
+  try {
+    const bytes = CryptoJS.AES.decrypt(ciphertext, passphrase);
+    const original = bytes.toString(CryptoJS.enc.Utf8);
+    document.getElementById("decryptedOutput").innerText = original
+      ? `Decrypted: ${original}`
+      : "Wrong passphrase or invalid ciphertext";
+  } catch (e) {
+    document.getElementById("decryptedOutput").innerText = "Decryption failed";
+  }
+}
