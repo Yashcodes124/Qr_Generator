@@ -16,16 +16,36 @@
       <button id="generateBtn">Generate</button>
       <div id="output"></div>
     </div>
-    <h2>Generate Encrypted QR Code</h2>
-    <input id="secretText" placeholder="Secret text" />
-    <input id="passphrase" placeholder="Passphrase" type="password" />
-    <button onclick="generate()">Generate QR</button>
-    <div id="qrOutput"></div>
+    <div class="security">
+      <h2>Generate Encrypted QR Code</h2>
+      <label for="secretData">Enter your secret text:</label>
 
-    <h2>Decrypt Scanned QR</h2>
-    <input id="qrCipher" placeholder="Paste scanned QR ciphertext" />
-    <input id="userPassphrase" placeholder="Passphrase" type="password" />
-    <button onclick="decrypt()">Decrypt</button>
-    <div id="decryptedOutput"></div>
+      <textarea
+        id="secretData"
+        rows="4"
+        cols="50"
+        placeholder="Type your Secret Data here....."
+        required
+      >
+      </textarea>
+      <label for="passphrase">Enter a passphrase:</label>
+
+      <input
+        id="passphrase"
+        placeholder="Your Encrption Key"
+        type="password"
+        required
+      />
+      <button onclick="generate()">Generate QR</button>
+      <div id="qrOutput">
+        <button onclick="copyCipherText()">copy</button>
+      </div>
+
+      <h2>Decrypt Scanned QR</h2>
+      <input id="qrCipher" placeholder="Paste scanned QR ciphertext" />
+      <input id="userPassphrase" placeholder="Passphrase" type="password" />
+      <button onclick="decrypt()">Decrypt</button>
+      <div id="decryptedOutput"></div>
+    </div>
   </body>
 </html>

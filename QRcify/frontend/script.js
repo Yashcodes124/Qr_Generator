@@ -31,12 +31,12 @@ btn.addEventListener("click", async () => {
 });
 
 function generate() {
-  const secretText = document.getElementById("secretText").value;
+  const secretData = document.getElementById("secretData").value;
   const passphrase = document.getElementById("passphrase").value;
   fetch("/api/generate-encrypted", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ secretText, passphrase }),
+    body: JSON.stringify({ secretData, passphrase }),
   })
     .then((res) => res.json())
     .then((data) => {
@@ -45,8 +45,21 @@ function generate() {
         "qrOutput"
       ).innerHTML = `<img src="${data.qrCode}" alt="Encrypted QR"><br>
       <label>Raw Ciphertext:</label>
-      <textarea rows="2" cols="40">${data.encrypted}</textarea>`;
+      <textarea rows="3" cols="40">${data.encrypted}</textarea>`;
     });
+}
+
+//function to copy the ciphertext
+function copyCipherText() {
+  const copyTextArea = document.querySelector("#qrOutput textarea");
+  if (!copyTextArea) return alert("No ciphertext to copy");
+  // select text inside the area
+  copyTextArea.select();
+  // copy the text to clipboard.
+  navigator.clipboard
+    .writeText(copyTextArea.value)
+    .then(() => alert("Ciphertext Copied!!"))
+    .catch(() => alert("Failed to copy ciphertext"));
 }
 function decrypt() {
   const ciphertext = document.getElementById("qrCipher").value;

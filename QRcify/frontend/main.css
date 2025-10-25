@@ -1,21 +1,26 @@
 body {
   font-family: Arial, sans-serif;
   background: #f2f2f2;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   height: 100vh;
   margin: 0;
 }
 
 .container {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
   text-align: center;
   background: white;
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
-
+.security {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 input {
   width: 70%;
   padding: 10px;
@@ -41,4 +46,12 @@ button:hover {
   margin-top: 20px;
   width: 200px;
   height: 200px;
+}
+#qrOutput button {
+  padding: 7px 12px;
+  background-color: #09ff00;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
 }

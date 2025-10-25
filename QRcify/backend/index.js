@@ -46,25 +46,26 @@ app.post("/generate", (req, res) => {
 //Encrypt and create Qr
 // API: Generate encrypted QR
 app.post("/api/generate-encrypted", (req, res) => {
-  const { secretText, passphrase } = req.body;
-  if (!secretText || !passphrase)
+  const { secretData, passphrase } = req.body;
+  if (!secretData || !passphrase)
     return res
       .status(400)
       .json({ error: "secretText and passphrase required" });
 
   try {
-    // Encrypt with AES
-    const encrypted = CryptoJS.AES.encrypt(secretText, passphrase).toString();
+    // Encrypt with AES : aes is a algorithm used to secure e-data  by converting it into an unreadable format
+    //it encryps data breaking it into 128 bit blocks using a key of 128,256 bits for substitutes  and shuffing through  multiple rounds and uses  the same key for both encryption and decryption.
+    const encrypted = CryptoJS.AES.encrypt(secretData, passphrase).toString();
     // QR encode the ciphertext
     const qrPng = qr.imageSync(encrypted, { type: "png" });
     const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
 
-    res.json({ qrCode: qrBase64, encrypted });
+    res.json({ qrCode: qrBase64, encrypted }); //- Returns both QR image and raw ciphertext
   } catch (err) {
     res.status(500).json({ error: "Encryption/QR generation failed" });
   }
 });
-
+//
 app.listen(port, () => {
   console.log(`🚀 Server running at http://localhost:${port}`);
 });
