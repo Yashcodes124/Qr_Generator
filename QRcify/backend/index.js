@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import CryptoJS from "crypto-js";
+// import { error } from "console";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +16,7 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend")));
+app.use("/encrypted", express.static(path.join(__dirname, "encrypted")));
 
 // Serve main page
 app.get("/", (req, res) => {
@@ -45,7 +47,7 @@ app.post("/generate", (req, res) => {
 
 //Encrypt and create Qr
 // API: Generate encrypted QR
-app.post("/api/generate-encrypted", (req, res) => {
+app.post("/api/generate-encryptedText", (req, res) => {
   const { secretData, passphrase } = req.body;
   if (!secretData || !passphrase)
     return res
@@ -65,7 +67,33 @@ app.post("/api/generate-encrypted", (req, res) => {
     res.status(500).json({ error: "Encryption/QR generation failed" });
   }
 });
-//
+//Route for file encryption
+app.post("/api/encrypt-file", (req, res) => {
+  //get the data from frontend
+  const { base64, passphrase, filename } = req.body;
+  //check their existence
+  if (!base64 || !passphrase || !filename) {
+    return res.status(400).json({ error: "Missing required Data" });
+  }
+  try {
+    //encryting the file
+    const encrypted = CryptoJS.AES.encrypt(base64, passphrase).toString();
+    //generate image from encryted data.
+    const qrPng = qr.imageSync(encrypted, { type: "png" });
+    const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
+    //storing the file
+    const filePath = path.join(__dirname, "encrypted", filename + ".enc");
+    fs.writeFileSync(filePath, encrypted);
+    //sending the encryted file and QR
+    res.json({
+      qrCode: qrBase64,
+      downloadUrl: `/encrypted/${filename}.enc`,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to encrypt File...." });
+  }
+});
+
 app.listen(port, () => {
   console.log(`🚀 Server running at http://localhost:${port}`);
 });

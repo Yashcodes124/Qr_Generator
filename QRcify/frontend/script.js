@@ -33,7 +33,7 @@ btn.addEventListener("click", async () => {
 function generate() {
   const secretData = document.getElementById("secretData").value;
   const passphrase = document.getElementById("passphrase").value;
-  fetch("/api/generate-encrypted", {
+  fetch("/api/generate-encryptedText", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ secretData, passphrase }),
@@ -44,8 +44,11 @@ function generate() {
       document.getElementById(
         "qrOutput"
       ).innerHTML = `<img src="${data.qrCode}" alt="Encrypted QR"><br>
-      <label>Raw Ciphertext:</label>
-      <textarea rows="3" cols="40">${data.encrypted}</textarea>`;
+      <label>Raw Ciphertext:  </label>
+      <br>
+      <textarea rows="3" cols="40" style="outline:none;">${data.encrypted}</textarea>
+      `;
+      //  <a href="${data.downloadUrl}" download>Download Encrypted File</a>
     });
 }
 
@@ -61,6 +64,37 @@ function copyCipherText() {
     .then(() => alert("Ciphertext Copied!!"))
     .catch(() => alert("Failed to copy ciphertext"));
 }
+
+//function to encrypt files
+async function encryptFile() {
+  const file = document.getElementById("fileInput").files[0];
+  const passphrase = document.getElementById("filePassphrase").value;
+  //checking whether file uploaded or not
+  if (!file || !passphrase) return alert("File and passphrase required");
+  //FileReader() reads the selected file as a Base64 string
+
+  const reader = new FileReader();
+  reader.onload = async () => {
+    // example:data:application/pdf;base64,JVBERi0xLjQKJcfs...        here - The part before the comma (data:application/pdf;base64) is the Data URI scheme header.
+    // - The part after the comma is the actual base64-encoded file content
+
+    const base64 = reader.result.split(",")[1]; // remove data URI prefix
+    // Sends the Base64 string, passphrase, and filename to the server
+    const response = await fetch("/api/encrypt-file", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ base64, passphrase, filename: file.name }),
+    });
+    const data = await response.json();
+    if (data.error) return alert(data.error);
+    document.getElementById("fileOutput").innerHTML = `
+      <img src="${data.qrCode}" alt="File QR"><br>
+      <a href="${data.downloadUrl}" download>Download Encrypted File</a>
+    `;
+  };
+  reader.readAsDataURL(file);
+}
+
 function decrypt() {
   const ciphertext = document.getElementById("qrCipher").value;
   const passphrase = document.getElementById("userPassphrase").value;

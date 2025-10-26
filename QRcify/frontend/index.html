@@ -18,6 +18,7 @@
     </div>
     <div class="security">
       <h2>Generate Encrypted QR Code</h2>
+      <br />
       <label for="secretData">Enter your secret text:</label>
 
       <textarea
@@ -38,7 +39,26 @@
       />
       <button onclick="generate()">Generate QR</button>
       <div id="qrOutput">
-        <button onclick="copyCipherText()">copy</button>
+        <button onclick="copyCipherText()" style="margin-top: 20px">
+          copy
+        </button>
+      </div>
+      <div class="encrypt-file">
+        <h2>Encrypt File & Generate QR</h2>
+        <input
+          type="file"
+          id="fileInput"
+          placeholder="Upload the File here.."
+        />
+
+        <input
+          type="password"
+          id="filePassphrase"
+          placeholder="Enter your passphrase here....."
+        />
+
+        <button onclick="encryptFile()">Encrypt File</button>
+        <div id="fileOutput"></div>
       </div>
 
       <h2>Decrypt Scanned QR</h2>
