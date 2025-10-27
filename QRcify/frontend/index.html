@@ -5,67 +5,90 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>QR Code Generator</title>
     <link rel="stylesheet" href="main.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <script src="script.js" defer></script>
     <!-- defer ensures the script runs after the html is fully parsed -->
   </head>
   <body>
-    <div class="container">
-      <h1>QR Code Generator</h1>
-      <input type="text" id="url" placeholder="Enter URL here..." required />
-      <button id="generateBtn">Generate</button>
-      <div id="output"></div>
-    </div>
-    <div class="security">
-      <h2>Generate Encrypted QR Code</h2>
-      <br />
-      <label for="secretData">Enter your secret text:</label>
+    <header></header>
+    <main>
+      <section class="qr-url">
+        <h1>QR Code Generator</h1>
+        <input type="text" id="url" placeholder="Enter URL here..." required />
+        <button id="generateBtn">Generate</button>
 
-      <textarea
-        id="secretData"
-        rows="4"
-        cols="50"
-        placeholder="Type your Secret Data here....."
-        required
-      >
-      </textarea>
-      <label for="passphrase">Enter a passphrase:</label>
+        <div id="urlLoader" class="loader-container" style="display: none">
+          <span id="urlLoaderText">Generating...</span>
+        </div>
 
-      <input
-        id="passphrase"
-        placeholder="Your Encrption Key"
-        type="password"
-        required
-      />
-      <button onclick="generate()">Generate QR</button>
-      <div id="qrOutput">
-        <button onclick="copyCipherText()" style="margin-top: 20px">
-          copy
-        </button>
-      </div>
-      <div class="encrypt-file">
-        <h2>Encrypt File & Generate QR</h2>
+        <div id="output"></div>
+      </section>
+      <section class="encrypt-text">
+        <h2>Generate Encrypted QR Code</h2>
+
+        <label for="secretData">Enter your secret text:</label>
+        <textarea
+          id="secretData"
+          rows="4"
+          cols="50"
+          placeholder="Type your Secret Data..."
+          required
+        ></textarea>
+
+        <label for="passphrase">Enter a passphrase:</label>
         <input
-          type="file"
-          id="fileInput"
-          placeholder="Upload the File here.."
+          id="passphrase"
+          type="password"
+          placeholder="Your Encryption Key"
+          required
         />
 
+        <button id="encryptTextBtn" onclick="generate()">Generate QR</button>
+
+        <div id="textLoader" class="loader-container" style="display: none">
+          <span id="textLoaderText">Encrypting...</span>
+        </div>
+
+        <div id="qrOutput"></div>
+        <button onclick="copyCipherText()" style="margin-top: 10px">
+          Copy Ciphertext
+        </button>
+      </section>
+      <section class="encrypt-file">
+        <h2>Encrypt File & Generate QR</h2>
+
+        <input type="file" id="fileInput" />
         <input
           type="password"
           id="filePassphrase"
-          placeholder="Enter your passphrase here....."
+          placeholder="Enter your passphrase..."
         />
 
-        <button onclick="encryptFile()">Encrypt File</button>
-        <div id="fileOutput"></div>
-      </div>
+        <button id="encryptFileBtn" onclick="encryptFile()">
+          Encrypt File
+        </button>
 
-      <h2>Decrypt Scanned QR</h2>
-      <input id="qrCipher" placeholder="Paste scanned QR ciphertext" />
-      <input id="userPassphrase" placeholder="Passphrase" type="password" />
-      <button onclick="decrypt()">Decrypt</button>
-      <div id="decryptedOutput"></div>
-    </div>
+        <div id="fileLoader" class="loader-container" style="display: none">
+          <span id="fileLoaderText">Encrypting file...</span>
+        </div>
+
+        <div id="fileOutput"></div>
+      </section>
+      <section class="decrypt">
+        <h2>Decrypt Scanned QR</h2>
+
+        <input id="qrCipher" placeholder="Paste scanned QR ciphertext" />
+        <input id="userPassphrase" type="password" placeholder="Passphrase" />
+
+        <button id="decryptBtn" onclick="decrypt()">Decrypt</button>
+
+        <div id="decryptLoader" class="loader-container" style="display: none">
+          <span id="decryptLoaderText">Decrypting...</span>
+        </div>
+
+        <div id="decryptedOutput"></div>
+      </section>
+    </main>
   </body>
 </html>

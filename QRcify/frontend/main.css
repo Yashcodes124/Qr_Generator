@@ -5,7 +5,7 @@ body {
   margin: 0;
 }
 
-.container {
+main {
   display: flex;
   align-items: center;
   flex-direction: column;
@@ -54,4 +54,31 @@ button:hover {
   border: none;
   border-radius: 8px;
   cursor: pointer;
+}
+
+/* loader animation */
+.loader {
+  width: 48px;
+  height: 48px;
+  border: 5px solid;
+  border-color: #ff3d00 transparent;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.hidden {
+  display: none;
+}
+#loaderText {
+  display: none;
 }

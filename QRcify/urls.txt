@@ -1,3 +1,7 @@
 https://www.google.com
 https://www.google.com
 https://www.exampledomain.com
+https://www.google.com
+examplefile.png
+examplefile.png
+https://example.com
