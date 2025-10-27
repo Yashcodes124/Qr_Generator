@@ -141,11 +141,11 @@ async function encryptFile() {
       if (data.error) return alert(data.error);
 
       document.getElementById("fileOutput").innerHTML = `
-        <img src="${data.qrCode}" alt="File QR"><br>
-        <label>Raw Ciphertext:</label><br>
-        <textarea rows="3" cols="40" readonly>${data.encrypted}</textarea><br>
-        <a href="${data.downloadUrl}" download>Download Encrypted File</a>
-      `;
+  <img src="${data.qrCode}" alt="File QR"><br>
+  <label>Combined (Salt::IV::Ciphertext):</label><br>
+  <textarea rows="3" cols="40" readonly>${data.encrypted}</textarea><br>
+  <a href="${data.downloadUrl}" download>Download Encrypted File</a>
+`;
     } catch (err) {
       alert("Error encrypting file: " + err.message);
     } finally {
@@ -159,12 +159,7 @@ async function encryptFile() {
 // 🔹 5. DECRYPT CIPHERTEXT
 // ================================
 async function decrypt() {
-  const cipher = document
-    .getElementById("qrCipher")
-    .value.trim()
-    .replace(/\s+/g, "") // remove spaces/newlines
-    .replace(/ /g, "+"); // fix lost '+' from QR copy
-
+  const cipher = document.getElementById("qrCipher").value.trim();
   const passphrase = document.getElementById("userPassphrase").value.trim();
 
   if (!cipher || !passphrase)
@@ -173,23 +168,25 @@ async function decrypt() {
   showLoader("decryptLoader", "Decrypting");
 
   try {
-    const bytes = CryptoJS.AES.decrypt(
-      "U2FsdGVkX190bKeEIHQtK+7SmcUwugJefStThJRJKal8juVjR2ZtmutDcMz4pAl+qsFg/TS1MdAmitSOIwWH/LO1EgrQWRJ6jcx8ikU701c=",
-      "yashbro"
-    );
+    const response = await fetch("/api/decrypt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cipher, passphrase }),
+    });
 
-    const original = bytes.toString(CryptoJS.enc.Utf8);
-    if (!original) {
-      console.log("Wrong passphrase or invalid ciphertext");
-    }
+    const data = await response.json();
 
     const output = document.getElementById("decryptedOutput");
-    output.innerText = original
-      ? `Decrypted: ${original}`
-      : "Wrong passphrase or invalid ciphertext.";
-  } catch (e) {
-    console.error("Decryption error:", e);
-    document.getElementById("decryptedOutput").innerText = "Decryption failed.";
+
+    if (data.success) {
+      output.innerText = `Decrypted: ${data.decrypted}`;
+    } else {
+      output.innerText = data.error || "Decryption failed.";
+    }
+  } catch (error) {
+    console.error("Decryption request failed:", error);
+    document.getElementById("decryptedOutput").innerText =
+      "Server error during decryption.";
   } finally {
     hideLoader("decryptLoader");
   }
