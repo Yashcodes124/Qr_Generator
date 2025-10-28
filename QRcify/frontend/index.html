@@ -89,6 +89,24 @@
 
         <div id="decryptedOutput"></div>
       </section>
+      <h2>Decrypt File</h2>
+
+      <input type="file" id="fileDecryptInput" accept=".enc" />
+      <input
+        type="password"
+        id="fileDecryptPassphrase"
+        placeholder="Enter passphrase"
+      />
+
+      <button onclick="decryptFile()">Decrypt File</button>
+
+      <!-- Loader (hidden by default) -->
+      <div id="decryptLoader" class="loader-container" style="display: none">
+        <span id="decryptLoaderText">Decrypting file...</span>
+      </div>
+
+      <!-- Output -->
+      <div id="decryptedOutput"></div>
     </main>
   </body>
 </html>

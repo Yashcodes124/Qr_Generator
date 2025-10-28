@@ -21,7 +21,10 @@ const app = express();
 const port = 3000;
 
 app.use(cors());
-app.use(express.json());
+// Allow larger JSON payloads for file uploads (up to 10 MB)
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
 app.use(express.static(path.join(__dirname, "../frontend")));
 app.use("/encrypted", express.static(path.join(__dirname, "encrypted")));
 
@@ -59,9 +62,7 @@ app.post("/generate", (req, res) => {
 app.post("/api/generate-encryptedText", (req, res) => {
   const { secretData, passphrase } = req.body;
   if (!secretData || !passphrase)
-    return res
-      .status(400)
-      .json({ error: "Secret data and passphrase required" });
+    return res.status(400).json({ error: "Data and passphrase required" });
 
   try {
     // Encrypt with AES : aes is a algorithm used to secure e-data  by converting it into an unreadable format
@@ -75,7 +76,6 @@ app.post("/api/generate-encryptedText", (req, res) => {
       iterations: 10000,
       hasher: CryptoJS.algo.SHA256,
     });
-
 
     // Encrypt
     const encrypted = CryptoJS.AES.encrypt(secretData, key, { iv }).toString();
@@ -111,6 +111,8 @@ app.post("/api/generate-encryptedText", (req, res) => {
 app.post("/api/encrypt-file", (req, res) => {
   // get the data
   const { base64, passphrase, filename } = req.body;
+  console.log("Received body:", req.body);
+
   //check existence
   if (!base64 || !passphrase || !filename) {
     return res.status(400).json({ error: "Missing required data." });
@@ -136,36 +138,41 @@ app.post("/api/encrypt-file", (req, res) => {
       encrypted,
     ].join("::");
 
-    // 4️⃣ Optional: handle large data gracefully
-    if (combined.length > 1200) {
-      return res.json({
-        success: false,
-        error:
-          "Encrypted data too large for QR. File saved successfully — use the download link instead.",
-      });
-    }
-
-    // 5️⃣ Generate QR and save encrypted file
-    const qrPng = qr.imageSync(combined, { type: "png" });
-    const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
-
+    // 4️⃣ Save encrypted file
     const fileId = Math.floor(100000 + Math.random() * 900000);
     const encryptedDir = path.join(__dirname, "encrypted");
 
     if (!fs.existsSync(encryptedDir)) {
       fs.mkdirSync(encryptedDir, { recursive: true });
     }
-
     const filePath = path.join(encryptedDir, `${filename}_${fileId}.enc`);
     fs.writeFileSync(filePath, combined);
 
-    // 6️⃣ Send full response
+    // 5️⃣ Optional: handle large data gracefully
+    let qrData;
+    let message;
+
+    if (combined.length >= 1200) {
+      // file is too large to gen QR directly → use file link instead
+      const fileLink = `http://localhost:3000/encrypted/${filename}_${fileId}.enc`;
+      qrData = fileLink;
+      message = "Large file: QR contains download link instead of ciphertext.";
+    } else {
+      qrData = combined;
+      message = "Encrypted file and QR generated successfully.";
+    }
+
+    // ✅ Generate QR safely here (common to both cases)
+    const qrPng = qr.imageSync(qrData, { type: "png" });
+    const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
+
+    // 6️⃣ Send response
     res.json({
       success: true,
       qrCode: qrBase64,
       downloadUrl: `/encrypted/${filename}_${fileId}.enc`,
       encrypted: combined, // important!
-      message: `Encrypted file saved successfully.`,
+      message,
     });
   } catch (error) {
     console.error("File encryption failed:", error);
@@ -218,6 +225,53 @@ app.post("/api/decrypt", (req, res) => {
     });
   }
 });
+
+app.post("/api/decrypt-file", (req, res) => {
+  const { encryptedData, passphrase, filename } = req.body;
+  if (!encryptedData || !passphrase) {
+    return res
+      .status(400)
+      .json({ error: "Missing encrypted data or passphrase" });
+  }
+
+  try {
+    // 1️⃣ Split into salt, iv, ciphertext
+    const parts = encryptedData.split("::");
+    if (parts.length !== 3) throw new Error("Invalid ciphertext format.");
+
+    const salt = CryptoJS.enc.Base64.parse(parts[0]);
+    const iv = CryptoJS.enc.Base64.parse(parts[1]);
+    const ciphertext = parts[2];
+
+    // 2️⃣ Derive key from same passphrase + salt
+    const key = CryptoJS.PBKDF2(passphrase, salt, {
+      keySize: 256 / 32,
+      iterations: 10000,
+      hasher: CryptoJS.algo.SHA256,
+    });
+
+    // 3️⃣ Decrypt using AES
+    const decrypted = CryptoJS.AES.decrypt(ciphertext, key, { iv });
+    const decryptedBase64 = decrypted.toString(CryptoJS.enc.Utf8);
+
+    if (!decryptedBase64) throw new Error("Decryption failed or wrong key.");
+
+    // 4️⃣ Send Base64 data back to frontend
+    const cleanFilename = filename.replace(".enc", "").replace(/_\d+$/, "");
+    res.json({
+      success: true,
+      decryptedBase64,
+      suggestedFilename: cleanFilename,
+    });
+  } catch (error) {
+    console.error("File decryption failed:", error);
+    res.status(500).json({
+      success: false,
+      error: "Invalid passphrase or corrupted ciphertext.",
+    });
+  }
+});
+
 
 app.listen(port, () => {
   console.log(`🚀 Server running at http://localhost:${port}`);
