@@ -18,14 +18,12 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 app.use(express.static(path.join(__dirname, "../frontend")));
 app.use("/encrypted", express.static(path.join(__dirname, "encrypted")));
-
-//Routes
+// Routes
+app.use("/api", mainRoutes);
 // Serve main page
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
-// Routes
-app.use("/api", mainRoutes);
 
 app.listen(port, () => {
   console.log(`🚀 Server running at http://localhost:${port}`);

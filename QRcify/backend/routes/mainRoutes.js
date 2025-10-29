@@ -3,10 +3,11 @@ import fs from "fs";
 import path from "path";
 import qr from "qr-image";
 import { encryptData, decryptData } from "../utils/cryptoUtils.js";
-import { error } from "console";
 
 const router = express.Router();
-const __dirname = path.resolve();
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 🟩 1️⃣ Generate QR from URL
 router.post("/generate", (req, res) => {
@@ -59,7 +60,7 @@ router.post("/encrypt-file", (req, res) => {
     const combined = encryptData(base64, passphrase);
 
     const fileId = Math.floor(100000 + Math.random() * 900000);
-    const encryptedDir = path.join(__dirname, "encrypted");
+    const encryptedDir = path.join(__dirname, "../encrypted");
     if (!fs.existsSync(encryptedDir))
       fs.mkdirSync(encryptedDir, { recursive: true });
 
@@ -80,7 +81,7 @@ router.post("/encrypt-file", (req, res) => {
       qrCode: qrBase64,
       downloadUrl: `/encrypted/${filename}_${fileId}.enc`,
       encrypted: combined, // important!
-      message,
+      message: "Encrypted file saved successfully.",
     });
   } catch (error) {
     console.error("File encryption failed at server:", error);
@@ -96,7 +97,7 @@ router.post("/decrypt", (req, res) => {
 
   try {
     const decrypted = decryptData(cipher, passphrase);
-    if (decrypted) {
+    if (!decrypted) {
       return res.status(400).json({
         success: false,
         error: "Invalid passphrase or corrupted ciphertext.",

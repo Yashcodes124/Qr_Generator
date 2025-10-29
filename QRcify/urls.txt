@@ -5,3 +5,6 @@ https://www.google.com
 examplefile.png
 examplefile.png
 https://example.com
+https://www.google.com
+https://www.testcase1.com
+https://www.testcase1.com
