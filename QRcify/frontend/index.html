@@ -3,131 +3,252 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QR Code Generator</title>
+    <title>QRGen Pro - Advanced QR Code Generator</title>
     <link rel="stylesheet" href="main.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-
-    <script src="script.js" defer></script>
-    <!-- defer ensures the script runs after the html is fully parsed -->
   </head>
   <body>
-    <header></header>
-    <main>
-      <section class="qr-url">
-        <h1>QR Code Generator</h1>
-        <input type="text" id="url" placeholder="Enter URL here..." required />
-        <button id="generateBtn">Generate</button>
-
-        <div id="urlLoader" class="loader-container" style="display: none">
-          <span id="urlLoaderText">Generating...</span>
+    <!-- Navigation Header -->
+    <header class="header">
+      <div class="container">
+        <div class="logo">
+          <h1>🔐 QRGen Pro</h1>
+          <span class="tagline">Secure QR Code Generator</span>
         </div>
-
-        <div id="output"></div>
-      </section>
-      <section class="encrypt-text">
-        <h2>Generate Encrypted QR Code</h2>
-
-        <label for="secretData">Enter your secret text:</label>
-        <textarea
-          id="secretData"
-          rows="4"
-          cols="50"
-          placeholder="Type your Secret Data..."
-          required
-        ></textarea>
-
-        <label for="passphrase">Enter a passphrase:</label>
-        <input
-          id="passphrase"
-          type="password"
-          placeholder="Your Encryption Key"
-          required
-        />
-
-        <button id="encryptTextBtn" onclick="generate()">Generate QR</button>
-
-        <div id="textLoader" class="loader-container" style="display: none">
-          <span id="textLoaderText">Encrypting...</span>
-        </div>
-
-        <div id="qrOutput"></div>
-        <button onclick="copyCipherText()" style="margin-top: 10px">
-          Copy Ciphertext
-        </button>
-      </section>
-      <section class="encrypt-file">
-        <h2>Encrypt File & Generate QR</h2>
-
-        <input type="file" id="fileInput" />
-        <input
-          type="password"
-          id="filePassphrase"
-          placeholder="Enter your passphrase..."
-        />
-
-        <button id="encryptFileBtn" onclick="encryptFile()">
-          Encrypt File
-        </button>
-
-        <div id="fileLoader" class="loader-container" style="display: none">
-          <span id="fileLoaderText">Encrypting file...</span>
-        </div>
-
-        <div id="fileOutput"></div>
-      </section>
-      <section class="decrypt">
-        <h2>Decrypt Scanned QR</h2>
-
-        <input id="qrCipher" placeholder="Paste scanned QR ciphertext" />
-        <input id="userPassphrase" type="password" placeholder="Passphrase" />
-
-        <button id="decryptBtn" onclick="decrypt()">Decrypt</button>
-
-        <div id="decryptLoader" class="loader-container" style="display: none">
-          <span id="decryptLoaderText">Decrypting...</span>
-        </div>
-
-        <div id="decryptedOutput"></div>
-      </section>
-      <h2>Decrypt File</h2>
-
-      <input type="file" id="fileDecryptInput" accept=".enc" />
-      <input
-        type="password"
-        id="fileDecryptPassphrase"
-        placeholder="Enter passphrase"
-      />
-
-      <button onclick="decryptFile()">Decrypt File</button>
-
-      <!-- Loader (hidden by default) -->
-      <div id="decryptLoader" class="loader-container" style="display: none">
-        <span id="decryptLoaderText">Decrypting file...</span>
+        <nav class="nav">
+          <a href="#basic" class="nav-link">Basic QR</a>
+          <a href="#secure" class="nav-link">Secure QR</a>
+          <a href="#advanced" class="nav-link">Advanced</a>
+          <a href="#decrypt" class="nav-link">Decrypt</a>
+        </nav>
       </div>
+    </header>
 
-      <!-- Output -->
-      <div id="decryptedOutput"></div>
-      <!-- Add to index.html -->
-      <section class="advanced-features">
-        <h2>Advanced QR Types</h2>
+    <!-- Main Content -->
+    <main class="main">
+      <div class="container">
+        <!-- Hero Section -->
+        <section class="hero">
+          <h2>Generate Secure QR Codes Instantly</h2>
+          <p>
+            Create encrypted QR codes for URLs, files, contacts, and WiFi with
+            military-grade encryption
+          </p>
+        </section>
 
-        <!-- vCard QR -->
-        <div class="feature-card">
-          <h3>vCard QR</h3>
-          <input type="text" id="vcardName" placeholder="Full Name" />
-          <input type="tel" id="vcardPhone" placeholder="Phone" />
-          <input type="email" id="vcardEmail" placeholder="Email" />
-          <button onclick="generateVCardQR()">Generate vCard QR</button>
+        <!-- Basic QR Section -->
+        <section id="basic" class="section card">
+          <div class="section-header">
+            <h3>🚀 Basic QR Generator</h3>
+            <p>Quick and simple QR codes for URLs</p>
+          </div>
+          <div class="form-group">
+            <input
+              type="text"
+              id="url"
+              placeholder="https://example.com"
+              class="form-input"
+            />
+            <button id="generateBtn" class="btn btn-primary">
+              Generate QR Code
+            </button>
+          </div>
+          <div id="urlLoader" class="loader-container" style="display: none">
+            <div class="loader"></div>
+            <span id="urlLoaderText">Generating QR Code...</span>
+          </div>
+          <div id="output" class="output-container"></div>
+        </section>
+
+        <!-- Secure Text QR Section -->
+        <section id="secure" class="section card">
+          <div class="section-header">
+            <h3>🔒 Secure Text QR</h3>
+            <p>Encrypt sensitive text before generating QR codes</p>
+          </div>
+          <div class="form-group">
+            <textarea
+              id="secretData"
+              rows="4"
+              placeholder="Enter your secret message here..."
+              class="form-textarea"
+            ></textarea>
+            <input
+              id="passphrase"
+              type="password"
+              placeholder="Encryption passphrase"
+              class="form-input"
+            />
+            <button id="encryptTextBtn" class="btn btn-secondary">
+              Generate Secure QR
+            </button>
+          </div>
+          <div id="textLoader" class="loader-container" style="display: none">
+            <div class="loader"></div>
+            <span id="textLoaderText">Encrypting and generating...</span>
+          </div>
+          <div id="qrOutput" class="output-container"></div>
+        </section>
+
+        <!-- File Encryption Section -->
+        <section class="section card">
+          <div class="section-header">
+            <h3>📁 Secure File QR</h3>
+            <p>Encrypt files and generate downloadable QR codes</p>
+          </div>
+          <div class="form-group">
+            <input type="file" id="fileInput" class="file-input" />
+            <input
+              type="password"
+              id="filePassphrase"
+              placeholder="File encryption passphrase"
+              class="form-input"
+            />
+            <button id="encryptFileBtn" class="btn btn-secondary">
+              Encrypt & Generate QR
+            </button>
+          </div>
+          <div id="fileLoader" class="loader-container" style="display: none">
+            <div class="loader"></div>
+            <span id="fileLoaderText">Encrypting file...</span>
+          </div>
+          <div id="fileOutput" class="output-container"></div>
+        </section>
+
+        <!-- Advanced Features Section -->
+        <!-- In your Advanced Features Section -->
+<section id="advanced" class="section card">
+    <div class="section-header">
+        <h3>⚡ Advanced QR Types</h3>
+        <p>Specialized QR codes for different use cases</p>
+    </div>
+    
+    <!-- vCard QR -->
+    <div class="feature-card">
+        <h4>📇 vCard QR Code</h4>
+        <div class="form-grid">
+            <input type="text" id="vcardName" placeholder="Full Name" class="form-input">
+            <input type="tel" id="vcardPhone" placeholder="Phone Number" class="form-input">
+            <input type="email" id="vcardEmail" placeholder="Email Address" class="form-input">
+            <input type="text" id="vcardCompany" placeholder="Company" class="form-input">
         </div>
+        <button onclick="generateVCardQR()" class="btn btn-outline">Generate vCard QR</button>
+        
+        <!-- ✅ ADD THIS OUTPUT CONTAINER -->
+        <div id="vcardOutput" class="output-container" style="margin-top: 1rem;"></div>
+    </div>
 
-        <!-- WiFi QR -->
-        <div class="feature-card">
-          <h3>WiFi QR</h3>
-          <input type="text" id="wifiSsid" placeholder="Network Name (SSID)" />
-          <input type="password" id="wifiPassword" placeholder="Password" />
-          <button onclick="generateWifiQR()">Generate WiFi QR</button>
+    <!-- WiFi QR -->
+    <div class="feature-card">
+        <h4>📶 WiFi QR Code</h4>
+        <div class="form-grid">
+            <input type="text" id="wifiSsid" placeholder="Network Name (SSID)" class="form-input">
+            <input type="password" id="wifiPassword" placeholder="WiFi Password" class="form-input">
+            <select id="wifiEncryption" class="form-select">
+                <option value="WPA">WPA/WPA2</option>
+                <option value="WEP">WEP</option>
+                <option value="nopass">No Encryption</option>
+            </select>
         </div>
-      </section>
+        <button onclick="generateWifiQR()" class="btn btn-outline">Generate WiFi QR</button>
+        
+        <!-- ✅ ADD THIS OUTPUT CONTAINER -->
+        <div id="wifiOutput" class="output-container" style="margin-top: 1rem;"></div>
+    </div>
+</section>
+        <!-- Decryption Section -->
+        <section id="decrypt" class="section card">
+          <div class="section-header">
+            <h3>🔓 QR Decryption</h3>
+            <p>Decrypt your secure QR codes</p>
+          </div>
+
+          <!-- Text Decryption -->
+          <div class="feature-card">
+            <h4>Decrypt Text</h4>
+            <div class="form-group">
+              <textarea
+                id="qrCipher"
+                placeholder="Paste encrypted ciphertext from QR code..."
+                rows="3"
+                class="form-textarea"
+              ></textarea>
+              <input
+                id="userPassphrase"
+                type="password"
+                placeholder="Decryption passphrase"
+                class="form-input"
+              />
+              <button onclick="decrypt()" class="btn btn-warning">
+                Decrypt Text
+              </button>
+            </div>
+          </div>
+          <div
+            id="decryptLoader"
+            class="loader-container"
+            style="display: none"
+          >
+            <div class="loader"></div>
+            <span id="decryptLoaderText">Decrypting...</span>
+          </div>
+          <div id="decryptedOutput" class="output-container"></div>
+
+          <!-- File Decryption -->
+          <div class="feature-card">
+            <h4>Decrypt File</h4>
+            <div class="form-group">
+              <input
+                type="file"
+                id="fileDecryptInput"
+                accept=".enc"
+                class="file-input"
+              />
+              <input
+                type="password"
+                id="fileDecryptPassphrase"
+                placeholder="File decryption passphrase"
+                class="form-input"
+              />
+              <button onclick="decryptFile()" class="btn btn-warning">
+                Decrypt File
+              </button>
+            </div>
+          </div>
+
+          <div
+            id="decryptLoader"
+            class="loader-container"
+            style="display: none"
+          >
+            <div class="loader"></div>
+            <span id="decryptLoaderText">Decrypting...</span>
+          </div>
+          <div id="decryptedOutput" class="output-container"></div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="section card">
+          <div class="section-header">
+            <h3>📊 Usage Statistics</h3>
+            <p>Track your QR code generation</p>
+          </div>
+          <div id="statsContainer" class="stats-container">
+            <button onclick="loadStats()" class="btn btn-outline">
+              Load Statistics
+            </button>
+          </div>
+        </section>
+      </div>
     </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <p>&copy; 2024 QRGen Pro. Built with Node.js & Express</p>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
   </body>
 </html>

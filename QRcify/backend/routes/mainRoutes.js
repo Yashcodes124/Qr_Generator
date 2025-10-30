@@ -6,7 +6,7 @@ import path from "path";
 import qr from "qr-image";
 import { encryptData, decryptData } from "../utils/cryptoUtils.js";
 import { logQRGeneration } from "../services/historyService.js";
-import { qrGenerationLimiter } from "../middleware/rateLimit.js";
+import qrGenerationLimiter from "../middleware/rateLimit.js";
 import { validateUrl, validatePassphrase } from "../utils/validation.js";
 import { getStats } from "../services/historyService.js";
 
@@ -14,11 +14,6 @@ const router = express.Router();
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-//  updated the imports and routes:
-import { logQRGeneration } from "../services/historyService.js";
-import { qrGenerationLimiter } from "../middleware/rateLimit.js";
-import { validateUrl, validatePassphrase } from "../utils/validation.js";
 
 // Applying rate limiting middleware to all QR generation routes
 router.use(
@@ -45,7 +40,7 @@ router.post("/generate", async (req, res) => {
     const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
 
     // Log to database
-    await logQRGeneration("url", url.length, req);
+    // await logQRGeneration("url", url.length, req);
 
     fs.appendFileSync("urls.txt", url + "\n");
     res.json({ success: true, qrCode: qrBase64 });
@@ -132,7 +127,12 @@ router.post("/encrypt-file", async (req, res) => {
 router.post("/generate-vcard", (req, res) => {
   const { name, phone, email, company } = req.body;
 
-  const vcard = `BEGIN:VCARD
+  if (!name || !phone) {
+    console.log("❌ vCard missing name or phone");
+    return res.status(400).json({ error: "Name and phone are required" });
+  }
+  try {
+    const vcard = `BEGIN:VCARD
 VERSION:3.0
 FN:${name}
 TEL:${phone}
@@ -140,11 +140,18 @@ EMAIL:${email}
 ORG:${company}
 END:VCARD`;
 
-  // Generate QR from vcard string
-  const qrPng = qr.imageSync(vcard, { type: "png" });
-  const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
+    // Generate QR from vcard string
+    const qrPng = qr.imageSync(vcard, { type: "png" });
+    const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
 
-  res.json({ success: true, qrCode: qrBase64 });
+    res.json({ success: true, qrCode: qrBase64 });
+    console.log("✅ vCard QR generated successfully");
+  } catch (error) {
+    console.error("❌ vCard QR generation failed:", error);
+    res
+      .status(500)
+      .json({ error: "vCard QR generation failed: " + error.message });
+  }
 });
 
 // 🆕 WiFi QR Code
@@ -164,11 +171,19 @@ router.post("/generate-wifi", (req, res) => {
   // P:pass   → Password
   // ;;       → End of data
 
-  const wifiString = `WIFI:S:${ssid};T:${encryption};P:${password};;`;
-  const qrPng = qr.imageSync(wifiString, { type: "png" });
-  const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
+  try {
+    const wifiString = `WIFI:S:${ssid};T:${encryption};P:${password};;`;
+    const qrPng = qr.imageSync(wifiString, { type: "png" });
+    const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
 
-  res.json({ success: true, qrCode: qrBase64 });
+    res.json({ success: true, qrCode: qrBase64 });
+    console.log("✅ WiFi QR generated successfully");
+  } catch (error) {
+    console.error("❌ WiFi QR generation failed:", error);
+    res
+      .status(500)
+      .json({ error: "WiFi QR generation failed: " + error.message });
+  }
 });
 
 // 🟥 4️⃣ Decrypt text
@@ -220,6 +235,7 @@ router.post("/decrypt-file", (req, res) => {
 
 router.get("/stats", async (req, res) => {
   try {
+    const { getStats } = await import("../services/historyService.js");
     const stats = await getStats();
     res.json({ success: true, stats });
   } catch (error) {

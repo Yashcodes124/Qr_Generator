@@ -11,3 +11,5 @@ export const qrGeneationLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+export default qrGeneationLimiter;

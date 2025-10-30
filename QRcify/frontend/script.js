@@ -1,12 +1,9 @@
-//use the FileReader API to read the file’s content. bcs When a user uploads a file in the browser using <input type="file">,the file isn’t automatically readable as text or binary — it’s just a reference.
-//const reader = new FileReader();
-// reader.readAsText(file);
-//Base64 is a safe, text-friendly format that represents binary data using only printable characters (A–Z, a–z, 0–9, +, /).
-//example Binary file → Base64 → safe for sending in JSON
+// ================================
+// 🔹 LOADER FUNCTIONS
+// ================================
 
 let dotInterval;
 
-// Show loader for specific section
 function showLoader(loaderId, text = "Processing") {
   const loader = document.getElementById(loaderId);
   if (!loader) return;
@@ -22,24 +19,70 @@ function showLoader(loaderId, text = "Processing") {
   }, 500);
 }
 
-// Hide loader for specific section
 function hideLoader(loaderId) {
   const loader = document.getElementById(loaderId);
   if (loader) loader.style.display = "none";
   clearInterval(dotInterval);
 }
-//1.  QR from URL
-const urlBtn = document.getElementById("generateBtn");
-const urlOutput = document.getElementById("output");
 
-urlBtn.addEventListener("click", async () => {
+// ================================
+// 🔹 INITIALIZE EVENT LISTENERS
+// ================================
+
+document.addEventListener("DOMContentLoaded", function () {
+  // URL QR Generation
+  const urlBtn = document.getElementById("generateBtn");
+  if (urlBtn) {
+    urlBtn.addEventListener("click", generateUrlQR);
+  }
+
+  // Encrypt Text QR Generation
+  const encryptTextBtn = document.getElementById("encryptTextBtn");
+  if (encryptTextBtn) {
+    encryptTextBtn.addEventListener("click", generateEncryptedQR);
+  }
+
+  // Encrypt File
+  const encryptFileBtn = document.getElementById("encryptFileBtn");
+  if (encryptFileBtn) {
+    encryptFileBtn.addEventListener("click", encryptFile);
+  }
+
+  // Decrypt Text
+  const decryptBtn = document.getElementById("decryptBtn");
+  if (decryptBtn) {
+    decryptBtn.addEventListener("click", decryptText);
+  }
+
+  // Smooth scrolling for navigation
+  const navLinks = document.querySelectorAll(".nav-link");
+  navLinks.forEach((link) => {
+    link.addEventListener("click", function (e) {
+      e.preventDefault();
+      const targetId = this.getAttribute("href");
+      const targetSection = document.querySelector(targetId);
+      if (targetSection) {
+        targetSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  });
+});
+
+// ================================
+// 🔹 1. BASIC URL QR GENERATION
+// ================================
+
+async function generateUrlQR() {
   const url = document.getElementById("url").value.trim();
+  const urlOutput = document.getElementById("output");
+
   if (!url) {
-    urlOutput.innerHTML = "<p>Please enter a valid URL!</p>";
+    urlOutput.innerHTML =
+      '<div class="error-message">Please enter a valid URL!</div>';
     return;
   }
 
-  showLoader("urlLoader", "Generating.");
+  showLoader("urlLoader", "Generating QR");
   urlOutput.innerHTML = "";
 
   try {
@@ -51,29 +94,36 @@ urlBtn.addEventListener("click", async () => {
 
     const data = await response.json();
     if (data.qrCode || data.success) {
-      urlOutput.innerHTML = `<img src="${data.qrCode}" alt="QR Code"> <br> QR Generated Successfully....`;
+      urlOutput.innerHTML = `
+        <div class="qr-result">
+          <img src="${data.qrCode}" alt="QR Code">
+          <p class="success-message">✅ QR Code Generated Successfully!</p>
+        </div>
+      `;
     } else {
-      alert(data.error);
-      urlOutput.innerHTML = `<p>Error: ${data.error}</p>`;
+      urlOutput.innerHTML = `<div class="error-message">Error: ${data.error}</div>`;
     }
   } catch (err) {
-    alert("Failed to generate QR ", data.err);
+    urlOutput.innerHTML = `<div class="error-message">Failed to generate QR: ${err.message}</div>`;
   } finally {
     hideLoader("urlLoader");
   }
-});
+}
 
 // ================================
 // 🔹 2. ENCRYPT TEXT → QR GENERATION
 // ================================
-async function generate() {
+
+async function generateEncryptedQR() {
   const secretData = document.getElementById("secretData").value.trim();
   const passphrase = document.getElementById("passphrase").value.trim();
+  const qrOutput = document.getElementById("qrOutput");
 
-  if (!secretData || !passphrase)
-    return alert(
-      "Both secret text and passphrase are required for Generating QR."
-    );
+  if (!secretData || !passphrase) {
+    qrOutput.innerHTML =
+      '<div class="error-message">Both secret text and passphrase are required.</div>';
+    return;
+  }
 
   showLoader("textLoader", "Encrypting");
 
@@ -86,103 +136,117 @@ async function generate() {
 
     const data = await res.json();
     if (data.error) {
-      alert(data.error);
+      qrOutput.innerHTML = `<div class="error-message">${data.error}</div>`;
       return;
     }
 
-    document.getElementById("qrOutput").innerHTML = `
-      <img src="${data.qrCode}" alt="Encrypted QR"><br>
-      <label>Raw Ciphertext:</label><br>
-      <textarea rows="3" cols="40" readonly>${data.encrypted}</textarea>
+    qrOutput.innerHTML = `
+      <div class="qr-result">
+        <img src="${data.qrCode}" alt="Encrypted QR">
+        <div class="success-message">✅ Secure QR Generated!</div>
+        <label><strong>Encrypted Text:</strong></label>
+        <textarea rows="3" class="form-textarea" readonly>${data.encrypted}</textarea>
+        <button onclick="copyCipherText()" class="btn btn-outline">📋 Copy Ciphertext</button>
+      </div>
     `;
   } catch (err) {
-    alert("Failed to encrypt: " + err.message);
+    qrOutput.innerHTML = `<div class="error-message">Failed to encrypt: ${err.message}</div>`;
   } finally {
     hideLoader("textLoader");
   }
 }
 
+// ================================
 // 🔹 3. COPY CIPHERTEXT
+// ================================
 
 function copyCipherText() {
   const textArea = document.querySelector("#qrOutput textarea");
-  if (!textArea) return alert("No ciphertext found to copy.");
+  if (!textArea) {
+    alert("No ciphertext found to copy.");
+    return;
+  }
 
   textArea.select();
   navigator.clipboard
     .writeText(textArea.value)
-    .then(() => alert("Ciphertext copied!"))
-    .catch(() => alert("Copy failed."));
+    .then(() => alert("✅ Ciphertext copied to clipboard!"))
+    .catch(() => alert("❌ Copy failed."));
 }
+
+// ================================
 // 🔹 4. FILE ENCRYPTION
+// ================================
+
 async function encryptFile() {
   const file = document.getElementById("fileInput").files[0];
   const passphrase = document.getElementById("filePassphrase").value.trim();
+  const fileOutput = document.getElementById("fileOutput");
 
-  // 1️⃣ Basic validation
-  if (!file || !passphrase)
-    return alert("Please upload a file and enter a passphrase.");
+  if (!file || !passphrase) {
+    fileOutput.innerHTML =
+      '<div class="error-message">Please upload a file and enter a passphrase.</div>';
+    return;
+  }
 
   showLoader("fileLoader", "Encrypting file");
 
-  // FileReader API reads file’s content from <input type="file"> in a browser.
-  // Base64 is used because it’s safe for text-based transmission in JSON.
   const reader = new FileReader();
 
   reader.onload = async () => {
     try {
-      // 2️⃣ Extract Base64 content from the data URL
       const base64 = reader.result.split(",")[1];
-
-      // 3️⃣ Send the data to backend for encryption
       const response = await fetch("/api/encrypt-file", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          base64,
-          passphrase,
-          filename: file.name,
-        }),
+        body: JSON.stringify({ base64, passphrase, filename: file.name }),
       });
 
-      // 4️⃣ Handle response (ensure valid JSON)
       if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`Server error (${response.status}): ${text}`);
+        throw new Error(`Server error (${response.status})`);
       }
 
       const data = await response.json();
-      if (data.error) return alert(data.error);
+      if (data.error) {
+        fileOutput.innerHTML = `<div class="error-message">${data.error}</div>`;
+        return;
+      }
 
-      // 5️⃣ Show output
-      document.getElementById("fileOutput").innerHTML = `
-        <img src="${data.qrCode}" alt="File QR"><br>
-        <label>Combined (Salt::IV::Ciphertext):</label><br>
-        <textarea rows="3" cols="40" readonly>${data.encrypted}</textarea><br>
-        <a href="${data.downloadUrl}" download style="text-decoration:none;">Download File</a> <br>
-        <h3>QR contains download link instead of ciphertext</h3>
-        <br>
+      fileOutput.innerHTML = `
+        <div class="qr-result">
+          <img src="${data.qrCode}" alt="File QR">
+          <div class="success-message">✅ File Encrypted Successfully!</div>
+          <a href="${data.downloadUrl}" download class="download-link">📥 Download Encrypted File</a>
+        </div>
       `;
     } catch (err) {
-      // 6️⃣ Error handling
-      console.error("Error encrypting file:", err);
-      alert("Error encrypting file: " + err.message);
+      fileOutput.innerHTML = `<div class="error-message">Error encrypting file: ${err.message}</div>`;
     } finally {
       hideLoader("fileLoader");
     }
   };
 
-  // 7️⃣ Read the file as a Data URL (Base64)
   reader.readAsDataURL(file);
 }
 
-// 🔹 5. DECRYPT CIPHERTEXT
+// ================================
+// 🔹 5. DECRYPTION FUNCTIONS
+// ================================
 async function decrypt() {
   const cipher = document.getElementById("qrCipher").value.trim();
   const passphrase = document.getElementById("userPassphrase").value.trim();
+  const output = document.getElementById("decryptedOutput");
 
-  if (!cipher || !passphrase)
-    return alert("Ciphertext and passphrase are required.");
+  console.log("🔓 Frontend decrypt called:", {
+    cipher: cipher.substring(0, 50) + "...",
+    passphrase: passphrase,
+  });
+
+  if (!cipher || !passphrase) {
+    output.innerHTML =
+      '<div class="error-message">Ciphertext and passphrase are required.</div>';
+    return;
+  }
 
   showLoader("decryptLoader", "Decrypting");
 
@@ -194,46 +258,48 @@ async function decrypt() {
     });
 
     const data = await response.json();
-
-    const output = document.getElementById("decryptedOutput");
+    console.log("🔓 Backend response:", data);
 
     if (data.success) {
-      output.innerText = `Decrypted: ${data.decrypted}`;
+      output.innerHTML = `
+        <div class="success-message">
+          <strong>✅ Decryption Successful!</strong><br>
+          <strong>Decrypted text:</strong> ${data.decrypted}
+        </div>
+      `;
     } else {
-      output.innerText = data.error || "Decryption failed in UI.";
+      output.innerHTML = `<div class="error-message">${data.error}</div>`;
     }
   } catch (error) {
     console.error("Decryption request failed:", error);
-    document.getElementById("decryptedOutput").innerText =
-      "Server error during decryption.";
+    output.innerHTML = `<div class="error-message">Server error: ${error.message}</div>`;
   } finally {
     hideLoader("decryptLoader");
   }
 }
+
 
 async function decryptFile() {
   const fileInput = document.getElementById("fileDecryptInput");
   const passphrase = document
     .getElementById("fileDecryptPassphrase")
     .value.trim();
+  const decryptedOutput = document.getElementById("decryptedOutput");
 
   if (!fileInput.files.length || !passphrase) {
-    return alert(
-      "Please upload an encrypted (.enc) file and enter the passphrase."
-    );
+    decryptedOutput.innerHTML =
+      '<div class="error-message">Please upload an encrypted file and enter the passphrase.</div>';
+    return;
   }
 
-  showLoader("decryptLoader", "Decrypting file...");
+  showLoader("decryptLoader", "Decrypting file");
 
   try {
-    // Read uploaded file as text
     const file = fileInput.files[0];
-    const reader = new FileReader(); //api will read the text string like salt::iv::ciphertext
+    const reader = new FileReader();
 
     reader.onload = async () => {
-      const encryptedData = reader.result.trim(); // this will be result of reading  salt::iv::ciphertext
-      //this becomes actual encryted data after reading
-      // Send file data to backend for decryption
+      const encryptedData = reader.result.trim();
       const response = await fetch("/api/decrypt-file", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -245,54 +311,52 @@ async function decryptFile() {
       });
 
       const data = await response.json();
-      const output = document.getElementById("decryptedOutput");
-
       if (data.success) {
-        output.innerText = "File decrypted successfully. Preparing download...";
-
-        //  Convert base64 back to downloadable file
-        const byteCharacters = atob(data.decryptedBase64); //atob() decodes the Base64 string back to binary characters.
-        const byteNumbers = new Array(byteCharacters.length) //convert those characters into real bytes:
+        const byteCharacters = atob(data.decryptedBase64);
+        const byteNumbers = new Array(byteCharacters.length)
           .fill(0)
           .map((_, i) => byteCharacters.charCodeAt(i));
-        const byteArray = new Uint8Array(byteNumbers); //we have the file as a binary array (Uint8Array).
+        const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], {
-          // wraping bin data in a blob - a special object that the browser can treat as a real file:
           type: "application/octet-stream",
         });
 
-        //  Create download link
-        const link = document.createElement("a");
-        link.style.alignContent = "center";
-        link.style.textDecoration = "none";
-        link.href = URL.createObjectURL(blob);
-        link.download = data.suggestedFilename;
-        link.textContent = "Download Decrypted File";
-        output.appendChild(document.createElement("br"));
-        output.appendChild(link);
+        decryptedOutput.innerHTML = `
+          <div class="success-message">
+            <strong>✅ File Decrypted Successfully!</strong><br>
+            <a href="${URL.createObjectURL(blob)}" download="${
+          data.suggestedFilename
+        }" class="download-link">
+              📥 Download Decrypted File
+            </a>
+          </div>
+        `;
       } else {
-        output.innerText = ` ${data.error || "Decryption failed."}`;
+        decryptedOutput.innerHTML = `<div class="error-message">${data.error}</div>`;
       }
-
       hideLoader("decryptLoader");
     };
 
     reader.readAsText(file);
   } catch (error) {
-    console.error("File decryption failed:", error);
-    document.getElementById("decryptedOutput").innerText =
-      "Server error during file decryption.";
+    decryptedOutput.innerHTML = `<div class="error-message">File decryption failed: ${error.message}</div>`;
     hideLoader("decryptLoader");
   }
 }
 
-// Advanced QR Generation Functions
+// ================================
+// 🔹 6. ADVANCED QR FEATURES
+// ================================
+// Update vCard function
 async function generateVCardQR() {
   const name = document.getElementById("vcardName").value.trim();
   const phone = document.getElementById("vcardPhone").value.trim();
+  const vcardOutput = document.getElementById("vcardOutput"); // ✅ Changed to vcardOutput
 
   if (!name || !phone) {
-    return alert("Name and phone are required for vCard QR");
+    vcardOutput.innerHTML =
+      '<div class="error-message">Name and phone are required</div>';
+    return;
   }
 
   showLoader("textLoader", "Generating vCard QR");
@@ -302,35 +366,42 @@ async function generateVCardQR() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name,
-        phone,
+        name: name,
+        phone: phone,
         email: document.getElementById("vcardEmail").value.trim(),
         company: document.getElementById("vcardCompany").value.trim(),
       }),
     });
 
     const data = await response.json();
+
     if (data.success) {
-      document.getElementById("qrOutput").innerHTML = `
-        <img src="${data.qrCode}" alt="vCard QR"><br>
-        <p>vCard QR Generated Successfully!</p>
+      vcardOutput.innerHTML = `  // ✅ Now using vcardOutput
+        <div class="qr-result">
+          <img src="${data.qrCode}" alt="vCard QR">
+          <p class="success-message">✅ vCard QR Generated Successfully!</p>
+        </div>
       `;
     } else {
-      alert(data.error);
+      vcardOutput.innerHTML = `<div class="error-message">${data.error}</div>`;
     }
   } catch (error) {
-    alert("Failed to generate vCard QR: " + error.message);
+    vcardOutput.innerHTML = `<div class="error-message">Failed to generate vCard QR: ${error.message}</div>`;
   } finally {
     hideLoader("textLoader");
   }
 }
 
+// Update WiFi function
 async function generateWifiQR() {
   const ssid = document.getElementById("wifiSsid").value.trim();
   const password = document.getElementById("wifiPassword").value.trim();
+  const wifiOutput = document.getElementById("wifiOutput"); // ✅ Changed to wifiOutput
 
   if (!ssid || !password) {
-    return alert("SSID and password are required for WiFi QR");
+    wifiOutput.innerHTML =
+      '<div class="error-message">SSID and password are required</div>';
+    return;
   }
 
   showLoader("textLoader", "Generating WiFi QR");
@@ -339,21 +410,66 @@ async function generateWifiQR() {
     const response = await fetch("/api/generate-wifi", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ssid, password }),
+      body: JSON.stringify({
+        ssid: ssid,
+        password: password,
+        encryption: document.getElementById("wifiEncryption").value,
+      }),
     });
 
     const data = await response.json();
     if (data.success) {
-      document.getElementById("qrOutput").innerHTML = `
-        <img src="${data.qrCode}" alt="WiFi QR"><br>
-        <p>WiFi QR Generated Successfully!</p>
+      wifiOutput.innerHTML = `  // ✅ Now using wifiOutput
+        <div class="qr-result">
+          <img src="${data.qrCode}" alt="WiFi QR">
+          <p class="success-message">✅ WiFi QR Generated Successfully!</p>
+        </div>
       `;
     } else {
-      alert(data.error);
+      wifiOutput.innerHTML = `<div class="error-message">${data.error}</div>`;
     }
   } catch (error) {
-    alert("Failed to generate WiFi QR: " + error.message);
+    wifiOutput.innerHTML = `<div class="error-message">Failed to generate WiFi QR: ${error.message}</div>`;
   } finally {
     hideLoader("textLoader");
+  }
+}
+
+// ================================
+// 🔹 7. STATISTICS
+// ================================
+
+async function loadStats() {
+  try {
+    const response = await fetch("/api/stats");
+    const data = await response.json();
+
+    if (data.success) {
+      const statsContainer = document.getElementById("statsContainer");
+      statsContainer.innerHTML = `
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-number">${data.stats.totalQRs}</span>
+            <span class="stat-label">Total QR Codes</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number">${data.stats.recentActivity}</span>
+            <span class="stat-label">Last 24 Hours</span>
+          </div>
+          ${data.stats.byType
+            .map(
+              (type) => `
+            <div class="stat-card">
+              <span class="stat-number">${type.count}</span>
+              <span class="stat-label">${type.type} QR Codes</span>
+            </div>
+          `
+            )
+            .join("")}
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error("Failed to load stats:", error);
   }
 }

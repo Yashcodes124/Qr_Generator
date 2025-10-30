@@ -1,6 +1,9 @@
 // backend/models/QRHistory.js
 // DefinING MY  table structure as a JavaScript class
 
+import { DataTypes } from "sequelize";
+import sequelize from "../config/database.js";
+
 const QRHistory = sequelize.define(
   "QRHistory",
   {
@@ -31,6 +34,8 @@ const QRHistory = sequelize.define(
     timestamps: true, // ✅ Automatically adds createdAt & updatedAt
   }
 );
+
+export default QRHistory;
 
 // Sequelize generates this SQL:
 // INSERT INTO qr_history (type, data_size, ip_address, created_at, updated_at)
