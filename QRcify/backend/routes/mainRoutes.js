@@ -135,5 +135,34 @@ router.post("/decrypt-file", (req, res) => {
     res.status(500).json({ error: "Decryption failed" });
   }
 });
+// Add to mainRoutes.js
+// 🆕 Generate QR with different types
+router.post("/generate-vcard", (req, res) => {
+  const { name, phone, email, company } = req.body;
 
+  const vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:${name}
+TEL:${phone}
+EMAIL:${email}
+ORG:${company}
+END:VCARD`;
+
+  // Generate QR from vcard string
+  const qrPng = qr.imageSync(vcard, { type: "png" });
+  const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
+
+  res.json({ success: true, qrCode: qrBase64 });
+});
+
+// 🆕 WiFi QR Code
+router.post("/generate-wifi", (req, res) => {
+  const { ssid, password, encryption = "WPA" } = req.body;
+
+  const wifiString = `WIFI:S:${ssid};T:${encryption};P:${password};;`;
+  const qrPng = qr.imageSync(wifiString, { type: "png" });
+  const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
+
+  res.json({ success: true, qrCode: qrBase64 });
+});
 export default router;

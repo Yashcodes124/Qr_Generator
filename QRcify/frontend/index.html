@@ -107,6 +107,27 @@
 
       <!-- Output -->
       <div id="decryptedOutput"></div>
+      <!-- Add to index.html -->
+      <section class="advanced-features">
+        <h2>Advanced QR Types</h2>
+
+        <!-- vCard QR -->
+        <div class="feature-card">
+          <h3>vCard QR</h3>
+          <input type="text" id="vcardName" placeholder="Full Name" />
+          <input type="tel" id="vcardPhone" placeholder="Phone" />
+          <input type="email" id="vcardEmail" placeholder="Email" />
+          <button onclick="generateVCardQR()">Generate vCard QR</button>
+        </div>
+
+        <!-- WiFi QR -->
+        <div class="feature-card">
+          <h3>WiFi QR</h3>
+          <input type="text" id="wifiSsid" placeholder="Network Name (SSID)" />
+          <input type="password" id="wifiPassword" placeholder="Password" />
+          <button onclick="generateWifiQR()">Generate WiFi QR</button>
+        </div>
+      </section>
     </main>
   </body>
 </html>
