@@ -4,10 +4,10 @@
   "description": "A simple Web-based QR generator where users can input a URL and receive a QR code.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "lint": "eslint .",
-    "test": "jest"
+    "start": "node backend/index.js",
+    "dev": "nodemon backend/index.js",
+    "test": "jest",
+    "db:setup": "node backend/scripts/setupDB.js"
   },
   "keywords": [
     "qr",
@@ -23,6 +23,7 @@
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.2.0",
     "inquirer": "^12.10.0",
     "pg": "^8.16.3",
     "qr-image": "^3.2.0",

@@ -28,10 +28,7 @@ function hideLoader(loaderId) {
   if (loader) loader.style.display = "none";
   clearInterval(dotInterval);
 }
-
-// ================================
-// 🔹 1. BASIC URL → QR GENERATION
-// ================================
+//1.  QR from URL
 const urlBtn = document.getElementById("generateBtn");
 const urlOutput = document.getElementById("output");
 
@@ -42,7 +39,7 @@ urlBtn.addEventListener("click", async () => {
     return;
   }
 
-  showLoader("urlLoader", "Generating");
+  showLoader("urlLoader", "Generating.");
   urlOutput.innerHTML = "";
 
   try {
@@ -53,13 +50,14 @@ urlBtn.addEventListener("click", async () => {
     });
 
     const data = await response.json();
-    if (data.qrCode) {
+    if (data.qrCode || data.success) {
       urlOutput.innerHTML = `<img src="${data.qrCode}" alt="QR Code"> <br> QR Generated Successfully....`;
     } else {
+      alert(data.error);
       urlOutput.innerHTML = `<p>Error: ${data.error}</p>`;
     }
   } catch (err) {
-    urlOutput.innerHTML = `<p>Request failed: ${err.message}</p>`;
+    alert("Failed to generate QR ", data.err);
   } finally {
     hideLoader("urlLoader");
   }
@@ -104,9 +102,8 @@ async function generate() {
   }
 }
 
-// ================================
 // 🔹 3. COPY CIPHERTEXT
-// ================================
+
 function copyCipherText() {
   const textArea = document.querySelector("#qrOutput textarea");
   if (!textArea) return alert("No ciphertext found to copy.");
@@ -117,11 +114,7 @@ function copyCipherText() {
     .then(() => alert("Ciphertext copied!"))
     .catch(() => alert("Copy failed."));
 }
-
-// ================================
 // 🔹 4. FILE ENCRYPTION
-// ================================
-
 async function encryptFile() {
   const file = document.getElementById("fileInput").files[0];
   const passphrase = document.getElementById("filePassphrase").value.trim();
@@ -183,9 +176,7 @@ async function encryptFile() {
   reader.readAsDataURL(file);
 }
 
-// ================================
 // 🔹 5. DECRYPT CIPHERTEXT
-// ================================
 async function decrypt() {
   const cipher = document.getElementById("qrCipher").value.trim();
   const passphrase = document.getElementById("userPassphrase").value.trim();
@@ -292,5 +283,77 @@ async function decryptFile() {
     document.getElementById("decryptedOutput").innerText =
       "Server error during file decryption.";
     hideLoader("decryptLoader");
+  }
+}
+
+// Advanced QR Generation Functions
+async function generateVCardQR() {
+  const name = document.getElementById("vcardName").value.trim();
+  const phone = document.getElementById("vcardPhone").value.trim();
+
+  if (!name || !phone) {
+    return alert("Name and phone are required for vCard QR");
+  }
+
+  showLoader("textLoader", "Generating vCard QR");
+
+  try {
+    const response = await fetch("/api/generate-vcard", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        phone,
+        email: document.getElementById("vcardEmail").value.trim(),
+        company: document.getElementById("vcardCompany").value.trim(),
+      }),
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      document.getElementById("qrOutput").innerHTML = `
+        <img src="${data.qrCode}" alt="vCard QR"><br>
+        <p>vCard QR Generated Successfully!</p>
+      `;
+    } else {
+      alert(data.error);
+    }
+  } catch (error) {
+    alert("Failed to generate vCard QR: " + error.message);
+  } finally {
+    hideLoader("textLoader");
+  }
+}
+
+async function generateWifiQR() {
+  const ssid = document.getElementById("wifiSsid").value.trim();
+  const password = document.getElementById("wifiPassword").value.trim();
+
+  if (!ssid || !password) {
+    return alert("SSID and password are required for WiFi QR");
+  }
+
+  showLoader("textLoader", "Generating WiFi QR");
+
+  try {
+    const response = await fetch("/api/generate-wifi", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ssid, password }),
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      document.getElementById("qrOutput").innerHTML = `
+        <img src="${data.qrCode}" alt="WiFi QR"><br>
+        <p>WiFi QR Generated Successfully!</p>
+      `;
+    } else {
+      alert(data.error);
+    }
+  } catch (error) {
+    alert("Failed to generate WiFi QR: " + error.message);
+  } finally {
+    hideLoader("textLoader");
   }
 }

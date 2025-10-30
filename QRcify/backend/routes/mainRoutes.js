@@ -1,36 +1,70 @@
+//  updated the imports and routes:
+
 import express from "express";
 import fs from "fs";
 import path from "path";
 import qr from "qr-image";
 import { encryptData, decryptData } from "../utils/cryptoUtils.js";
+import { logQRGeneration } from "../services/historyService.js";
+import { qrGenerationLimiter } from "../middleware/rateLimit.js";
+import { validateUrl, validatePassphrase } from "../utils/validation.js";
+import { getStats } from "../services/historyService.js";
 
 const router = express.Router();
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 🟩 1️⃣ Generate QR from URL
-router.post("/generate", (req, res) => {
+//  updated the imports and routes:
+import { logQRGeneration } from "../services/historyService.js";
+import { qrGenerationLimiter } from "../middleware/rateLimit.js";
+import { validateUrl, validatePassphrase } from "../utils/validation.js";
+
+// Applying rate limiting middleware to all QR generation routes
+router.use(
+  [
+    "/generate",
+    "/generate-encryptedText",
+    "/encrypt-file",
+    "/generate-vcard",
+    "/generate-wifi",
+  ],
+  qrGenerationLimiter
+);
+
+// 1️⃣ Generate QR from URL (Updated)
+router.post("/generate", async (req, res) => {
   const { url } = req.body;
-  if (!url) return res.status(400).json({ error: "URL is required" });
+
+  if (!url || !validateUrl(url)) {
+    return res.status(400).json({ error: "Valid URL is required" });
+  }
 
   try {
     const qrPng = qr.imageSync(url, { type: "png" });
     const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
+
+    // Log to database
+    await logQRGeneration("url", url.length, req);
+
     fs.appendFileSync("urls.txt", url + "\n");
     res.json({ success: true, qrCode: qrBase64 });
   } catch (error) {
-    console.error("QR generation failed at server.", error);
+    console.error("QR generation failed:", error);
     res.status(500).json({ error: "QR generation failed" });
   }
 });
 
 // 🟦 2️⃣ Encrypt text → generate QR
-router.post("/generate-encryptedText", (req, res) => {
+router.post("/generate-encryptedText", async (req, res) => {
   const { secretData, passphrase } = req.body;
-  if (!secretData || !passphrase)
-    return res.status(400).json({ error: "Secret data & passphrase required" });
-
+  // adding validation
+  // Add validation
+  if (!secretData || !passphrase || !validatePassphrase(passphrase)) {
+    return res
+      .status(400)
+      .json({ error: "Valid secret data & passphrase required" });
+  }
   try {
     const combined = encryptData(secretData, passphrase);
     // Prevent overlong QR payload
@@ -42,6 +76,8 @@ router.post("/generate-encryptedText", (req, res) => {
 
     const qrPng = qr.imageSync(combined, { type: "png" });
     const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
+    // Adding DB logging
+    await logQRGeneration("encrypted_text", secretData.length, req);
 
     res.json({ success: true, qrCode: qrBase64, encrypted: combined });
   } catch (error) {
@@ -51,9 +87,9 @@ router.post("/generate-encryptedText", (req, res) => {
 });
 
 // 🟨 3️⃣ Encrypt file
-router.post("/encrypt-file", (req, res) => {
+router.post("/encrypt-file", async (req, res) => {
   const { base64, passphrase, filename } = req.body;
-  if (!base64 || !passphrase || !filename)
+  if (!base64 || !passphrase || !filename || !validatePassphrase(passphrase))
     return res.status(400).json({ error: "Missing required data" });
 
   try {
@@ -75,6 +111,10 @@ router.post("/encrypt-file", (req, res) => {
     //   QR generation for both bases
     const qrPng = qr.imageSync(qrTarget, { type: "png" });
     const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
+
+    // Adding DB logging
+    await logQRGeneration("encrypted_file", base64.length, req);
+
     // 6️⃣ Send response
     res.json({
       success: true,
@@ -87,6 +127,48 @@ router.post("/encrypt-file", (req, res) => {
     console.error("File encryption failed at server:", error);
     res.status(500).json({ error: "File encryption failed" });
   }
+});
+// 🆕 Generate QR with different types
+router.post("/generate-vcard", (req, res) => {
+  const { name, phone, email, company } = req.body;
+
+  const vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:${name}
+TEL:${phone}
+EMAIL:${email}
+ORG:${company}
+END:VCARD`;
+
+  // Generate QR from vcard string
+  const qrPng = qr.imageSync(vcard, { type: "png" });
+  const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
+
+  res.json({ success: true, qrCode: qrBase64 });
+});
+
+// 🆕 WiFi QR Code
+router.post("/generate-wifi", (req, res) => {
+  const { ssid, password, encryption = "WPA" } = req.body;
+  // 🔒 VALIDATION: Network credentials check before passing data
+  if (!ssid || !password) {
+    return res.status(400).json({
+      error: "SSID and password are required for WiFi QR",
+    });
+  }
+  // 📶 WIFI STRING FORMAT (Standard format for mobile devices)
+  // Format breakdown:
+  // WIFI:    → Protocol identifier
+  // S:ssid   → Network name (SSID)
+  // T:WPA    → Encryption type (WPA, WEP, nopass)
+  // P:pass   → Password
+  // ;;       → End of data
+
+  const wifiString = `WIFI:S:${ssid};T:${encryption};P:${password};;`;
+  const qrPng = qr.imageSync(wifiString, { type: "png" });
+  const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
+
+  res.json({ success: true, qrCode: qrBase64 });
 });
 
 // 🟥 4️⃣ Decrypt text
@@ -135,34 +217,14 @@ router.post("/decrypt-file", (req, res) => {
     res.status(500).json({ error: "Decryption failed" });
   }
 });
-// Add to mainRoutes.js
-// 🆕 Generate QR with different types
-router.post("/generate-vcard", (req, res) => {
-  const { name, phone, email, company } = req.body;
 
-  const vcard = `BEGIN:VCARD
-VERSION:3.0
-FN:${name}
-TEL:${phone}
-EMAIL:${email}
-ORG:${company}
-END:VCARD`;
-
-  // Generate QR from vcard string
-  const qrPng = qr.imageSync(vcard, { type: "png" });
-  const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
-
-  res.json({ success: true, qrCode: qrBase64 });
+router.get("/stats", async (req, res) => {
+  try {
+    const stats = await getStats();
+    res.json({ success: true, stats });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch stats" });
+  }
 });
 
-// 🆕 WiFi QR Code
-router.post("/generate-wifi", (req, res) => {
-  const { ssid, password, encryption = "WPA" } = req.body;
-
-  const wifiString = `WIFI:S:${ssid};T:${encryption};P:${password};;`;
-  const qrPng = qr.imageSync(wifiString, { type: "png" });
-  const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
-
-  res.json({ success: true, qrCode: qrBase64 });
-});
 export default router;
