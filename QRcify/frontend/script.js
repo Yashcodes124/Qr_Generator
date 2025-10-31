@@ -1,9 +1,5 @@
-// ================================
 // 🔹 LOADER FUNCTIONS
-// ================================
-
 let dotInterval;
-
 function showLoader(loaderId, text = "Processing") {
   const loader = document.getElementById(loaderId);
   if (!loader) return;
@@ -26,8 +22,68 @@ function hideLoader(loaderId) {
 }
 
 // ================================
-// 🔹 INITIALIZE EVENT LISTENERS
+// 🔐 AUTHENTICATION FUNCTIONS
 // ================================
+
+function openAuthModal() {
+  document.getElementById("authModal").style.display = "flex";
+  showLoginForm();
+}
+
+function openRegisterModal() {
+  document.getElementById("authModal").style.display = "flex";
+  showRegisterForm();
+}
+
+function showLoginForm() {
+  document.getElementById("loginForm").style.display = "block";
+  document.getElementById("registerForm").style.display = "none";
+}
+
+function showRegisterForm() {
+  document.getElementById("loginForm").style.display = "none";
+  document.getElementById("registerForm").style.display = "block";
+}
+
+function closeAuthModal() {
+  document.getElementById("authModal").style.display = "none";
+}
+
+// Close modal when clicking outside
+document.addEventListener("click", function (event) {
+  const modal = document.getElementById("authModal");
+
+  if (event.target === modal) {
+    //outside the modal
+    closeAuthModal();
+  }
+});
+const crossmark = document.getElementById("close-modal");
+crossmark.addEventListener("click", function (event) {
+  closeAuthModal();
+});
+
+// Mock functions - will connect to backend later
+function handleLogin() {
+  const email = document.getElementById("loginEmail").value;
+  const password = document.getElementById("loginPassword").value;
+
+  // TODO: Connect to backend
+  console.log("Login attempt:", { email, password });
+  alert("Login functionality will be connected to backend soon!");
+}
+
+function handleRegister() {
+  const name = document.getElementById("registerName").value;
+  const email = document.getElementById("registerEmail").value;
+  const password = document.getElementById("registerPassword").value;
+
+  // TODO: Connect to backend
+  console.log("Register attempt:", { name, email, password });
+  alert("Registration will be connected to backend soon!");
+}
+
+// 🔹 INITIALIZE EVENT LISTENERS
 
 document.addEventListener("DOMContentLoaded", function () {
   // URL QR Generation
@@ -35,19 +91,16 @@ document.addEventListener("DOMContentLoaded", function () {
   if (urlBtn) {
     urlBtn.addEventListener("click", generateUrlQR);
   }
-
   // Encrypt Text QR Generation
   const encryptTextBtn = document.getElementById("encryptTextBtn");
   if (encryptTextBtn) {
     encryptTextBtn.addEventListener("click", generateEncryptedQR);
   }
-
   // Encrypt File
   const encryptFileBtn = document.getElementById("encryptFileBtn");
   if (encryptFileBtn) {
     encryptFileBtn.addEventListener("click", encryptFile);
   }
-
   // Decrypt Text
   const decryptBtn = document.getElementById("decryptBtn");
   if (decryptBtn) {
@@ -277,7 +330,6 @@ async function decrypt() {
     hideLoader("decryptLoader");
   }
 }
-
 
 async function decryptFile() {
   const fileInput = document.getElementById("fileDecryptInput");

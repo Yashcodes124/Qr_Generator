@@ -8,11 +8,89 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   </head>
   <body>
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <!-- Login Form -->
+        <div id="loginForm">
+          <span id="close-modal" class="close-modal"
+            ><i class="fa-solid fa-xmark"></i
+          ></span>
+          <h3>🔐 Login to QRcify Pro</h3>
+          <div class="form-group">
+            <input
+              type="email"
+              id="loginEmail"
+              placeholder="Email"
+              class="form-input"
+            />
+            <input
+              type="password"
+              id="loginPassword"
+              placeholder="Password"
+              class="form-input"
+            />
+            <button onclick="handleLogin()" class="btn btn-primary">
+              Login
+            </button>
+          </div>
+          <p>
+            Don't have an account?
+            <a href="#" onclick="showRegisterForm()">Register here</a>
+          </p>
+        </div>
+
+        <!-- Register Form -->
+        <div id="registerForm" style="display: none">
+          <span id="close-modal" class="close-modal"
+            ><i class="fa-solid fa-xmark"></i
+          ></span>
+          <h3>🚀 Create Account</h3>
+          <div class="form-group">
+            <input
+              type="text"
+              id="registerName"
+              placeholder="Full Name"
+              class="form-input"
+            />
+            <input
+              type="email"
+              id="registerEmail"
+              placeholder="Email"
+              class="form-input"
+            />
+            <input
+              type="password"
+              id="registerPassword"
+              placeholder="Password"
+              class="form-input"
+            />
+            <button onclick="handleRegister()" class="btn btn-secondary">
+              Create Account
+            </button>
+          </div>
+          <p>
+            Already have an account?
+            <a href="#" onclick="showLoginForm()">Login here</a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Menu  (it will replace auth modal when logged in) -->
+    <div id="userMenu" style="display: none">
+      <button id="userDropdown" class="btn btn-outline">👤 User</button>
+      <div id="dropdownMenu" class="dropdown-content">
+        <a href="#" onclick="showDashboard()">📊 Dashboard</a>
+        <a href="#" onclick="showProfile()">⚙️ Profile</a>
+        <a href="#" onclick="handleLogout()">🚪 Logout</a>
+      </div>
+    </div>
     <!-- Navigation Header -->
     <header class="header">
       <div class="container">
         <div class="logo">
-          <h1>🔐 QRGen Pro</h1>
+          <h1>🔐 QRcify Pro</h1>
           <span class="tagline">Secure QR Code Generator</span>
         </div>
         <nav class="nav">
@@ -20,6 +98,19 @@
           <a href="#secure" class="nav-link">Secure QR</a>
           <a href="#advanced" class="nav-link">Advanced</a>
           <a href="#decrypt" class="nav-link">Decrypt</a>
+
+          <!-- Auth Buttons -->
+          <div id="authButtons">
+            <button onclick="openAuthModal()" class="btn btn-outline">
+              Login
+            </button>
+            <button onclick="openRegisterModal()" class="btn btn-primary">
+              Sign Up
+            </button>
+          </div>
+
+          <!-- User Menu (hidden by default) -->
+          <div id="userMenuContainer"></div>
         </nav>
       </div>
     </header>
@@ -117,45 +208,87 @@
 
         <!-- Advanced Features Section -->
         <!-- In your Advanced Features Section -->
-<section id="advanced" class="section card">
-    <div class="section-header">
-        <h3>⚡ Advanced QR Types</h3>
-        <p>Specialized QR codes for different use cases</p>
-    </div>
-    
-    <!-- vCard QR -->
-    <div class="feature-card">
-        <h4>📇 vCard QR Code</h4>
-        <div class="form-grid">
-            <input type="text" id="vcardName" placeholder="Full Name" class="form-input">
-            <input type="tel" id="vcardPhone" placeholder="Phone Number" class="form-input">
-            <input type="email" id="vcardEmail" placeholder="Email Address" class="form-input">
-            <input type="text" id="vcardCompany" placeholder="Company" class="form-input">
-        </div>
-        <button onclick="generateVCardQR()" class="btn btn-outline">Generate vCard QR</button>
-        
-        <!-- ✅ ADD THIS OUTPUT CONTAINER -->
-        <div id="vcardOutput" class="output-container" style="margin-top: 1rem;"></div>
-    </div>
+        <section id="advanced" class="section card">
+          <div class="section-header">
+            <h3>⚡ Advanced QR Types</h3>
+            <p>Specialized QR codes for different use cases</p>
+          </div>
 
-    <!-- WiFi QR -->
-    <div class="feature-card">
-        <h4>📶 WiFi QR Code</h4>
-        <div class="form-grid">
-            <input type="text" id="wifiSsid" placeholder="Network Name (SSID)" class="form-input">
-            <input type="password" id="wifiPassword" placeholder="WiFi Password" class="form-input">
-            <select id="wifiEncryption" class="form-select">
+          <!-- vCard QR -->
+          <div class="feature-card">
+            <h4>📇 vCard QR Code</h4>
+            <div class="form-grid">
+              <input
+                type="text"
+                id="vcardName"
+                placeholder="Full Name"
+                class="form-input"
+              />
+              <input
+                type="tel"
+                id="vcardPhone"
+                placeholder="Phone Number"
+                class="form-input"
+              />
+              <input
+                type="email"
+                id="vcardEmail"
+                placeholder="Email Address"
+                class="form-input"
+              />
+              <input
+                type="text"
+                id="vcardCompany"
+                placeholder="Company"
+                class="form-input"
+              />
+            </div>
+            <button onclick="generateVCardQR()" class="btn btn-outline">
+              Generate vCard QR
+            </button>
+
+            <!-- ✅ ADD THIS OUTPUT CONTAINER -->
+            <div
+              id="vcardOutput"
+              class="output-container"
+              style="margin-top: 1rem"
+            ></div>
+          </div>
+
+          <!-- WiFi QR -->
+          <div class="feature-card">
+            <h4>📶 WiFi QR Code</h4>
+            <div class="form-grid">
+              <input
+                type="text"
+                id="wifiSsid"
+                placeholder="Network Name (SSID)"
+                class="form-input"
+              />
+              <input
+                type="password"
+                id="wifiPassword"
+                placeholder="WiFi Password"
+                class="form-input"
+              />
+              <select id="wifiEncryption" class="form-select">
                 <option value="WPA">WPA/WPA2</option>
                 <option value="WEP">WEP</option>
                 <option value="nopass">No Encryption</option>
-            </select>
-        </div>
-        <button onclick="generateWifiQR()" class="btn btn-outline">Generate WiFi QR</button>
-        
-        <!-- ✅ ADD THIS OUTPUT CONTAINER -->
-        <div id="wifiOutput" class="output-container" style="margin-top: 1rem;"></div>
-    </div>
-</section>
+              </select>
+            </div>
+            <button onclick="generateWifiQR()" class="btn btn-outline">
+              Generate WiFi QR
+            </button>
+
+            <!-- ✅ ADD THIS OUTPUT CONTAINER -->
+            <div
+              id="wifiOutput"
+              class="output-container"
+              style="margin-top: 1rem"
+            ></div>
+          </div>
+        </section>
         <!-- Decryption Section -->
         <section id="decrypt" class="section card">
           <div class="section-header">
@@ -245,7 +378,7 @@
     <!-- Footer -->
     <footer class="footer">
       <div class="container">
-        <p>&copy; 2024 QRGen Pro. Built with Node.js & Express</p>
+        <p>&copy; 2024 QRcify Pro. Built with PostgreSQL and ERN stack</p>
       </div>
     </footer>
 
