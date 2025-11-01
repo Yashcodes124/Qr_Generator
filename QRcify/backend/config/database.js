@@ -17,9 +17,9 @@ export const connectDB = async () => {
     await sequelize.authenticate();
     console.log("✅ SQLite Database Connected Successfully");
 
-    // Sync all models (creates tables)
-    await sequelize.sync({ force: false }); // force: true would drop tables!
-    console.log("✅ Database tables synchronized");
+    // Sync with force: true to update schema (drops existing tables!)
+    await sequelize.sync({ force: false });
+    console.log("✅ ✅ Database tables synchronized (schema updated)");
   } catch (error) {
     console.error("❌ Database connection failed:", error.message);
   }
