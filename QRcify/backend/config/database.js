@@ -1,51 +1,28 @@
-// // backend/config/database.js
-// import { Sequelize } from 'sequelize';
+// backend/config/database.js
+import { Sequelize } from "sequelize";
+import path from "path";
+import { fileURLToPath } from "url";
 
-// const sequelize = new Sequelize(
-//   process.env.DB_NAME || 'qr_generator',
-//   process.env.DB_USER || 'postgres',
-//   process.env.DB_PASSWORD || 'password',
-//   {
-//     host: process.env.DB_HOST || 'localhost',
-//     dialect: 'postgres',
-//     logging: false, // Set to true for debugging
-//     pool: {
-//       max: 5,
-//       min: 0,
-//       acquire: 30000,
-//       idle: 10000
-//     }
-//   }
-// );
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// export const connectDB = async () => {
-//   try {
-//     await sequelize.authenticate();
-//     console.log('✅ PostgreSQL Connected Successfully');
-//     await sequelize.sync(); // Creates tables if they don't exist
-//   } catch (error) {
-//     console.error('❌ Database connection failed:', error);
-//     process.exit(1);
-//   }
-// };
+const sequelize = new Sequelize({
+  dialect: "sqlite",
+  storage: path.join(__dirname, "../../database/qr_generator.sqlite"),
+  // logging: console.log, // So we can see SQL queries
+});
 
-// export default sequelize;
-
-
-
-
-
-// backend/config/database.js - ULTRA SIMPLE
 export const connectDB = async () => {
-  console.log('✅ App running without database');
+  try {
+    await sequelize.authenticate();
+    console.log("✅ SQLite Database Connected Successfully");
+
+    // Sync all models (creates tables)
+    await sequelize.sync({ force: false }); // force: true would drop tables!
+    console.log("✅ Database tables synchronized");
+  } catch (error) {
+    console.error("❌ Database connection failed:", error.message);
+  }
 };
 
-export default {
-  authenticate: () => Promise.resolve(),
-  sync: () => Promise.resolve(),
-  define: () => ({
-    create: () => Promise.resolve(),
-    count: () => Promise.resolve(0),
-    findAll: () => Promise.resolve([])
-  })
-};
+export default sequelize;
