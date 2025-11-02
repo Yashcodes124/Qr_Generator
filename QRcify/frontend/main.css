@@ -95,7 +95,7 @@ body {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
-/* .close-modal {
+.close-modal {
   position: absolute;
   right: 1rem;
   top: 1rem;
@@ -106,25 +106,25 @@ body {
 
 .close-modal:hover {
   color: #e74c3c;
-} */
+}
 /* ================================
    USER DROPDOWN STYLES
    ================================ */
 
-.dropdown-content {
+#dropdownMenu {
   display: none;
   position: absolute;
+  top: 100%;
   right: 0;
   background: white;
   min-width: 180px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   border-radius: 12px;
   padding: 8px 0;
-  z-index: 1000;
+  z-index: 10000;
   border: 1px solid #e9ecef;
   margin-top: 8px;
 }
-
 .dropdown-content a {
   display: flex;
   align-items: center;
@@ -151,9 +151,8 @@ body {
 /* Make sure the dropdown appears above other content */
 #userMenu {
   position: relative;
-  z-index: 1001;
+  display: inline-block;
 }
-
 
 /* Main Content */
 .main {

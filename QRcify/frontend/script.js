@@ -164,103 +164,64 @@ async function handleRegister() {
     hideLoader("urlLoader");
   }
 }
-function handleLogout() {
-  console.log("🚪 Logging out...");
-
-  // Clear stored user data
-  localStorage.removeItem("userToken");
-  localStorage.removeItem("userData");
-
-  // Reset UI
-  const authButtons = document.getElementById("authButtons");
-  if (authButtons) {
-    authButtons.style.display = "flex";
-    console.log("✅ Auth buttons shown");
-  }
-
-  const userMenuContainer = document.getElementById("userMenuContainer");
-  if (userMenuContainer) {
-    userMenuContainer.innerHTML = "";
-    console.log("✅ User menu cleared");
-  }
-
-  // Hide any open dropdown
-  const dropdownMenu = document.getElementById("dropdownMenu");
-  if (dropdownMenu) {
-    dropdownMenu.style.display = "none";
-  }
-
-  showNotification("👋 Logged out successfully!", "success");
-
-  // Optional: Refresh the page to reset any user-specific state
-  setTimeout(() => {
-    window.location.reload();
-  }, 1000);
-}
 
 function updateUIForLoggedInUser(user) {
-  console.log("🔄 Updating UI for user:", user);
-
   // Hide auth buttons
   const authButtons = document.getElementById("authButtons");
-  if (authButtons) {
-    authButtons.style.display = "none";
-    console.log("✅ Auth buttons hidden");
-  }
+  if (authButtons) authButtons.style.display = "none";
 
-  // Show user menu
+  // Show simple user menu (NO DROPDOWN - clean solution)
   const userMenuContainer = document.getElementById("userMenuContainer");
   if (userMenuContainer) {
     userMenuContainer.innerHTML = `
-      <div id="userMenu" style="display: inline-block; position: relative;">
-        <button id="userDropdown" class="btn btn-outline" style="display: flex; align-items: center; gap: 8px;">
-          👤 ${user.name || user.email}
-          <span style="font-size: 12px;">▼</span>
-        </button>
-        <div id="dropdownMenu" class="dropdown-content">
-          <a href="#" onclick="showDashboard()">📊 Dashboard</a>
-          <a href="#" onclick="showProfile()">⚙️ Profile</a>
-          <a href="#" onclick="handleLogout()" style="color: #e74c3c;">🚪 Logout</a>
-        </div>
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <span style="color: #2c3e50; font-weight: 500;">👤 ${user.name}</span>
+        <button onclick="showDashboard()" class="btn btn-outline" style="padding: 8px 12px;">📊</button>
+        <button onclick="handleLogout()" class="btn btn-warning" style="padding: 8px 12px;">🚪 Logout</button>
       </div>
     `;
-
-    // Add dropdown toggle functionality
-    const userDropdown = document.getElementById("userDropdown");
-    const dropdownMenu = document.getElementById("dropdownMenu");
-
-    if (userDropdown && dropdownMenu) {
-      userDropdown.addEventListener("click", function (e) {
-        e.stopPropagation();
-        console.log("🎯 Dropdown clicked");
-        const isVisible = dropdownMenu.style.display === "block";
-        dropdownMenu.style.display = isVisible ? "none" : "block";
-      });
-
-      // Close dropdown when clicking elsewhere
-      document.addEventListener("click", function () {
-        console.log("📌 Closing dropdown");
-        dropdownMenu.style.display = "none";
-      });
-
-      // Prevent dropdown from closing when clicking inside it
-      dropdownMenu.addEventListener("click", function (e) {
-        e.stopPropagation();
-      });
-    }
   }
+}
+
+function handleLogout() {
+  localStorage.removeItem("userToken");
+  localStorage.removeItem("userData");
+
+  const authButtons = document.getElementById("authButtons");
+  if (authButtons) authButtons.style.display = "flex";
+
+  const userMenuContainer = document.getElementById("userMenuContainer");
+  if (userMenuContainer) userMenuContainer.innerHTML = "";
+
+  alert("👋 Logged out successfully!");
+  setTimeout(() => window.location.reload(), 1000);
 }
 
 function showDashboard() {
   alert(
-    "📊 Dashboard feature coming soon!\n\nPlanned features:\n• Your QR code history\n• Usage statistics\n• Saved templates"
+    "📊 Dashboard coming soon!\n• Your QR history\n• Usage analytics\n• Saved templates"
   );
 }
 
 function showProfile() {
   alert(
-    "⚙️ Profile management coming soon!\n\nPlanned features:\n• Update your information\n• Change password\n• Account settings"
+    "⚙️ Profile management coming soon!\n• Update info\n• Change password\n• Preferences"
   );
+}
+
+function checkExistingLogin() {
+  const userData = localStorage.getItem("userData");
+  const userToken = localStorage.getItem("userToken");
+
+  if (userData && userToken) {
+    try {
+      const user = JSON.parse(userData);
+      updateUIForLoggedInUser(user);
+    } catch (e) {
+      localStorage.removeItem("userData");
+      localStorage.removeItem("userToken");
+    }
+  }
 }
 
 // Notification system
@@ -389,24 +350,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 });
-
-function checkExistingLogin() {
-  const userData = localStorage.getItem("userData");
-  const userToken = localStorage.getItem("userToken");
-
-  if (userData && userToken) {
-    try {
-      const user = JSON.parse(userData);
-      updateUIForLoggedInUser(user);
-      console.log("✅ User automatically logged in:", user.email);
-    } catch (e) {
-      console.error("❌ Invalid user data in storage");
-      // Clear invalid data
-      localStorage.removeItem("userData");
-      localStorage.removeItem("userToken");
-    }
-  }
-}
 
 // ================================
 // 🔹 REST OF YOUR QR FUNCTIONS (UNCHANGED)

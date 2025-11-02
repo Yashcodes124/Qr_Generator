@@ -1,6 +1,6 @@
 import express from "express";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import { generateAuthToken } from "../utils/authUtils.js";
 import User from "../models/user.js";
 
 const router = express.Router();
@@ -65,19 +65,10 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Invalid email or Password" });
     }
     //generate JWT token
-    const token = jwt.sign(
-      {
-        userId: user.id, //meta data
-        email: user.email,
-      },
-      process.env.JWT_SECRET || "your-secret-key", //key
-      {
-        expiresIn: "7d", //expiray data
-      }
-    );
+    const token = generateAuthToken(user);
     res.json({
       success: true,
-      message: "Login successful",
+      message: "Login successfull.",
       token,
       user: {
         id: user.id,
