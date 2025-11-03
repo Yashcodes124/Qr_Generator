@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>QRGen Pro - Advanced QR Code Generator</title>
     <link rel="stylesheet" href="main.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   </head>
   <body>
@@ -83,18 +84,7 @@
     </div>
 
     <!-- User Menu  (it will replace auth modal when logged in) -->
-    <div id="userMenu" style="display: none">
-      <button id="userDropdown" class="btn btn-outline">👤 User</button>
-      <div id="dropdownMenu" class="dropdown-content">
-        <a href="#" onclick="showDashboard()">📊 Dashboard</a>
-        <a href="#" onclick="showProfile()">⚙️ Profile</a>
-      </div>
-      <div style="position: fixed; top: 10px; right: 10px; z-index: 10000">
-        <button onclick="handleLogout()" class="btn btn-warning">
-          🚪 Logout
-        </button>
-      </div>
-    </div>
+
     <!-- Navigation Header -->
     <!-- Enhanced Header -->
     <header class="header">
@@ -136,9 +126,10 @@
               Register
             </button>
           </div>
-
-          <!-- User Menu (shown when logged in) -->
-          <div id="userMenuContainer"></div>
+             <div id="userMenuContainer" class="user-menu-container">
+  <!-- Profile menu will be inserted here by JavaScript -->
+</div>
+          
         </nav>
       </div>
     </header>
@@ -147,14 +138,268 @@
     <main class="main">
       <div class="container">
         <!-- Hero Section -->
+        <!-- Enhanced Hero Section -->
         <section class="hero">
-          <h2>Generate Secure QR Codes Instantly</h2>
-          <p>
-            Create encrypted QR codes for URLs, files, contacts, and WiFi with
-            military-grade encryption
-          </p>
-        </section>
+          <div class="hero-content">
+            <h2>Generate Secure QR Codes Instantly</h2>
+            <p>
+              Enterprise-grade QR code generation with military-grade encryption
+              for URLs, files, contacts, and WiFi networks
+            </p>
+            <div class="hero-buttons">
+              <button class="cssbuttons-io-button">
+  Get started
+  <div class="icon">
+    <svg
+      height="24"
+      width="24"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M0 0h24v24H0z" fill="none"></path>
+      <path
+        d="M16.172 11l-5.364-5.364 1.414-1.414L20 12l-7.778 7.778-1.414-1.414L16.172 13H4v-2z"
+        fill="currentColor"
+      ></path>
+    </svg>
+  </div>
+            </button>
 
+             <button class="feature" onclick="">
+    <svg height="24" width="24" fill="#FFFFFF" viewBox="0 0 24 24" data-name="Layer 1" id="Layer_1" class="sparkle">
+        <path d="M10,21.236,6.755,14.745.264,11.5,6.755,8.255,10,1.764l3.245,6.491L19.736,11.5l-6.491,3.245ZM18,21l1.5,3L21,21l3-1.5L21,18l-1.5-3L18,18l-3,1.5ZM19.333,4.667,20.5,7l1.167-2.333L24,3.5,21.667,2.333,20.5,0,19.333,2.333,17,3.5Z"></path>
+    </svg>
+
+    <span class="text">See Features</span>
+            </button>
+            </div>
+            </div>
+            <div class="hero-stats">
+              <div class="stat">
+                <span class="stat-number">1K+</span>
+                <span class="stat-label">Users</span>
+              </div>
+              <div class="stat">
+                <span class="stat-number">10K+</span>
+                <span class="stat-label">QR Codes</span>
+              </div>
+              <div class="stat">
+                <span class="stat-number">99.9%</span>
+                <span class="stat-label">Uptime</span>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- Enhanced Features Showcase -->
+        <section class="features-showcase">
+          <div class="container">
+            <div class="section-header">
+              <h3>✨ Enterprise-Grade Features</h3>
+              <p>Everything you need for professional QR code generation</p>
+            </div>
+
+            <div class="features-grid">
+              <!-- Feature 1: Military Encryption -->
+              <div class="feature-card-3d">
+                <div class="card-content">
+                  <div class="card-front">
+                    <div class="card-bg">
+                      <div class="circle circle-1"></div>
+                      <div class="circle circle-2"></div>
+                    </div>
+                    <div class="feature-icon">🔒</div>
+                    <h4 class="feature-title">Military-Grade Encryption</h4>
+                    <p class="feature-description">
+                      AES-256 with PBKDF2 key derivation
+                    </p>
+                    <div class="feature-badge">Security First</div>
+                  </div>
+                  <div class="card-back">
+                    <div class="back-content">
+                      <div class="feature-icon">🛡️</div>
+                      <h4>Secure by Design</h4>
+                      <p class="feature-description">
+                        Enterprise-level encryption for all your QR codes and
+                        files
+                      </p>
+                      <div class="feature-badge">AES-256</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Feature 2: Real-time Analytics -->
+              <div class="feature-card-3d">
+                <div class="card-content">
+                  <div class="card-front">
+                    <div class="card-bg">
+                      <div
+                        class="circle circle-1"
+                        style="background: #27ae60"
+                      ></div>
+                      <div
+                        class="circle circle-2"
+                        style="background: #2ecc71"
+                      ></div>
+                    </div>
+                    <div class="feature-icon">📊</div>
+                    <h4 class="feature-title">Real-time Analytics</h4>
+                    <p class="feature-description">
+                      Track performance and engagement metrics
+                    </p>
+                    <div class="feature-badge">Live Data</div>
+                  </div>
+                  <div class="card-back">
+                    <div class="back-content">
+                      <div class="feature-icon">📈</div>
+                      <h4>Data Insights</h4>
+                      <p class="feature-description">
+                        Monitor QR code scans and user engagement in real-time
+                      </p>
+                      <div class="feature-badge">Live Tracking</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Feature 3: Multiple QR Types -->
+              <div class="feature-card-3d">
+                <div class="card-content">
+                  <div class="card-front">
+                    <div class="card-bg">
+                      <div
+                        class="circle circle-1"
+                        style="background: #e67e22"
+                      ></div>
+                      <div
+                        class="circle circle-2"
+                        style="background: #d35400"
+                      ></div>
+                    </div>
+                    <div class="feature-icon">🎨</div>
+                    <h4 class="feature-title">Multiple QR Types</h4>
+                    <p class="feature-description">
+                      URLs, WiFi, vCard, Files, and more
+                    </p>
+                    <div class="feature-badge">Versatile</div>
+                  </div>
+                  <div class="card-back">
+                    <div class="back-content">
+                      <div class="feature-icon">🔗</div>
+                      <h4>All Formats</h4>
+                      <p class="feature-description">
+                        Generate QR codes for URLs, contact info, WiFi, and
+                        encrypted files
+                      </p>
+                      <div class="feature-badge">6+ Types</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Feature 4: File Encryption -->
+              <div class="feature-card-3d">
+                <div class="card-content">
+                  <div class="card-front">
+                    <div class="card-bg">
+                      <div
+                        class="circle circle-1"
+                        style="background: #9b59b6"
+                      ></div>
+                      <div
+                        class="circle circle-2"
+                        style="background: #8e44ad"
+                      ></div>
+                    </div>
+                    <div class="feature-icon">📁</div>
+                    <h4 class="feature-title">Secure File Sharing</h4>
+                    <p class="feature-description">
+                      Encrypt and share files via QR codes
+                    </p>
+                    <div class="feature-badge">File Safe</div>
+                  </div>
+                  <div class="card-back">
+                    <div class="back-content">
+                      <div class="feature-icon">🔐</div>
+                      <h4>Encrypted Files</h4>
+                      <p class="feature-description">
+                        Share sensitive files securely with password-protected
+                        QR codes
+                      </p>
+                      <div class="feature-badge">Secure Transfer</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Feature 5: Quick Generation -->
+              <div class="feature-card-3d">
+                <div class="card-content">
+                  <div class="card-front">
+                    <div class="card-bg">
+                      <div
+                        class="circle circle-1"
+                        style="background: #3498db"
+                      ></div>
+                      <div
+                        class="circle circle-2"
+                        style="background: #2980b9"
+                      ></div>
+                    </div>
+                    <div class="feature-icon">⚡</div>
+                    <h4 class="feature-title">Instant Generation</h4>
+                    <p class="feature-description">
+                      Generate QR codes in seconds
+                    </p>
+                    <div class="feature-badge">Fast</div>
+                  </div>
+                  <div class="card-back">
+                    <div class="back-content">
+                      <div class="feature-icon">🚀</div>
+                      <h4>Lightning Fast</h4>
+                      <p class="feature-description">
+                        Quick generator modal for instant QR code creation
+                      </p>
+                      <div class="feature-badge">Quick Actions</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Feature 6: Professional Dashboard -->
+              <div class="feature-card-3d">
+                <div class="card-content">
+                  <div class="card-front">
+                    <div class="card-bg">
+                      <div
+                        class="circle circle-1"
+                        style="background: #e74c3c"
+                      ></div>
+                      <div
+                        class="circle circle-2"
+                        style="background: #c0392b"
+                      ></div>
+                    </div>
+                    <div class="feature-icon">💼</div>
+                    <h4 class="feature-title">Professional Dashboard</h4>
+                    <p class="feature-description">Clean, modern interface</p>
+                    <div class="feature-badge">Enterprise UI</div>
+                  </div>
+                  <div class="card-back">
+                    <div class="back-content">
+                      <div class="feature-icon">🎯</div>
+                      <h4>User Friendly</h4>
+                      <p class="feature-description">
+                        Intuitive dashboard with analytics and quick actions
+                      </p>
+                      <div class="feature-badge">Modern Design</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
         <!-- Basic QR Section -->
         <section id="basic" class="section card">
           <div class="section-header">

@@ -106,50 +106,232 @@ body {
 
 .close-modal:hover {
   color: #e74c3c;
+} 
+/* ==================== PROFILE MENU STYLES ==================== */
+/* Profile Menu Header with Close Button */
+.profile-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e9ecef;
 }
-/* ================================
-   USER DROPDOWN STYLES
-   ================================ */
 
-#dropdownMenu {
-  display: none;
+.profile-menu-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.close-profile-menu {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #7f8c8d;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-profile-menu:hover {
+  background: #f8f9fa;
+  color: #e74c3c;
+}
+
+/* Make profile menu position fixed for better UX */
+.profile-menu {
+  position: fixed;
+  top: 70px; /* Adjust based on your header height */
+  right: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  padding: 1.5rem;
+  min-width: 280px;
+  z-index: 10000;
+  border: 1px solid #e9ecef;
+  animation: slideInDown 0.2s ease-out;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.profile-menu {
   position: absolute;
   top: 100%;
   right: 0;
   background: white;
-  min-width: 180px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   border-radius: 12px;
-  padding: 8px 0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  padding: 1.5rem;
+  min-width: 280px;
   z-index: 10000;
   border: 1px solid #e9ecef;
-  margin-top: 8px;
+  margin-top: 10px;
 }
-.dropdown-content a {
+
+.user-info {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.user-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.25rem;
+}
+
+.user-email {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.profile-activity {
+  margin-bottom: 1.5rem;
+}
+
+.activity-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  text-decoration: none;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.activity-label {
   color: #2c3e50;
   font-weight: 500;
-  transition: all 0.2s ease;
-  border: none;
 }
 
-.dropdown-content a:hover {
-  background: #f8f9fa;
-  color: #3498db;
-}
-
-/* User menu container positioning */
-#userMenuContainer {
+.toggle-switch {
   position: relative;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle-checkbox {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #bdc3c7;
+  border-radius: 24px;
+  transition: 0.3s;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+.toggle-checkbox:checked + .toggle-slider {
+  background-color: #3498db;
+}
+
+.toggle-checkbox:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+.plan-section {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.plan-badge {
+  background: #27ae60;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
   display: inline-block;
 }
 
-/* Make sure the dropdown appears above other content */
-#userMenu {
+.days-left {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.logout-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: #c0392b;
+}
+
+.user-menu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: 2px solid #3498db;
+  border-radius: 25px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.user-menu-trigger:hover {
+  background: #3498db;
+  color: white;
+}
+
+.user-avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.user-menu-container {
   position: relative;
   display: inline-block;
 }
@@ -197,6 +379,18 @@ body {
   font-size: 1.1rem;
 }
 
+/* stats  */
+.hero-stats {
+  display: flex;
+  flex-direction: row;
+  gap: 80px;
+  justify-content: center;
+  align-items: center;
+  margin-top:100px;
+}
+.stat:hover{
+  color: #34d3db;
+}
 /* Cards */
 .card {
   background: white;
@@ -484,7 +678,7 @@ body {
 
 .download-link:hover {
   background: #219a52;
-  width:scale(1.02px);
+  width: scale(1.02px);
 }
 /* ==================== ENHANCED UI COMPONENTS ==================== */
 
@@ -547,7 +741,7 @@ body {
   background: white;
   padding: 1.5rem;
   border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
@@ -613,7 +807,7 @@ body {
   background: white;
   padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   text-align: center;
   border-left: 4px solid #3498db;
   transition: transform 0.2s ease;
@@ -691,4 +885,302 @@ body {
   color: white;
   font-weight: bold;
   font-size: 16px;
+}
+/* ==================== 3D FEATURE CARDS ==================== */
+
+.features-showcase {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 4rem 0;
+  color: white;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+/* 3D Card Styles */
+.feature-card-3d {
+  overflow: visible;
+  width: 100%;
+  height: 300px;
+  perspective: 1000px;
+}
+
+.card-content {
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 500ms ease;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  border-radius: 15px;
+  cursor: pointer;
+}
+
+.feature-card-3d:hover .card-content {
+  transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+  background: linear-gradient(145deg, #2c3e50, #34495e);
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 15px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.card-back {
+  background: linear-gradient(145deg, #1a1a1a, #2d3436);
+  transform: rotateY(180deg);
+  color: white;
+}
+
+.card-back::before {
+  position: absolute;
+  content: " ";
+  display: block;
+  width: 120px;
+  height: 160%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #3498db,
+    #3498db,
+    #3498db,
+    #3498db,
+    transparent
+  );
+  animation: rotation_481 5000ms infinite linear;
+  z-index: 1;
+}
+
+.back-content {
+  position: absolute;
+  width: 98%;
+  height: 98%;
+  background: linear-gradient(145deg, #1a1a1a, #2d3436);
+  border-radius: 13px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  z-index: 2;
+  padding: 1.5rem;
+}
+
+.feature-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.feature-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #ecf0f1;
+}
+
+.feature-description {
+  font-size: 0.9rem;
+  color: #bdc3c7;
+  line-height: 1.5;
+}
+
+.feature-badge {
+  background: rgba(52, 152, 219, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(52, 152, 219, 0.3);
+  font-size: 0.8rem;
+  color: #3498db;
+}
+
+/* Card background animations */
+.card-front .card-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0.1;
+}
+
+.circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  position: absolute;
+  filter: blur(20px);
+  animation: floating 3000ms infinite ease-in-out;
+}
+
+.circle-1 {
+  background: #3498db;
+  top: 20px;
+  left: 30px;
+  animation-delay: 0s;
+}
+
+.circle-2 {
+  background: #9b59b6;
+  bottom: 30px;
+  right: 40px;
+  animation-delay: -1000ms;
+}
+
+.circle-3 {
+  background: #e74c3c;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: -2000ms;
+}
+
+@keyframes rotation_481 {
+  0% {
+    transform: rotateZ(0deg);
+  }
+  100% {
+    transform: rotateZ(360deg);
+  }
+}
+
+@keyframes floating {
+  0%,
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.05);
+  }
+}
+
+/* Responsive cards */
+@media (max-width: 768px) {
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-card-3d {
+    height: 280px;
+  }
+}
+
+.hero-buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.cssbuttons-io-button {
+  width: 12rem;
+  height: 15rem;
+  background: #a370f0;
+  color: white;
+  font-family: inherit;
+  padding: 1.6rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border-radius: 1.5rem;
+  border: none;
+  display: flex;
+  align-items: center;
+  box-shadow: inset 0 0 1.6em -0.6em #714da6;
+  overflow: hidden;
+  position: relative;
+  height: 2.8em;
+  padding-right: 3.3em;
+  cursor: pointer;
+}
+
+.cssbuttons-io-button .icon {
+  background: white;
+  margin-left: 1em;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.2em;
+  width: 2.2em;
+  border-radius: 0.7em;
+  box-shadow: 0.1em 0.1em 0.6em 0.2em #7b52b9;
+  right: 0.3em;
+  transition: all 0.3s;
+}
+
+.cssbuttons-io-button:hover .icon {
+  width: calc(100% - 0.6em);
+}
+
+.cssbuttons-io-button .icon svg {
+  width: 1.1em;
+  transition: transform 0.3s;
+  color: #7b52b9;
+}
+
+.cssbuttons-io-button:hover .icon svg {
+  transform: translateX(0.1em);
+}
+
+.cssbuttons-io-button:active .icon {
+  transform: scale(0.95);
+}
+
+/* From Uiverse.io by AlimurtuzaCodes */
+.feature {
+  border: none;
+  width: 12em;
+  height: 4em;
+  border-radius: 3em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  background: #1c1a1c;
+  cursor: pointer;
+  transition: all 450ms ease-in-out;
+}
+
+.sparkle {
+  fill: #aaaaaa;
+  transition: all 800ms ease;
+}
+
+.text {
+  font-weight: 600;
+  color: #aaaaaa;
+  font-size: medium;
+}
+
+.feature:hover {
+  background: linear-gradient(0deg, #a47cf3, #683fea);
+  box-shadow: inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4),
+    inset 0px -4px 0px 0px rgba(0, 0, 0, 0.2),
+    0px 0px 0px 4px rgba(255, 255, 255, 0.2), 0px 0px 180px 0px #9917ff;
+  transform: translateY(-2px);
+}
+
+.feature:hover .text {
+  color: white;
+}
+
+.feature:hover .sparkle {
+  fill: white;
+  transform: scale(1.2);
 }

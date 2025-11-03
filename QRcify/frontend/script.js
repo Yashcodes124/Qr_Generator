@@ -206,18 +206,6 @@ function handleLogout() {
   showNotification("👋 Logged out successfully!", "success");
 }
 
-function showDashboard() {
-  alert(
-    "📊 Dashboard coming soon!\n• Your QR history\n• Usage analytics\n• Saved templates"
-  );
-}
-
-function showProfile() {
-  alert(
-    "⚙️ Profile management coming soon!\n• Update info\n• Change password\n• Preferences"
-  );
-}
-
 function checkExistingLogin() {
   const userData = localStorage.getItem("userData");
   const userToken = localStorage.getItem("userToken");
@@ -232,7 +220,165 @@ function checkExistingLogin() {
     }
   }
 }
+// Profile Menu Functions
+function createProfileMenu(user) {
+  return `
+    <div class="profile-menu" id="profileMenu">
+      <div class="profile-menu-header">
+        <div class="profile-menu-title">Profile</div>
+        <button class="close-profile-menu" onclick="closeProfileMenu()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      
+      <div class="user-info">
+        <div class="user-name">${user.name}</div>
+        <div class="user-email">${user.email}</div>
+      </div>
+      
+      <div class="profile-activity">
+        <h4 style="color: #2c3e50; margin-bottom: 1rem; font-size: 0.9rem;">Profile Activity</h4>
+        <div class="activity-item">
+          <span class="activity-label">Manage Projects</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="toggle-checkbox">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="activity-item">
+          <span class="activity-label">Purchases</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="toggle-checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="activity-item">
+          <span class="activity-label">Account Settings</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="toggle-checkbox" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="activity-item">
+          <span class="activity-label">Help Center</span>
+          <label class="toggle-switch">
+            <input type="checkbox" class="toggle-checkbox">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="plan-section">
+        <div class="plan-badge">Student Plan Active</div>
+        <div class="days-left">284 Days Left</div>
+      </div>
+      
+      <button class="logout-btn" onclick="handleLogout()">Logout</button>
+    </div>
+  `;
+}
 
+function toggleProfileMenu() {
+  const profileMenu = document.getElementById("profileMenu");
+  if (profileMenu) {
+    closeProfileMenu();
+    return;
+  }
+
+  const userData = JSON.parse(localStorage.getItem("userData"));
+  if (userData) {
+    const menuHTML = createProfileMenu(userData);
+    const userMenuContainer = document.getElementById("userMenuContainer");
+    userMenuContainer.insertAdjacentHTML("beforeend", menuHTML);
+
+    // Add click outside to close
+    setTimeout(() => {
+      document.addEventListener("click", closeProfileMenuOutside);
+    }, 100);
+
+    // Add Escape key to close
+    document.addEventListener("keydown", handleEscapeKey);
+  }
+}
+
+function handleEscapeKey(event) {
+  if (event.key === "Escape") {
+    closeProfileMenu();
+  }
+}
+
+function closeProfileMenu() {
+  const profileMenu = document.getElementById("profileMenu");
+  if (profileMenu) {
+    profileMenu.remove();
+    document.removeEventListener("click", closeProfileMenuOutside);
+    document.removeEventListener("keydown", handleEscapeKey);
+  }
+}
+function closeProfileMenuOutside(event) {
+  const profileMenu = document.getElementById("profileMenu");
+  const userMenuContainer = document.getElementById("userMenuContainer");
+  const closeButton = event.target.closest(".close-profile-menu");
+
+  // Don't close if clicking the close button (it has its own handler)
+  if (closeButton) return;
+
+  if (
+    profileMenu &&
+    userMenuContainer &&
+    !userMenuContainer.contains(event.target) &&
+    !profileMenu.contains(event.target)
+  ) {
+    closeProfileMenu();
+  }
+}
+
+
+
+// Update the updateUIForLoggedInUser function
+function updateUIForLoggedInUser(user) {
+  console.log("🔄 Updating UI for user:", user.name);
+
+  // Hide auth butjtons, show quick actions
+  const authButtons = document.getElementById("authButtons");
+  const quickActions = document.getElementById("quickActions");
+
+  if (authButtons) authButtons.style.display = "none";
+  if (quickActions) quickActions.style.display = "flex";
+
+  // Update user menu container with profile menu trigger
+  const userMenuContainer = document.getElementById("userMenuContainer");
+  if (userMenuContainer) {
+    userMenuContainer.innerHTML = `
+      <button class="user-menu-trigger" onclick="toggleProfileMenu()">
+        <div class="user-avatar-small">${user.name
+          .charAt(0)
+          .toUpperCase()}</div>
+        <span>${user.name}</span>
+      </button>
+    `;
+  }
+
+  // Hide analytics by default (show main content)
+  hideAnalytics();
+}
+
+// Update handleLogout to close profile menu
+function handleLogout() {
+  closeProfileMenu();
+  localStorage.removeItem("userToken");
+  localStorage.removeItem("userData");
+
+  // Reset UI to logged out state
+  document.getElementById("authButtons").style.display = "flex";
+  document.getElementById("quickActions").style.display = "none";
+  document.getElementById("userMenuContainer").innerHTML = "";
+
+  // Show all sections (in case analytics was open)
+  hideAnalytics();
+
+  showNotification("👋 Logged out successfully!", "success");
+}
 // Notification system
 function showNotification(message, type = "info") {
   // Create notification element
