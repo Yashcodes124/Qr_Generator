@@ -224,7 +224,7 @@ router.post("/decrypt-file", (req, res) => {
     const cleanFilename = filename.replace(".enc", "").replace(/_\d+$/, "");
     res.json({
       success: true,
-      decryptedBase64,
+      decryptedBase64: decryptedBase64,
       suggestedFilename: cleanFilename,
     });
   } catch (error) {

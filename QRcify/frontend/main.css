@@ -590,3 +590,105 @@ body {
   color: white;
   border-color: #3498db;
 }
+
+/* ==================== ENHANCED DASHBOARD STYLES ==================== */
+
+/* Quick Actions in Header */
+.quick-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-left: 2rem;
+}
+
+/* Metrics Grid for Analytics */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.metric-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: center;
+  border-left: 4px solid #3498db;
+  transition: transform 0.2s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+}
+
+.metric-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #2c3e50;
+  display: block;
+}
+
+.metric-label {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+/* Quick Generator Tabs */
+.generator-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 1rem;
+}
+
+.generator-tab {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #ddd;
+  background: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.generator-tab.active {
+  background: #3498db;
+  color: white;
+  border-color: #3498db;
+}
+
+.generator-tab:hover:not(.active) {
+  background: #f8f9fa;
+}
+
+.generator-content {
+  display: none;
+}
+
+.generator-content.active {
+  display: block;
+}
+
+/* Enhanced User Menu */
+.user-menu-enhanced {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+}

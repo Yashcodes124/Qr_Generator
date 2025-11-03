@@ -96,6 +96,7 @@
       </div>
     </div>
     <!-- Navigation Header -->
+    <!-- Enhanced Header -->
     <header class="header">
       <div class="container">
         <div class="logo">
@@ -108,7 +109,25 @@
           <a href="#advanced" class="nav-link">Advanced</a>
           <a href="#decrypt" class="nav-link">Decrypt</a>
 
-          <!-- Auth Buttons -->
+          <!-- Quick Actions (shown when logged in) -->
+          <div id="quickActions" class="quick-actions" style="display: none">
+            <button
+              onclick="showQuickGenerator()"
+              class="btn btn-primary"
+              style="padding: 8px 16px"
+            >
+              🚀 Quick Generate
+            </button>
+            <button
+              onclick="showAnalytics()"
+              class="btn btn-outline"
+              style="padding: 8px 16px"
+            >
+              📊 Analytics
+            </button>
+          </div>
+
+          <!-- Auth Buttons (shown when logged out) -->
           <div id="authButtons">
             <button onclick="openAuthModal()" class="btn btn-outline">
               Login
@@ -118,7 +137,7 @@
             </button>
           </div>
 
-          <!-- User Menu (hidden by default) -->
+          <!-- User Menu (shown when logged in) -->
           <div id="userMenuContainer"></div>
         </nav>
       </div>
@@ -320,7 +339,7 @@
                 placeholder="Decryption passphrase"
                 class="form-input"
               />
-              <button onclick="decrypt()" class="btn btn-warning">
+              <button onclick="decryptText()" class="btn btn-warning">
                 Decrypt Text
               </button>
             </div>
@@ -363,9 +382,9 @@
             style="display: none"
           >
             <div class="loader"></div>
-            <span id="decryptLoaderText">Decrypting...</span>
+            <span id="decryptLoaderFile">Decrypting...</span>
           </div>
-          <div id="decryptedOutput" class="output-container"></div>
+          <div id="decryptedFileOutput" class="output-container"></div>
         </section>
 
         <!-- Stats Section -->
@@ -377,6 +396,117 @@
           <div id="statsContainer" class="stats-container">
             <button onclick="loadStats()" class="btn btn-outline">
               Load Statistics
+            </button>
+          </div>
+        </section>
+        <!-- Quick Generator Modal -->
+        <div id="quickGeneratorModal" class="modal" style="display: none">
+          <div class="modal-content">
+            <span class="close-modal" onclick="closeQuickGenerator()"
+              >&times;</span
+            >
+            <h3>🚀 Quick QR Generator</h3>
+
+            <div class="generator-tabs">
+              <button class="generator-tab active" onclick="switchQRTab('url')">
+                URL
+              </button>
+              <button class="generator-tab" onclick="switchQRTab('text')">
+                Text
+              </button>
+              <button class="generator-tab" onclick="switchQRTab('wifi')">
+                WiFi
+              </button>
+            </div>
+
+            <div id="urlTab" class="generator-content active">
+              <input
+                type="text"
+                id="quickUrl"
+                placeholder="https://example.com"
+                class="form-input"
+              />
+              <button
+                onclick="generateQuickURL()"
+                class="btn btn-primary"
+                style="margin-top: 1rem; width: 100%"
+              >
+                Generate QR Code
+              </button>
+            </div>
+
+            <div id="textTab" class="generator-content">
+              <textarea
+                id="quickText"
+                placeholder="Enter your text here..."
+                class="form-textarea"
+                rows="3"
+              ></textarea>
+              <button
+                onclick="generateQuickText()"
+                class="btn btn-primary"
+                style="margin-top: 1rem; width: 100%"
+              >
+                Generate QR Code
+              </button>
+            </div>
+
+            <div id="wifiTab" class="generator-content">
+              <input
+                type="text"
+                id="quickSSID"
+                placeholder="WiFi Network Name (SSID)"
+                class="form-input"
+              />
+              <input
+                type="password"
+                id="quickPassword"
+                placeholder="WiFi Password"
+                class="form-input"
+              />
+              <button
+                onclick="generateQuickWifi()"
+                class="btn btn-primary"
+                style="margin-top: 1rem; width: 100%"
+              >
+                Generate WiFi QR
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytics Dashboard -->
+        <section
+          id="analyticsDashboard"
+          class="section card"
+          style="display: none"
+        >
+          <div class="section-header">
+            <h3>📊 Your QR Analytics</h3>
+            <p>Track your QR code generation statistics</p>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <span class="metric-value" id="totalQrs">0</span>
+              <span class="metric-label">Total QR Codes</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-value" id="todayActivity">0</span>
+              <span class="metric-label">Recent Activity</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-value" id="popularType">-</span>
+              <span class="metric-label">Most Used Type</span>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-top: 2rem">
+            <button onclick="loadRealStats()" class="btn btn-outline">
+              🔄 Refresh Stats
+            </button>
+            <button onclick="hideAnalytics()" class="btn btn-primary">
+              ← Back to Generator
             </button>
           </div>
         </section>

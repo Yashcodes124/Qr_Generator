@@ -10,3 +10,5 @@ https://www.testcase1.com
 https://www.testcase1.com
 https://www.google.com
 https://google.com
+https://testcase1.com
+https://testcase1.com
