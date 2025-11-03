@@ -18,8 +18,8 @@ export const connectDB = async () => {
     console.log("✅ SQLite Database Connected Successfully");
 
     // Sync with force: true to update schema (drops existing tables!)
-    await sequelize.sync({ force: false });
-    console.log("✅ ✅ Database tables synchronized (schema updated)");
+    await sequelize.sync({ force: true });
+    console.log("✅ Database tables synchronized (schema updated)");
   } catch (error) {
     console.error("❌ Database connection failed:", error.message);
   }

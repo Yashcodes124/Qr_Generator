@@ -13,6 +13,10 @@ const User = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -45,7 +49,7 @@ const User = sequelize.define(
 );
 
 // Hash password before saving
-//bycrypt: convert passward to fixed length, mke salt foreach 
+//bycrypt: convert passward to fixed length, mke salt foreach
 User.beforeCreate(async (user) => {
   user.password = await bcrypt.hash(user.password, 12);
 });

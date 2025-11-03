@@ -33,11 +33,15 @@ router.post("/register", async (req, res) => {
         .json({ error: "user account already Exists with this mail." });
     } else {
       const newUser = await User.create({ name, email, password });
+
+      console.log(" User created successfully:", newUser.id);
       return res.json({
         success: true,
-        user: newUser,
-        message: "User registed Successfully",
-        userId: newUser.id,
+        user: {
+          id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+        },
       });
     }
   } catch (err) {
@@ -66,9 +70,9 @@ router.post("/login", async (req, res) => {
     }
     //generate JWT token
     const token = generateAuthToken(user);
+    console.log("Login SUccessfull.", user.email);
     res.json({
       success: true,
-      message: "Login successfull.",
       token,
       user: {
         id: user.id,

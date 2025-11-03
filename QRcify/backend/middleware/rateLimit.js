@@ -1,8 +1,8 @@
 // backend/middleware/rateLimit.js
 
-import rateLimit from "express-rate-Limit";
+import rateLimit from "express-rate-limit";
 
-export const qrGeneationLimiter = rateLimit({
+export const qrGenerationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, //15 min
   max: 50, // Limit each IP to 50 QR generations per windowMs
   message: {
@@ -12,4 +12,4 @@ export const qrGeneationLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-export default qrGeneationLimiter;
+export default qrGenerationLimiter;

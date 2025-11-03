@@ -235,7 +235,6 @@ router.post("/decrypt-file", (req, res) => {
 
 router.get("/stats", async (req, res) => {
   try {
-    const { getStats } = await import("../services/historyService.js");
     const stats = await getStats();
     res.json({ success: true, stats });
   } catch (error) {

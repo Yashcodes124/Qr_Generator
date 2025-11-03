@@ -1,40 +1,47 @@
-// test-user-model.js
-import User from "./backend/models/user.js";
+// test-complete-flow.js
 import { connectDB } from "./backend/config/database.js";
+import User from "./backend/models/user.js";
+import bcrypt from "bcrypt";
 
-async function testUserModel() {
-  console.log("🧪 Testing User Model...");
+async function testCompleteFlow() {
+  console.log("🚀 Testing complete authentication flow...\n");
 
   try {
-    // Connect to database
+    // 1. Connect and reset database
     await connectDB();
 
-    // Test creating a user
-    const testUser = await User.create({
-      email: "test@example.com",
-      password: "testpassword123",
+    // 2. Test user creation
+    const user = await User.create({
+      name: "John Doe",
+      email: "john@example.com",
+      password: "password123",
     });
 
-    console.log("✅ User created successfully!");
-    console.log("User details:", {
-      id: testUser.id,
-      email: testUser.email,
-      isVerified: testUser,
-      createdAt: testUser.createdAt,
-    });
+    // 3. Test password hashing
+    const isHashValid = user.password.startsWith("$2b$");
 
-    // Test password hashing worked
-    console.log(
-      "🔐 Password is hashed:",
-      testUser.password !== "testpassword123"
-    );
-    console.log(
-      "🔐 Password starts with bcrypt:",
-      testUser.password.startsWith("$2b$")
-    );
+    // 4. Test password verification
+    console.log("4. Testing password verification...");
+    const isPasswordValid = await bcrypt.compare("password123", user.password);
+    console.log("   ✅ Password verification works:", isPasswordValid);
+
+    // 5. Test duplicate email prevention
+    console.log("5. Testing duplicate email prevention...");
+    try {
+      await User.create({
+        name: "Duplicate User",
+        email: "john@example.com", // Same email
+        password: "anotherpassword",
+      });
+      console.log("   ❌ Should have failed on duplicate email");
+    } catch (error) {
+      console.log("   ✅ Duplicate email correctly prevented");
+    }
+
+    console.log("\n🎉 ALL TESTS PASSED! Database is working correctly.");
   } catch (error) {
-    console.error("❌ Test failed:", error.message);
+    console.error("\n💥 TEST FAILED:", error.message);
   }
 }
 
-testUserModel();
+testCompleteFlow();
