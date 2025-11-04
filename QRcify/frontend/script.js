@@ -225,26 +225,19 @@ function createProfileMenu(user) {
   return `
     <div class="profile-menu" id="profileMenu">
       <div class="profile-menu-header">
-        <div class="profile-menu-title">Profile</div>
+        <div class="profile-menu-title">Profile<div class="user-name">${user.name}</div></div>
         <button class="close-profile-menu" onclick="closeProfileMenu()">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
-      
-      <div class="user-info">
-        <div class="user-name">${user.name}</div>
-        <div class="user-email">${user.email}</div>
-      </div>
-      
       <div class="profile-activity">
         <h4 style="color: #2c3e50; margin-bottom: 1rem; font-size: 0.9rem;">Profile Activity</h4>
-        <div class="activity-item">
-          <span class="activity-label">Manage Projects</span>
-          <label class="toggle-switch">
-            <input type="checkbox" class="toggle-checkbox">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
+          <button
+              onclick="showAnalytics()"
+              class="btn"
+              style="padding: 8px 16px;text-align:center;"
+            > Analytics
+            </button>
         <div class="activity-item">
           <span class="activity-label">Purchases</span>
           <label class="toggle-switch">
@@ -269,8 +262,8 @@ function createProfileMenu(user) {
       </div>
       
       <div class="plan-section">
-        <div class="plan-badge">Student Plan Active</div>
-        <div class="days-left">284 Days Left</div>
+        <div class="plan-badge"> Plan Active</div>
+        <div class="days-left">check Your Plan Left</div>
       </div>
       
       <button class="logout-btn" onclick="handleLogout()">Logout</button>
@@ -332,8 +325,6 @@ function closeProfileMenuOutside(event) {
     closeProfileMenu();
   }
 }
-
-
 
 // Update the updateUIForLoggedInUser function
 function updateUIForLoggedInUser(user) {
