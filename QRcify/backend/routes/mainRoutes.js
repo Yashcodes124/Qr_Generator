@@ -9,7 +9,7 @@ import { logQRGeneration } from "../services/historyService.js";
 import qrGenerationLimiter from "../middleware/rateLimit.js";
 import { validateUrl, validatePassphrase } from "../utils/validation.js";
 import { getStats } from "../services/historyService.js";
-
+import { authMiddleware } from "../middleware/authMiddleware.js";
 const router = express.Router();
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
@@ -233,7 +233,7 @@ router.post("/decrypt-file", (req, res) => {
   }
 });
 
-router.get("/stats", async (req, res) => {
+router.get("/stats",authMiddleware , async (req, res) => {
   try {
     const stats = await getStats();
     res.json({ success: true, stats });

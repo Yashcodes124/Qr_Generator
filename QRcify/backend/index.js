@@ -1,4 +1,6 @@
 // backend/index.js : main file for backend
+import "dotenv/config";
+console.log("🧩 Environment Loaded:", process.env.DB_DIALECT, process.env.PORT);
 
 import express from "express";
 import cors from "cors";
@@ -8,6 +10,9 @@ import mainRoutes from "./routes/mainRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import { connectDB } from "./config/database.js";
 import { config } from "./config/config.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+import "dotenv/config";
+console.log("🧩 Environment Loaded:", process.env.DB_DIALECT, process.env.PORT);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,6 +27,7 @@ app.use(cors());
 // Allow larger JSON payloads for file uploads (up to 50mb)
 app.use(express.json({ limit: config.MAX_FILE_SIZE }));
 app.use(express.urlencoded({ limit: config.MAX_FILE_SIZE, extended: true }));
+app.use(errorHandler);
 // request logging middleware
 app.use((req, res, next) => {
   req.clientIp = req.ip || req.connection.remoteAddress;

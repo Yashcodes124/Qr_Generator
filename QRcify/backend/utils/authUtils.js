@@ -12,6 +12,9 @@ export const generateAuthToken = (user) => {
   );
 };
 
+
+
+
 export const verifyAuthToken = (token) => {
   {
     return jwt.verify(token, process.env.JWT_SECRET || "your-secret-key");

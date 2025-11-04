@@ -7,7 +7,9 @@
     "start": "node backend/index.js",
     "dev": "nodemon backend/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "db:setup": "node backend/scripts/setupDB.js"
+    "db:setup": "node backend/scripts/setupDB.js",
+    "lint": "eslint 'backend/**/*.js'",
+    "format": "prettier --write 'backend/**/*.js'"
   },
   "keywords": [
     "qr",
