@@ -1,6 +1,4 @@
 // backend/index.js : main file for backend
-import "dotenv/config";
-console.log("🧩 Environment Loaded:", process.env.DB_DIALECT, process.env.PORT);
 
 import express from "express";
 import cors from "cors";
@@ -11,6 +9,7 @@ import authRoutes from "./routes/authRoutes.js";
 import { connectDB } from "./config/database.js";
 import { config } from "./config/config.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import authMiddleware from "./middleware/authMiddleware.js";
 import "dotenv/config";
 console.log("🧩 Environment Loaded:", process.env.DB_DIALECT, process.env.PORT);
 
@@ -27,7 +26,6 @@ app.use(cors());
 // Allow larger JSON payloads for file uploads (up to 50mb)
 app.use(express.json({ limit: config.MAX_FILE_SIZE }));
 app.use(express.urlencoded({ limit: config.MAX_FILE_SIZE, extended: true }));
-app.use(errorHandler);
 // request logging middleware
 app.use((req, res, next) => {
   req.clientIp = req.ip || req.connection.remoteAddress;
@@ -43,6 +41,13 @@ app.use("/api", mainRoutes);
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
+
+app.use((req, res, next) => {
+  const error = new Error("Not Found");
+  error.status = 404;
+  next(error);
+});
+app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`🚀 Server running at http://localhost:${port}`);

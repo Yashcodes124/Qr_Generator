@@ -5,9 +5,11 @@ export function authMiddleware(req, res, next) {
   const token = authHeader.split(" ")[1];
 
   try {
-    req.user = verifyAuthToken(token);
+    req.user = verifyAuthToken(token); //decoded info
     next();
   } catch {
     return res.status(401).json({ error: "Invalid token or expired" });
   }
 }
+
+export default authMiddleware;

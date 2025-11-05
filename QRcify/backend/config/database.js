@@ -9,7 +9,8 @@ const __dirname = path.dirname(__filename);
 const sequelize = new Sequelize({
   dialect: "sqlite",
   storage: path.join(__dirname, "../../database/qr_generator.sqlite"),
-  // logging: console.log, // So we can see SQL queries
+  // So we can see SQL querieslogging: console.log,
+  logging: false,
 });
 
 export const connectDB = async () => {
@@ -18,7 +19,7 @@ export const connectDB = async () => {
     console.log("✅ SQLite Database Connected Successfully");
 
     // Sync with force: true to update schema (drops existing tables!)
-    await sequelize.sync({ force: true });
+    await sequelize.sync({alter: true });
     console.log("✅ Database tables synchronized (schema updated)");
   } catch (error) {
     console.error("❌ Database connection failed:", error.message);
