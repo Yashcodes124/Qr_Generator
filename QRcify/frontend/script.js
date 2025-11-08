@@ -20,6 +20,19 @@ function hideLoader(loaderId) {
   if (loader) loader.style.display = "none";
   clearInterval(dotInterval);
 }
+function showSuccess(msg) {
+  const box = document.getElementById("successMessage");
+  box.textContent = msg;
+  box.style.display = "block";
+  setTimeout(() => (box.style.display = "none"), 3000);
+}
+
+function showError(msg) {
+  const box = document.getElementById("errorMessage");
+  box.textContent = msg;
+  box.style.display = "block";
+  setTimeout(() => (box.style.display = "none"), 4000);
+}
 
 // ================================
 // 🔐 AUTHENTICATION FUNCTIONS - UPDATED
@@ -62,14 +75,24 @@ document.addEventListener("click", function (event) {
     closeAuthModal();
   }
 });
+// Close on Escape key
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") {
+    closeAuthModal();
+  }
+});
 
 // Enhanced authentication functions - UPDATED
-async function handleLogin() {
+async function handleLogin(event) {
+  event.preventDefault();
   const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPassword").value.trim();
-
+  const errorMsg = document.getElementById("errorMessage");
+  const successMsg = document.getElementById("successMessage");
+  errorMsg.textContent = "";
+  successMsg.textContent = "";
   if (!email || !password) {
-    alert("Email and password required for login.");
+    showNotification("Email and password required for login.");
     return;
   }
 
@@ -84,41 +107,105 @@ async function handleLogin() {
 
     const data = await response.json();
 
-    if (data.success) {
-      // ✅ STORE TOKEN AND USER DATA
-      localStorage.setItem("userToken", data.token);
-      localStorage.setItem("userData", JSON.stringify(data.user));
+    // if (data.success && res.ok) {
+    //   // ✅ STORE TOKEN AND USER DATA
+    //   localStorage.setItem("userToken", data.token);
+    //   localStorage.setItem("userData", JSON.stringify(data.user));
 
-      closeAuthModal();
-      updateUIForLoggedInUser(data.user);
-      showNotification("🎉 Login successful! Welcome back.", "success");
-    } else {
-      alert(data.error || "Login failed. Please try again.");
+    //   closeAuthModal();
+    //   updateUIForLoggedInUser(data.user);
+    //   showSuccess(`Welcome back, ${data.user.name}!`);
+    // } else {
+    //   showError(
+    //     data.error || `Login failed ${data.user.name}!, Please try again.`
+    //   );
+    //   // alert(data.error || "Login failed. Please try again.");
+    // }
+    if (!response.ok) {
+      throw new Error(data.error || "Login failed");
     }
+
+    successMsg.textContent = "✅ Login successful!";
+    localStorage.setItem("authToken", data.token); // store token
+    closeAuthModal(); // hide modal
   } catch (error) {
     console.error("Login error:", error);
-    alert("Login failed. Please check your connection and try again.");
+    showNotification(
+      "Login failed. Please check your connection and try again.",
+      "Warning"
+    );
+    errorMsg.textContent = `❌ ${error.message}`;
   } finally {
     hideLoader("urlLoader");
   }
 }
 
-async function handleRegister() {
+// async function handleRegister() {
+//   event.preventDefault();
+//   const name = document.getElementById("registerName").value.trim();
+//   const email = document.getElementById("registerEmail").value.trim();
+//   const password = document.getElementById("registerPassword").value.trim();
+
+//   if (!name || !email || !password) {
+//     alert("Please fill in all fields.");
+//     return;
+//   }
+
+//   if (password.length < 8) {
+//     alert("Password must be at least 6 characters long.");
+//     return;
+//   }
+
+//   showLoader("urlLoader", "Creating account");
+
+//   try {
+//     const response = await fetch("/api/auth/register", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({ name, email, password }),
+//     });
+
+//     const data = await response.json();
+
+//     if (data.success && response.ok) {
+//       // ✅ AUTO-LOGIN AFTER SUCCESSFUL REGISTRATION
+//       // const loginResponse = await fetch("/api/auth/login", {
+//       //   method: "POST",
+//       //   headers: { "Content-Type": "application/json" },
+//       //   body: JSON.stringify({ email, password }),
+//       // });
+
+//       // const loginData = await loginResponse.json();
+
+//       // if (loginData.success) {
+//       //   localStorage.setItem("userToken", loginData.token);
+//       //   localStorage.setItem("userData", JSON.stringify(loginData.user));
+//       // }
+//       showSuccess("🎉 Registration successful! Please Login. ");
+//       showLoginForm();
+//       updateUIForLoggedInUser(loginData.user);
+//     } else {
+//       closeAuthModal();
+//       showError("Registration Failed!!, Please try again.");
+//     }
+//   } catch (error) {
+//     console.error("Registration error:", error);
+//     alert("Registration failed. Please check your connection and try again.");
+//   } finally {
+//     hideLoader("urlLoader");
+//   }
+// }
+async function handleRegister(event) {
+  event.preventDefault();
+
   const name = document.getElementById("registerName").value.trim();
   const email = document.getElementById("registerEmail").value.trim();
   const password = document.getElementById("registerPassword").value.trim();
+  const errorMsg = document.getElementById("errorMessage");
+  const successMsg = document.getElementById("successMessage");
 
-  if (!name || !email || !password) {
-    alert("Please fill in all fields.");
-    return;
-  }
-
-  if (password.length < 6) {
-    alert("Password must be at least 6 characters long.");
-    return;
-  }
-
-  showLoader("urlLoader", "Creating account");
+  errorMsg.textContent = "";
+  successMsg.textContent = "";
 
   try {
     const response = await fetch("/api/auth/register", {
@@ -129,39 +216,17 @@ async function handleRegister() {
 
     const data = await response.json();
 
-    if (data.success) {
-      // ✅ AUTO-LOGIN AFTER SUCCESSFUL REGISTRATION
-      const loginResponse = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const loginData = await loginResponse.json();
-
-      if (loginData.success) {
-        localStorage.setItem("userToken", loginData.token);
-        localStorage.setItem("userData", JSON.stringify(loginData.user));
-
-        closeAuthModal();
-        updateUIForLoggedInUser(loginData.user);
-        showNotification(
-          "🎉 Registration successful! Welcome to QRcify Pro!",
-          "success"
-        );
-      } else {
-        closeAuthModal();
-        showLoginForm();
-        alert("Registration successful! Please login with your credentials.");
-      }
-    } else {
-      alert(data.error || "Registration failed. Please try again.");
+    if (!response.ok) {
+      throw new Error(data.error || "Registration failed");
     }
+
+    successMsg.textContent = "✅ Account created successfully!";
+    setTimeout(() => {
+      showLoginForm();
+    }, 1000);
   } catch (error) {
     console.error("Registration error:", error);
-    alert("Registration failed. Please check your connection and try again.");
-  } finally {
-    hideLoader("urlLoader");
+    errorMsg.textContent = `❌ ${error.message}`;
   }
 }
 
@@ -739,8 +804,8 @@ async function generateQuickText() {
           <img src="${data.qrCode}" alt="QR Code">
           <p class="success-message">✅ Text QR Generated Successfully!</p>
           <p><strong>Text:</strong> ${text.substring(0, 50)}${
-        text.length > 50 ? "..." : ""
-      }</p>
+            text.length > 50 ? "..." : ""
+          }</p>
           <button onclick="downloadQRImage('${
             data.qrCode
           }', 'text-qr')" class="btn btn-outline">📥 Download QR</button>
@@ -1191,8 +1256,8 @@ async function decryptFile() {
               <p><strong>Decrypted File:</strong> ${data.suggestedFilename}</p>
               <div style="margin-top: 1rem;">
                 <a href="${URL.createObjectURL(blob)}" download="${
-            data.suggestedFilename
-          }" class="btn btn-primary">
+                  data.suggestedFilename
+                }" class="btn btn-primary">
                   📥 Download Decrypted File
                 </a>
               </div>

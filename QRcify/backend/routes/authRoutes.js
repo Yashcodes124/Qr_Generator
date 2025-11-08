@@ -61,17 +61,17 @@ router.post("/login", async (req, res) => {
     //to find the user
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(400).json({ error: "Invalid credentials" });
+      return res.status(400).json({ error: "User Not Found" });
     }
     //check Passward
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(400).json({ error: "Invalid email or Password" });
+      return res.status(400).json({ error: "Invalid Credentials." });
     }
     //generate JWT token
     const token = generateAuthToken(user);
     console.log("Login SUccessfull.", user.email);
-    res.json({
+    return res.json({
       success: true,
       token,
       user: {
@@ -82,7 +82,7 @@ router.post("/login", async (req, res) => {
     });
   } catch (error) {
     console.error("Login error:", error);
-    res.status(500).json({ error: "Login failed" });
+    res.status(500).json({ error: "internal Server error(auth)" });
   }
 });
 

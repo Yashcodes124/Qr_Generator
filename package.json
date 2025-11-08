@@ -2,10 +2,10 @@
   "name": "qr-generator",
   "version": "1.0.0",
   "description": "A simple Web-based QR generator where users can input a URL and receive a QR code.",
-  "main": "index.js",
+
   "scripts": {
-    "start": "node backend/index.js",
-    "dev": "nodemon backend/index.js",
+    "dev": "nodemon Qrcify/backend/index.js",
+    "start": "node Qrcify/backend/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "db:setup": "node backend/scripts/setupDB.js",
     "lint": "eslint 'backend/**/*.js'",
