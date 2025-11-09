@@ -14,15 +14,16 @@ body {
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 100px;
 }
 
 /* Header */
 .header {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   position: sticky;
   top: 0;
@@ -33,17 +34,17 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 20px;
+  padding: 1rem 5rem;
 }
 
 .logo h1 {
-  color: #2c3e50;
+  color: #fff;
   font-size: 1.8rem;
   margin-bottom: 0.2rem;
 }
 
 .tagline {
-  color: #7f8c8d;
+  color: #fff;
   font-size: 0.9rem;
 }
 
@@ -54,7 +55,8 @@ body {
 
 .nav-link {
   text-decoration: none;
-  color: #34495e;
+
+  color: #fff;
   font-weight: 500;
   padding: 0.5rem 1rem;
   border-radius: 25px;
@@ -63,7 +65,7 @@ body {
 
 .nav-link:hover {
   background: #3498db;
-  color: white;
+  color: #34495e;
 }
 .nav #authButtons {
   display: flex;
@@ -303,14 +305,16 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: none;
-  border: 2px solid #3498db;
-  border-radius: 25px;
+  font-size: 1.1rem;
+  background: rgb(97, 105, 109);
+  border: none;
   padding: 0.5rem 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: #2c3e50;
-  font-weight: 500;
+  color: #cadef3;
+  margin-top: 10px;
+  font-weight: 650;
+  border-radius:10px;
 }
 
 .user-menu-trigger:hover {
@@ -571,7 +575,7 @@ body {
   font-weight: 700;
   color: #212529;
   margin-bottom: 8px;
-   margin-top: 20px;
+  margin-top: 20px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -658,7 +662,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin: 15px 0 ;
+  margin: 15px 0;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 

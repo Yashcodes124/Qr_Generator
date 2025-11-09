@@ -116,6 +116,9 @@ async function handleLogin(event) {
         closeAuthModal();
         updateUIForLoggedInUser(data.user);
       }, 800);
+
+      localStorage.setItem("username", data.user.name);
+      window.location.href = "/dashboard.html";
     } else {
       document.getElementById("errorMessage").textContent =
         data.error || "Login failed!";

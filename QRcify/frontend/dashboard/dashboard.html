@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QRcify Pro - Dashboard</title>
+    <link rel="stylesheet" href="../dashboard/dashboard.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo"><i class="fas fa-qrcode"></i></div>
+        <div class="sidebar-title">
+          <div class="company-name">QRcify Pro</div>
+          <div class="plan-badge">Enterprise Plan</div>
+        </div>
+      </div>
+
+      <div class="nav-menu">
+        <div class="nav-item active" onclick="switchPage('dashboard')">
+          <div class="nav-icon"><i class="fas fa-home"></i></div>
+          <span class="nav-text">Dashboard</span>
+        </div>
+        <div class="nav-item" onclick="switchPage('generators')">
+          <div class="nav-icon"><i class="fas fa-qrcode"></i></div>
+          <span class="nav-text">Generators</span>
+          <span class="nav-badge">5</span>
+        </div>
+        <div class="nav-item" onclick="switchPage('analytics')">
+          <div class="nav-icon"><i class="fas fa-chart-line"></i></div>
+          <span class="nav-text">Analytics</span>
+        </div>
+        <div class="nav-item" onclick="switchPage('qr-codes')">
+          <div class="nav-icon"><i class="fas fa-folder"></i></div>
+          <span class="nav-text">My QR Codes</span>
+        </div>
+        <div class="nav-item" onclick="switchPage('teams')">
+          <div class="nav-icon"><i class="fas fa-users"></i></div>
+          <span class="nav-text">Teams</span>
+          <span class="nav-badge">3</span>
+        </div>
+
+        <div class="section-divider">Account</div>
+
+        <div class="nav-item" onclick="switchPage('settings')">
+          <div class="nav-icon"><i class="fas fa-cog"></i></div>
+          <span class="nav-text">Settings</span>
+        </div>
+        <div class="nav-item" onclick="switchPage('help')">
+          <div class="nav-icon"><i class="fas fa-question-circle"></i></div>
+          <span class="nav-text">Help & Support</span>
+        </div>
+      </div>
+
+      <div class="sidebar-toggle" onclick="toggleSidebar()">
+        <div class="toggle-icon"><i class="fas fa-chevron-left"></i></div>
+        <span class="nav-text">Collapse</span>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Header -->
+      <div class="dashboard-header">
+        <div class="header-title">
+          <h1>Welcome back, John! 👋</h1>
+          <p>Here's what's happening with your QR codes today</p>
+        </div>
+        <div class="header-actions">
+          <div class="action-btn" onclick="alert('Notifications')">
+            <i class="fas fa-bell"></i>
+            <span class="notification-dot"></span>
+          </div>
+          <div class="action-btn" onclick="toggleDarkMode()">
+            <i class="fas fa-moon" id="themeIcon"></i>
+          </div>
+          <div class="action-btn" onclick="alert('Profile')">
+            <i class="fas fa-user"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard Content -->
+      <div class="dashboard-content">
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon blue"><i class="fas fa-qrcode"></i></div>
+              <div class="trend"><i class="fas fa-arrow-up"></i> 12%</div>
+            </div>
+            <div class="stat-value" id="totalQRs">1,234</div>
+            <div class="stat-label">Total QR Codes</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon green"><i class="fas fa-eye"></i></div>
+              <div class="trend"><i class="fas fa-arrow-up"></i> 24%</div>
+            </div>
+            <div class="stat-value">45.2K</div>
+            <div class="stat-label">Total Scans</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon purple"><i class="fas fa-clock"></i></div>
+              <div class="trend"><i class="fas fa-arrow-up"></i> 8%</div>
+            </div>
+            <div class="stat-value">142</div>
+            <div class="stat-label">Today's Activity</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon orange"><i class="fas fa-fire"></i></div>
+              <div class="trend"><i class="fas fa-arrow-up"></i> 3%</div>
+            </div>
+            <div class="stat-value">URL</div>
+            <div class="stat-label">Most Popular Type</div>
+          </div>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="content-grid">
+          <!-- Recent Activity -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Recent Activity</h3>
+              <span class="view-all">View all</span>
+            </div>
+            <div class="activity-list">
+              <div class="activity-item">
+                <div class="activity-icon blue">
+                  <i class="fas fa-link"></i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">URL QR Generated</div>
+                  <div class="activity-desc">https://example.com/product</div>
+                </div>
+                <div class="activity-time">2 min ago</div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon green">
+                  <i class="fas fa-lock"></i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">Encrypted Text Created</div>
+                  <div class="activity-desc">
+                    Confidential message encrypted
+                  </div>
+                </div>
+                <div class="activity-time">15 min ago</div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon purple">
+                  <i class="fas fa-file"></i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">File Encrypted</div>
+                  <div class="activity-desc">document.pdf (2.4 MB)</div>
+                </div>
+                <div class="activity-time">1 hour ago</div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon orange">
+                  <i class="fas fa-address-card"></i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">vCard QR Generated</div>
+                  <div class="activity-desc">Business contact card</div>
+                </div>
+                <div class="activity-time">3 hours ago</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Stats -->
+          <div>
+            <div class="card" style="margin-bottom: 24px">
+              <div class="card-header">
+                <h3 class="card-title">Quick Stats</h3>
+              </div>
+              <div class="progress-item">
+                <span>Conversion Rate</span>
+                <span style="font-weight: 600">3.2%</span>
+              </div>
+              <div class="progress-bar">
+                <div
+                  class="progress-fill"
+                  style="width: 32%; background: #3b82f6"
+                ></div>
+              </div>
+
+              <div class="progress-item">
+                <span>Bounce Rate</span>
+                <span style="font-weight: 600">45%</span>
+              </div>
+              <div class="progress-bar">
+                <div
+                  class="progress-fill"
+                  style="width: 45%; background: #f59e0b"
+                ></div>
+              </div>
+
+              <div class="progress-item">
+                <span>Page Views</span>
+                <span style="font-weight: 600">8.7K</span>
+              </div>
+              <div class="progress-bar">
+                <div
+                  class="progress-fill"
+                  style="width: 87%; background: #10b981"
+                ></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Quick Actions</h3>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 12px">
+                <button
+                  onclick="openQRModal()"
+                  style="
+                    padding: 16px;
+                    background: linear-gradient(135deg, #3b82f6, #2563eb);
+                    color: white;
+                    border: none;
+                    border-radius: 12px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: transform 0.2s;
+                  "
+                >
+                  <i class="fas fa-plus-circle" style="margin-right: 8px"></i>
+                  Generate New QR
+                </button>
+                <button
+                  onclick="switchPage('analytics')"
+                  style="
+                    padding: 16px;
+                    background: var(--bg-primary);
+                    border: 2px solid var(--border);
+                    border-radius: 12px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                  "
+                >
+                  <i class="fas fa-chart-bar" style="margin-right: 8px"></i>
+                  View Analytics
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Generator Modal -->
+    <div class="modal" id="qrModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">🚀 Generate QR Code</h2>
+          <button class="close-btn" onclick="closeQRModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="qr-type-grid">
+          <div class="qr-type-btn" onclick="alert('URL QR coming soon!')">
+            <i class="fas fa-link"></i>
+            <span>URL QR</span>
+          </div>
+          <div
+            class="qr-type-btn"
+            onclick="alert('Encrypted Text coming soon!')"
+          >
+            <i class="fas fa-lock"></i>
+            <span>Encrypted Text</span>
+          </div>
+          <div class="qr-type-btn" onclick="alert('File Upload coming soon!')">
+            <i class="fas fa-file"></i>
+            <span>File Upload</span>
+          </div>
+          <div class="qr-type-btn" onclick="alert('vCard coming soon!')">
+            <i class="fas fa-address-card"></i>
+            <span>vCard</span>
+          </div>
+          <div class="qr-type-btn" onclick="alert('WiFi QR coming soon!')">
+            <i class="fas fa-wifi"></i>
+            <span>WiFi Network</span>
+          </div>
+          <div
+            class="qr-type-btn"
+            onclick="alert('Batch Generate coming soon!')"
+          >
+            <i class="fas fa-layer-group"></i>
+            <span>Batch Generate</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="../dashboard/dashboard.js"></script>
+  </body>
+</html>
