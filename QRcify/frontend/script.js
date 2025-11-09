@@ -106,28 +106,20 @@ async function handleLogin(event) {
     });
 
     const data = await response.json();
+    if (response.ok && data.success) {
+      localStorage.setItem("userToken", data.token);
+      localStorage.setItem("userData", JSON.stringify(data.user));
 
-    // if (data.success && res.ok) {
-    //   // ✅ STORE TOKEN AND USER DATA
-    //   localStorage.setItem("userToken", data.token);
-    //   localStorage.setItem("userData", JSON.stringify(data.user));
-
-    //   closeAuthModal();
-    //   updateUIForLoggedInUser(data.user);
-    //   showSuccess(`Welcome back, ${data.user.name}!`);
-    // } else {
-    //   showError(
-    //     data.error || `Login failed ${data.user.name}!, Please try again.`
-    //   );
-    //   // alert(data.error || "Login failed. Please try again.");
-    // }
-    if (!response.ok) {
-      throw new Error(data.error || "Login failed");
+      document.getElementById("successMessage").textContent =
+        "✅ Login successful!";
+      setTimeout(() => {
+        closeAuthModal();
+        updateUIForLoggedInUser(data.user);
+      }, 800);
+    } else {
+      document.getElementById("errorMessage").textContent =
+        data.error || "Login failed!";
     }
-
-    successMsg.textContent = "✅ Login successful!";
-    localStorage.setItem("authToken", data.token); // store token
-    closeAuthModal(); // hide modal
   } catch (error) {
     console.error("Login error:", error);
     showNotification(
@@ -203,9 +195,15 @@ async function handleRegister(event) {
   const password = document.getElementById("registerPassword").value.trim();
   const errorMsg = document.getElementById("errorMessage");
   const successMsg = document.getElementById("successMessage");
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  errorMsg.textContent = "";
-  successMsg.textContent = "";
+  if (!emailRegex.test(email)) {
+    document.getElementById("errorMessage").textContent =
+      "Please enter a valid email address.";
+    return;
+  }
+  // errorMsg.textContent = "";
+  // successMsg.textContent = "";
 
   try {
     const response = await fetch("/api/auth/register", {
@@ -215,15 +213,22 @@ async function handleRegister(event) {
     });
 
     const data = await response.json();
+    if (response.ok && data.success) {
+      // ✅ Save auth info
+      localStorage.setItem("userToken", data.token);
+      localStorage.setItem("userData", JSON.stringify(data.user));
 
-    if (!response.ok) {
-      throw new Error(data.error || "Registration failed");
+      // ✅ UI feedback
+      document.getElementById("successMessage").textContent =
+        "🎉 Account created successfully!";
+      setTimeout(() => {
+        closeAuthModal();
+        updateUIForLoggedInUser(data.user);
+      }, 800);
+    } else {
+      document.getElementById("errorMessage").textContent =
+        data.error || "Registration failed!";
     }
-
-    successMsg.textContent = "✅ Account created successfully!";
-    setTimeout(() => {
-      showLoginForm();
-    }, 1000);
   } catch (error) {
     console.error("Registration error:", error);
     errorMsg.textContent = `❌ ${error.message}`;
