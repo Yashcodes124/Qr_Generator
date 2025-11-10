@@ -12,6 +12,14 @@ const QRHistory = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: true, // Allow null for now (backward compatibility)
+      references: {
+        model: "users",
+        key: "id",
+      },
+    },
     type: {
       type: DataTypes.ENUM("url", "encrypted_text", "file", "vcard", "wifi"),
       allowNull: false,

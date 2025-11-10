@@ -8,10 +8,12 @@ import { encryptData, decryptData } from "../utils/cryptoUtils.js";
 import { logQRGeneration } from "../services/historyService.js";
 import qrGenerationLimiter from "../middleware/rateLimit.js";
 import { validateUrl, validatePassphrase } from "../utils/validation.js";
-import { getStats } from "../services/historyService.js";
+import { getStats, getTimeAgo } from "../services/historyService.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
-const router = express.Router();
 import { fileURLToPath } from "url";
+import QRHistory from "../models/QRHistory.js";
+
+const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -24,6 +26,7 @@ router.use(
     "/generate-vcard",
     "/generate-wifi",
   ],
+  authMiddleware,
   qrGenerationLimiter
 );
 
@@ -154,7 +157,6 @@ END:VCARD`;
   }
 });
 
-// 🆕 WiFi QR Code
 router.post("/generate-wifi", (req, res) => {
   const { ssid, password, encryption = "WPA" } = req.body;
   // 🔒 VALIDATION: Network credentials check before passing data
@@ -186,7 +188,6 @@ router.post("/generate-wifi", (req, res) => {
   }
 });
 
-// 🟥 4️⃣ Decrypt text
 router.post("/decrypt", (req, res) => {
   const { cipher, passphrase } = req.body;
   if (!cipher || !passphrase)
@@ -211,7 +212,6 @@ router.post("/decrypt", (req, res) => {
   }
 });
 
-// 🟪 5️⃣ Decrypt file
 router.post("/decrypt-file", (req, res) => {
   const { encryptedData, passphrase, filename } = req.body;
   if (!encryptedData || !passphrase)
@@ -233,12 +233,55 @@ router.post("/decrypt-file", (req, res) => {
   }
 });
 
-router.get("/stats",authMiddleware , async (req, res) => {
+router.get("/stats", authMiddleware, async (req, res) => {
   try {
     const stats = await getStats();
     res.json({ success: true, stats });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch stats" });
+  }
+});
+
+router.get("/qr/history", authMiddleware, async (req, res) => {
+  try {
+    const history = await QRHistory.findAll({
+      where: { userId: req.user.userId },
+      order: [["createdAt", "DESC"]],
+      limit: 10,
+    });
+    res.json({
+      success: true,
+      history: history.map((item) => ({
+        id: item.id,
+        type: item.type,
+        dataSize: item.data_size,
+        createdAt: item.createdAt,
+        timeAgo: getTimeAgo(item.createdAt),
+      })),
+    });
+  } catch (error) {
+    console.error("Failed to get history:", error);
+    res.status(500).json({ error: "Failed to fetch history" });
+  }
+});
+
+router.get("/dashboard/stats", authMiddleware, async (req, res) => {
+  try {
+    //total qrs gen by user
+    const stats = await getStats(req);
+    res.json({
+      success: true,
+      stats: {
+        totalQRs: stats.totalQRs,
+        todayActivity: stats.todayActivity,
+        byType: stats.byType,
+        popularType: stats.popularType,
+        totalScans: stats.totalQRs * 42, // Placeholder
+      },
+    });
+  } catch (error) {
+    console.error("Dashboard stats error:", error);
+    res.status(500).json({ error: "Failed to fetch dashboard stats" });
   }
 });
 

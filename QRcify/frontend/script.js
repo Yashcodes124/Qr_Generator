@@ -106,19 +106,17 @@ async function handleLogin(event) {
     });
 
     const data = await response.json();
-    if (response.ok && data.success) {
+    if (data.success) {
       localStorage.setItem("userToken", data.token);
       localStorage.setItem("userData", JSON.stringify(data.user));
-
+      closeAuthModal();
+      updateUIForLoggedInUser(data.user);
       document.getElementById("successMessage").textContent =
-        "✅ Login successful!";
+        "Login successful!";
       setTimeout(() => {
-        closeAuthModal();
-        updateUIForLoggedInUser(data.user);
-      }, 800);
-
-      localStorage.setItem("username", data.user.name);
-      window.location.href = "/dashboard.html";
+        window.location.href = "/dashboard.html";
+        localStorage.setItem("username", data.user.name);
+      }, 1000);
     } else {
       document.getElementById("errorMessage").textContent =
         data.error || "Login failed!";
