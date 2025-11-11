@@ -2,8 +2,9 @@
 const token =
   localStorage.getItem("token") || localStorage.getItem("userToken");
 const userData = localStorage.getItem("userData");
-
+console.log("Token Found:", token ? "Yes" : "No");
 if (!token) {
+  console.log("❌ No token found, redirecting to login...");
   window.location.href = "../index.html";
 }
 

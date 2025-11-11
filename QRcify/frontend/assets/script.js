@@ -114,7 +114,7 @@ async function handleLogin(event) {
       document.getElementById("successMessage").textContent =
         "Login successful!";
       setTimeout(() => {
-        window.location.href = "/dashboard.html";
+        window.location.href = "/dashboard/dashboard.html";
         localStorage.setItem("username", data.user.name);
       }, 1000);
     } else {
@@ -133,61 +133,6 @@ async function handleLogin(event) {
   }
 }
 
-// async function handleRegister() {
-//   event.preventDefault();
-//   const name = document.getElementById("registerName").value.trim();
-//   const email = document.getElementById("registerEmail").value.trim();
-//   const password = document.getElementById("registerPassword").value.trim();
-
-//   if (!name || !email || !password) {
-//     alert("Please fill in all fields.");
-//     return;
-//   }
-
-//   if (password.length < 8) {
-//     alert("Password must be at least 6 characters long.");
-//     return;
-//   }
-
-//   showLoader("urlLoader", "Creating account");
-
-//   try {
-//     const response = await fetch("/api/auth/register", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({ name, email, password }),
-//     });
-
-//     const data = await response.json();
-
-//     if (data.success && response.ok) {
-//       // ✅ AUTO-LOGIN AFTER SUCCESSFUL REGISTRATION
-//       // const loginResponse = await fetch("/api/auth/login", {
-//       //   method: "POST",
-//       //   headers: { "Content-Type": "application/json" },
-//       //   body: JSON.stringify({ email, password }),
-//       // });
-
-//       // const loginData = await loginResponse.json();
-
-//       // if (loginData.success) {
-//       //   localStorage.setItem("userToken", loginData.token);
-//       //   localStorage.setItem("userData", JSON.stringify(loginData.user));
-//       // }
-//       showSuccess("🎉 Registration successful! Please Login. ");
-//       showLoginForm();
-//       updateUIForLoggedInUser(loginData.user);
-//     } else {
-//       closeAuthModal();
-//       showError("Registration Failed!!, Please try again.");
-//     }
-//   } catch (error) {
-//     console.error("Registration error:", error);
-//     alert("Registration failed. Please check your connection and try again.");
-//   } finally {
-//     hideLoader("urlLoader");
-//   }
-// }
 async function handleRegister(event) {
   event.preventDefault();
 

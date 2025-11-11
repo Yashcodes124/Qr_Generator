@@ -397,7 +397,9 @@ body {
 }
 /* Cards */
 .card {
-  background: white;
+  width: 900px;
+  text-align: center;
+  background: rgb(165, 232, 253);
   border-radius: 15px;
   padding: 2rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -405,7 +407,7 @@ body {
 }
 
 .feature-card {
-  background: #f8f9fa;
+  background: #e5efeffa;
   border-radius: 10px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;

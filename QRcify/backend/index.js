@@ -41,12 +41,18 @@ app.use("/api", mainRoutes);
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
-
-app.use((req, res, next) => {
-  const error = new Error("Not Found");
-  error.status = 404;
-  next(error);
+app.get("/dashboard", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/dashboard/dashboard.html"));
 });
+// Catch-all fallback for unknown routes
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api")) {
+    return res.status(404).json({ success: false, error: "Not Found" });
+    next(error);
+  }
+  res.sendFile(path.join(__dirname, "../frontend/index.html"));
+});
+
 app.use(errorHandler);
 
 app.listen(port, () => {

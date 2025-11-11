@@ -235,9 +235,10 @@ router.post("/decrypt-file", (req, res) => {
 
 router.get("/stats", authMiddleware, async (req, res) => {
   try {
-    const stats = await getStats();
+    const stats = await getStats(req);
     res.json({ success: true, stats });
   } catch (error) {
+    console.error("Stats endpoint error:", error);
     res.status(500).json({ error: "Failed to fetch stats" });
   }
 });

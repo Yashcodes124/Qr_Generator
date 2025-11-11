@@ -25,16 +25,27 @@ export const logQRGeneration = async (type, dataSize, req) => {
 //  STATISTICS SERVICE
 export const getStats = async (req) => {
   try {
+    // Check if req and userId exist
+    const userId = req?.user?.userId;
+    if (!userId) {
+      console.error("❌ No userId found in request");
+      return {
+        totalQRs: 0,
+        byType: [],
+        recentActivity: 0,
+        todayActivity: 0,
+        popularType: "None",
+      };
+    }
     // 1. TOTAL QR CODES GENERATED
     const totalQRs = await QRHistory.count({
-      where: { userId: req.user.userId },
+      where: { userId },
     }); // SQL: SELECT COUNT(*) FROM qr_history;
     // Today's activity
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     // 2. BREAKDOWN BY QR TYPE
     const byType = await QRHistory.findAll({
-      // SQL: SELECT * FROM qr_history;
       // Find with conditions
       attributes: [
         "type",
@@ -54,9 +65,9 @@ export const getStats = async (req) => {
     });
     const todayActivity = await QRHistory.count({
       where: {
-        userId: req.user.userId,
+        userId,
         createdAt: {
-          [Sequelize.Op.gte]: today,
+          [Sequelize.Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000),
         },
       },
     });
@@ -66,12 +77,17 @@ export const getStats = async (req) => {
         ? byType.reduce((max, type) => (type.count > max.count ? type : max))
             .type
         : "None";
+    console.log(`✅ Stats for user ${userId}:`, {
+      totalQRs,
+      todayActivity,
+      popularType,
+    });
 
     return {
       totalQRs: totalQRs || 0,
       byType: byType || [],
       recentActivity: recentActivity || 0,
-      todayActivity: todayActivity,
+      todayActivity: todayActivity || 0,
       popularType: popularType,
     };
   } catch (error) {
@@ -80,6 +96,8 @@ export const getStats = async (req) => {
       totalQRs: 0,
       byType: [],
       recentActivity: 0,
+      todayActivity: 0,
+      popularType:"None",
       error: "Failed to fetch statistics",
     };
   }
