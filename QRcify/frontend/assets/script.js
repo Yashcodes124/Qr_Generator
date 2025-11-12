@@ -625,7 +625,7 @@ async function generateEncryptedQR() {
         <label><strong>Encrypted Text:</strong></label>
         <textarea rows="3" class="form-textarea" readonly>${data.encrypted}</textarea>
         <div style="display: flex; gap: 10px; margin-top: 10px;">
-          <button onclick="copyCipherText()" class="btn btn-outline">📋 Copy Ciphertext</button>
+          <button onclick="copyCipherText()" class="btn btn-outline copy-btn">📋 Copy Ciphertext</button>
           <button onclick="downloadQRImage('${data.qrCode}', 'encrypted-qr')" class="btn btn-outline">📥 Download QR</button>
         </div>
       </div>

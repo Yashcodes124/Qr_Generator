@@ -206,17 +206,17 @@
           <h1>🔐 QRcify Pro</h1>
           <span class="tagline">Secure QR Code Generator</span>
         </div>
-        <nav class="nav">
+        <nav class="nav" aria-label="navbar">
           <a href="#basic" class="nav-link">Basic QR</a>
           <a href="#secure" class="nav-link">Secure QR</a>
           <a href="#advanced" class="nav-link">Advanced</a>
           <a href="#decrypt" class="nav-link">Decrypt</a>
           <!-- Auth Buttons (shown when logged out) -->
-          <div id="authButtons">
-            <button onclick="openAuthModal()" class="btn btn-outline">
+          <div id="authButtons" >
+            <button onclick="openAuthModal()" class="btn ">
               Login
             </button>
-            <button onclick="openRegisterModal()" class="btn btn-primary">
+            <button onclick="openRegisterModal()" class="btn">
               Register
             </button>
           </div>
@@ -231,8 +231,6 @@
     <!-- Main Content -->
     <main class="main">
       <div class="container">
-        <!-- Hero Section -->
-        <!-- Enhanced Hero Section -->
         <section class="hero">
           <div class="hero-content">
             <h2>Generate Secure QR Codes Instantly</h2>
@@ -241,6 +239,13 @@
               for URLs, files, contacts, and WiFi networks
             </p>
             <div class="hero-buttons">
+              <button class="feature" onclick="">
+                <svg height="24" width="24" fill="#FFFFFF" viewBox="0 0 24 24" data-name="Layer 1" id="Layer_1" class="sparkle">
+                    <path d="M10,21.236,6.755,14.745.264,11.5,6.755,8.255,10,1.764l3.245,6.491L19.736,11.5l-6.491,3.245ZM18,21l1.5,3L21,21l3-1.5L21,18l-1.5-3L18,18l-3,1.5ZM19.333,4.667,20.5,7l1.167-2.333L24,3.5,21.667,2.333,20.5,0,19.333,2.333,17,3.5Z"></path>
+                </svg>
+
+                <span class="text">See Features</span>
+              </button>
               <button class="cssbuttons-io-button">
                 Get started
                 <div class="icon">
@@ -258,14 +263,6 @@
                   </svg>
                 </div>
               </button>
-
-             <button class="feature" onclick="">
-                <svg height="24" width="24" fill="#FFFFFF" viewBox="0 0 24 24" data-name="Layer 1" id="Layer_1" class="sparkle">
-                    <path d="M10,21.236,6.755,14.745.264,11.5,6.755,8.255,10,1.764l3.245,6.491L19.736,11.5l-6.491,3.245ZM18,21l1.5,3L21,21l3-1.5L21,18l-1.5-3L18,18l-3,1.5ZM19.333,4.667,20.5,7l1.167-2.333L24,3.5,21.667,2.333,20.5,0,19.333,2.333,17,3.5Z"></path>
-                </svg>
-
-                <span class="text">See Features</span>
-            </button>
             </div>
             </div>
             <div class="hero-stats">
