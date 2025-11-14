@@ -690,7 +690,7 @@ textarea.error {
   border-radius: 20px;
   padding: 2.2rem 1.4rem 1.8rem 1.4rem;
   box-shadow: 0 4px 30px rgba(76, 136, 197, 0.099);
- margin:2.5rem 12rem;
+  margin: 2.5rem 12rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -702,6 +702,10 @@ textarea.error {
   font-weight: 700;
   color: #34495e;
 }
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(255, 94, 98, 0.4);
+}
 
 .feature-card {
   background: #e5efeffa;
@@ -710,13 +714,20 @@ textarea.error {
   margin-bottom: 1.5rem;
   border-left: 4px solid #3498db;
 }
-
+.feature-card p {
+  color: #fff;
+  opacity: 0.9;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
 .feature-card h4 {
-  color: #2c3e50;
+  color: #252422;
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-weight: 600;
+  font-size: 1.1rem;
 }
 
 /*   ===================   AUTH MODAL ============== */

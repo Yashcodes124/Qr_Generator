@@ -18,8 +18,28 @@ function showLoader(loaderId, text = "Processing") {
 function hideLoader(loaderId) {
   const loader = document.getElementById(loaderId);
   if (loader) loader.style.display = "none";
-  clearInterval(dotInterval);
+  if (dotInterval) {
+    clearInterval(dotInterval);
+    dotInterval = null;
+  }
 }
+function getAuthHeaders() {
+  // Check either modern token key names your app might use
+  const token =
+    localStorage.getItem("userToken") || localStorage.getItem("token");
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+  return {};
+}
+function parseJSONSafe(res) {
+  // Try to parse JSON safely and return object with shape {ok, data}
+  return res
+    .json()
+    .then((data) => ({ ok: res.ok, data }))
+    .catch(() => ({ ok: res.ok, data: null }));
+}
+
 function showSuccess(msg) {
   const box = document.getElementById("successMessage");
   box.textContent = msg;
@@ -37,40 +57,54 @@ function showError(msg) {
 // ================================
 // 🔐 AUTHENTICATION FUNCTIONS - UPDATED
 // ================================
-
 function openAuthModal() {
-  document.getElementById("authModal").style.display = "flex";
+  const modal = document.getElementById("authModal");
+  if (!modal) return;
+  modal.style.display = "flex";
   showLoginForm();
 }
 
 function openRegisterModal() {
-  document.getElementById("authModal").style.display = "flex";
+  const modal = document.getElementById("authModal");
+  if (!modal) return;
+  modal.style.display = "flex";
   showRegisterForm();
 }
 
 function showLoginForm() {
-  document.getElementById("loginForm").style.display = "block";
-  document.getElementById("registerForm").style.display = "none";
+  const lf = document.getElementById("loginForm");
+  const rf = document.getElementById("registerForm");
+  if (lf) lf.style.display = "block";
+  if (rf) rf.style.display = "none";
 }
 
 function showRegisterForm() {
-  document.getElementById("loginForm").style.display = "none";
-  document.getElementById("registerForm").style.display = "block";
+  const lf = document.getElementById("loginForm");
+  const rf = document.getElementById("registerForm");
+  if (lf) lf.style.display = "none";
+  if (rf) rf.style.display = "block";
 }
 
 function closeAuthModal() {
-  document.getElementById("authModal").style.display = "none";
-  // Clear form fields
-  document.getElementById("loginEmail").value = "";
-  document.getElementById("loginPassword").value = "";
-  document.getElementById("registerName").value = "";
-  document.getElementById("registerEmail").value = "";
-  document.getElementById("registerPassword").value = "";
+  const modal = document.getElementById("authModal");
+  if (modal) modal.style.display = "none";
+  // Clear basic form fields if they exist
+  const ids = [
+    "loginEmail",
+    "loginPassword",
+    "registerName",
+    "registerEmail",
+    "registerPassword",
+  ];
+  ids.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
 }
-
 // Close modal when clicking outside
 document.addEventListener("click", function (event) {
   const modal = document.getElementById("authModal");
+  if (!modal) return;
   if (event.target === modal) {
     closeAuthModal();
   }
@@ -85,12 +119,17 @@ document.addEventListener("keydown", function (e) {
 // Enhanced authentication functions - UPDATED
 async function handleLogin(event) {
   event.preventDefault();
-  const email = document.getElementById("loginEmail").value.trim();
-  const password = document.getElementById("loginPassword").value.trim();
-  const errorMsg = document.getElementById("errorMessage");
-  const successMsg = document.getElementById("successMessage");
-  errorMsg.textContent = "";
-  successMsg.textContent = "";
+  const email = (
+    (document.getElementById("loginEmail") || {}).value || ""
+  ).trim();
+  const password = (
+    (document.getElementById("loginPassword") || {}).value || ""
+  ).trim();
+  const errorEl = document.getElementById("errorMessage");
+  const successEl = document.getElementById("successMessage");
+  if (errorEl) errorEl.textContent = "";
+  if (successEl) successEl.textContent = "";
+
   if (!email || !password) {
     showNotification("Email and password required for login.");
     return;
@@ -99,35 +138,37 @@ async function handleLogin(event) {
   showLoader("urlLoader", "Logging in");
 
   try {
-    const response = await fetch("/api/auth/login", {
+    const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await response.json();
-    if (data.success) {
+    const { ok, data } = await parseJSONSafe(res);
+    if (!ok) {
+      const msg = data?.error || data?.message || `Server error: ${res.status}`;
+      if (errorEl) errorEl.textContent = `Login error: ${msg}`;
+      console.error("Login error:", msg, data);
+      return;
+    }
+    if (data.success && data && data.token) {
       localStorage.setItem("userToken", data.token);
-      localStorage.setItem("userData", JSON.stringify(data.user));
+      localStorage.setItem("userData", JSON.stringify(data.user || {}));
+      if (successEl) successEl.textContent = "Login successful!";
       closeAuthModal();
-      updateUIForLoggedInUser(data.user);
-      document.getElementById("successMessage").textContent =
-        "Login successful!";
+      updateUIForLoggedInUser(data.user || { name: data.user?.name || "User" });
+
       setTimeout(() => {
         window.location.href = "/dashboard/dashboard.html";
         localStorage.setItem("username", data.user.name);
-      }, 1000);
+      }, 800);
     } else {
-      document.getElementById("errorMessage").textContent =
-        data.error || "Login failed!";
+      const msg = data?.error || "Login failed";
+      if (errorEl) errorEl.textContent = `Login error: ${msg}`;
     }
   } catch (error) {
     console.error("Login error:", error);
-    showNotification(
-      "Login failed. Please check your connection and try again.",
-      "Warning"
-    );
-    errorMsg.textContent = `❌ ${error.message}`;
+    if (errorEl) errorEl.textContent = "Login failed (network error).";
   } finally {
     hideLoader("urlLoader");
   }
@@ -136,55 +177,63 @@ async function handleLogin(event) {
 async function handleRegister(event) {
   event.preventDefault();
 
-  const name = document.getElementById("registerName").value.trim();
-  const email = document.getElementById("registerEmail").value.trim();
-  const password = document.getElementById("registerPassword").value.trim();
-  const errorMsg = document.getElementById("errorMessage");
-  const successMsg = document.getElementById("successMessage");
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!emailRegex.test(email)) {
-    document.getElementById("errorMessage").textContent =
-      "Please enter a valid email address.";
+  const name = (
+    (document.getElementById("registerName") || {}).value || ""
+  ).trim();
+  const email = (
+    (document.getElementById("registerEmail") || {}).value || ""
+  ).trim();
+  const password = (
+    (document.getElementById("registerPassword") || {}).value || ""
+  ).trim();
+  const errorEl = document.getElementById("errorMessage");
+  const successEl = document.getElementById("successMessage");
+  if (errorEl) errorEl.textContent = "";
+  if (successEl) successEl.textContent = "";
+  if (!name || !email || !password) {
+    if (errorEl) errorEl.textContent = "All fields are required.";
     return;
   }
-  // errorMsg.textContent = "";
-  // successMsg.textContent = "";
-
   try {
-    const response = await fetch("/api/auth/register", {
+    showLoader("urlLoader", "Registering");
+    const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password }),
     });
 
-    const data = await response.json();
-    if (response.ok && data.success) {
-      // ✅ Save auth info
+    const { ok, data } = await parseJSONSafe(res);
+
+    if (!ok) {
+      const msg = data?.error || data?.message || `Server error: ${res.status}`;
+      if (errorEl) errorEl.textContent = `Registration error: ${msg}`;
+      console.error("Registration error:", msg, data);
+      return;
+    }
+    if (data && data.success) {
+      if (successEl)
+        successEl.textContent = "Registration successful. Please login.";
       localStorage.setItem("userToken", data.token);
       localStorage.setItem("userData", JSON.stringify(data.user));
-
-      // ✅ UI feedback
-      document.getElementById("successMessage").textContent =
-        "🎉 Account created successfully!";
+      if (successEl) successEl.textContent = "Registration successfull.";
       setTimeout(() => {
-        closeAuthModal();
-        updateUIForLoggedInUser(data.user);
+        window.location.href = "/dashboard/dashboard.html";
+        localStorage.setItem("username", data.user.name);
       }, 800);
     } else {
-      document.getElementById("errorMessage").textContent =
-        data.error || "Registration failed!";
+      const msg = data?.error || "Registration failed";
+      if (errorEl) errorEl.textContent = `Registration error: ${msg}`;
     }
   } catch (error) {
-    console.error("Registration error:", error);
-    errorMsg.textContent = `❌ ${error.message}`;
+    console.error("Registration exception:", err);
+    if (errorEl) errorEl.textContent = "Registration failed (network error).";
+  } finally {
+    hideLoader("urlLoader");
   }
 }
 
 function updateUIForLoggedInUser(user) {
-  console.log("🔄 Updating UI for user:", user.name);
-
-  // Hide auth buttons, show quick actions
+  console.log("Updating UI for user:", user?.name || user);
   const authButtons = document.getElementById("authButtons");
   const quickActions = document.getElementById("quickActions");
 
@@ -196,30 +245,26 @@ function updateUIForLoggedInUser(user) {
   if (userMenuContainer) {
     userMenuContainer.innerHTML = `
       <div class="user-menu-enhanced">
-        <div class="user-avatar">${user.name.charAt(0).toUpperCase()}</div>
-        <span style="font-weight: 500; color: #2c3e50;">${user.name}</span>
+        <div class="user-avatar">${(user?.name || "U").charAt(0).toUpperCase()}</div>
+        <span style="font-weight: 500; color: #2c3e50;">${user?.name || "User"}</span>
         <button onclick="handleLogout()" class="btn btn-warning" style="padding: 8px 16px;">Logout</button>
       </div>
     `;
   }
-
-  // Hide analytics by default (show main content)
-  hideAnalytics();
+  if (typeof hideAnalytics === "function") hideAnalytics();
 }
 
 function handleLogout() {
   localStorage.removeItem("userToken");
   localStorage.removeItem("userData");
-
+  localStorage.removeItem("token");
   // Reset UI to logged out state
   document.getElementById("authButtons").style.display = "flex";
   document.getElementById("quickActions").style.display = "none";
   document.getElementById("userMenuContainer").innerHTML = "";
-
-  // Show all sections (in case analytics was open)
+  showNotification("Logged out successfully", "success");
+  window.location.href = "/";
   hideAnalytics();
-
-  showNotification("👋 Logged out successfully!", "success");
 }
 
 function checkExistingLogin() {
@@ -395,6 +440,7 @@ function showNotification(message, type = "info") {
     top: 20px;
     right: 20px;
     padding: 15px 20px;
+      background: ${type === "success" ? "#10b981" : type === "warning" ? "#f59e0b" : type === "error" ? "#ef4444" : "#3b82f6"};
     border-radius: 8px;
     color: white;
     font-weight: bold;
@@ -404,26 +450,15 @@ function showNotification(message, type = "info") {
     animation: slideIn 0.3s ease-out;
   `;
 
-  if (type === "success") {
-    notification.style.background = "linear-gradient(135deg, #27ae60, #219a52)";
-  } else if (type === "error") {
-    notification.style.background = "linear-gradient(135deg, #e74c3c, #c0392b)";
-  } else {
-    notification.style.background = "linear-gradient(135deg, #3498db, #2980b9)";
-  }
-
   notification.textContent = message;
   document.body.appendChild(notification);
 
   // Auto remove after 4 seconds
   setTimeout(() => {
     notification.style.animation = "slideOut 0.3s ease-in";
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.parentNode.removeChild(notification);
-      }
-    }, 300);
-  }, 4000);
+    notification.style.opacity = "0";
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
 }
 
 // Add CSS animations
@@ -526,33 +561,39 @@ document.addEventListener("DOMContentLoaded", function () {
 // ================================
 
 async function generateUrlQR() {
-  const url = document.getElementById("url").value.trim();
+  const url = (document.getElementById("url") || {}).value?.trim() || "";
   const urlOutput = document.getElementById("output");
 
   if (!url) {
-    urlOutput.innerHTML =
-      '<div class="error-message">Please enter a valid URL!</div>';
+    if (urlOutput)
+      urlOutput.innerHTML =
+        '<div class="error-message">Please enter a valid URL!</div>';
     return;
   }
 
-  // Add https:// if missing
   let processedUrl = url;
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    processedUrl = "https://" + url;
+  if (
+    !processedUrl.startsWith("http://") &&
+    !processedUrl.startsWith("https://")
+  ) {
+    processedUrl = "https://" + processedUrl;
   }
-
   showLoader("urlLoader", "Generating QR");
-  urlOutput.innerHTML = "";
-
+  if (urlOutput) urlOutput.innerHTML = "";
   try {
+    const headers = Object.assign(
+      { "Content-Type": "application/json" },
+      getAuthHeaders()
+    );
     const response = await fetch("/api/generate", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ url: processedUrl }),
     });
 
     if (!response.ok) {
-      throw new Error(`Server error: ${response.status}`);
+      const { data } = await parseJSONSafe(response);
+      throw new Error(data?.error || `Server error: ${response.status}`);
     }
 
     const data = await response.json();
@@ -572,19 +613,35 @@ async function generateUrlQR() {
     }
   } catch (err) {
     console.error("QR generation error:", err);
-    urlOutput.innerHTML = `<div class="error-message">Failed to generate QR: ${err.message}</div>`;
+    if (urlOutput)
+      urlOutput.innerHTML = `<div class="error-message">Failed to generate QR: ${err.message}</div>`;
   } finally {
     hideLoader("urlLoader");
   }
 }
 
+// function downloadQRImage(dataUrl, filename = "qr-image") {
+//   try {
+//     const link = document.createElement("a");
+//     link.href = dataUrl;
+//     link.download = `${filename}.png`;
+//     document.body.appendChild(link);
+//     link.click();
+//     link.remove();
+//   } catch (e) {
+//     console.error("Download QR failed:", e);
+//     showNotification("Download failed", "error");
+//   }
+// }
 // ================================
 // 🔹 2. ENCRYPT TEXT → QR GENERATION
 // ================================
 
 async function generateEncryptedQR() {
-  const secretData = document.getElementById("secretData").value.trim();
-  const passphrase = document.getElementById("passphrase").value.trim();
+  const secretData =
+    (document.getElementById("secretData") || {}).value?.trim() || "";
+  const passphrase =
+    (document.getElementById("passphrase") || {}).value?.trim() || "";
   const qrOutput = document.getElementById("qrOutput");
 
   if (!secretData || !passphrase) {
@@ -592,8 +649,8 @@ async function generateEncryptedQR() {
       '<div class="error-message">Both secret text and passphrase are required.</div>';
     return;
   }
-
-  if (passphrase.length < 6) {
+  showLoader("textLoader", "Encrypting");
+  if (passphrase.length <= 8) {
     qrOutput.innerHTML =
       '<div class="error-message">Passphrase must be at least 6 characters long.</div>';
     return;
@@ -602,16 +659,19 @@ async function generateEncryptedQR() {
   showLoader("textLoader", "Encrypting");
 
   try {
+    const headers = Object.assign(
+      { "Content-Type": "application/json" },
+      getAuthHeaders()
+    );
     const res = await fetch("/api/generate-encryptedText", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ secretData, passphrase }),
     });
-
     if (!res.ok) {
-      throw new Error(`Server error: ${res.status}`);
+      const { data } = await parseJSONSafe(res);
+      throw new Error(data?.error || `Server error: ${res.status}`);
     }
-
     const data = await res.json();
     if (data.error) {
       qrOutput.innerHTML = `<div class="error-message">${data.error}</div>`;
@@ -655,7 +715,7 @@ function copyCipherText() {
     .then(() =>
       showNotification("✅ Ciphertext copied to clipboard!", "success")
     )
-    .catch(() => alert("❌ Copy failed."));
+    .catch(() => alert(" Copy failed."));
 }
 
 function downloadQRImage(qrDataUrl, filename = "qr-code") {
@@ -676,158 +736,158 @@ function downloadQRImage(qrDataUrl, filename = "qr-code") {
 // ==================== FIXED QUICK GENERATOR FUNCTIONS ====================
 
 // Quick Generation Functions - PROPERLY CONNECTED TO BACKEND
-async function generateQuickURL() {
-  const url = document.getElementById("quickUrl").value.trim();
-  if (!url) {
-    showNotification("Please enter a URL", "error");
-    return;
-  }
+// async function generateQuickURL() {
+//   const url = document.getElementById("quickUrl").value.trim();
+//   if (!url) {
+//     showNotification("Please enter a URL", "error");
+//     return;
+//   }
 
-  try {
-    showLoader("urlLoader", "Generating QR");
+//   try {
+//     showLoader("urlLoader", "Generating QR");
 
-    // Process URL (add https:// if missing)
-    let processedUrl = url;
-    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-      processedUrl = "https://" + url;
-    }
+//     // Process URL (add https:// if missing)
+//     let processedUrl = url;
+//     if (!url.startsWith("http://") && !url.startsWith("https://")) {
+//       processedUrl = "https://" + url;
+//     }
 
-    // DIRECT API CALL to your backend
-    const response = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: processedUrl }),
-    });
+//     // DIRECT API CALL to your backend
+//     const response = await fetch("/api/generate", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({ url: processedUrl }),
+//     });
 
-    const data = await response.json();
+//     const data = await response.json();
 
-    if (data.success && data.qrCode) {
-      // Show the QR code in output section
-      document.getElementById("output").innerHTML = `
-        <div class="qr-result">
-          <img src="${data.qrCode}" alt="QR Code">
-          <p class="success-message">✅ QR Code Generated Successfully!</p>
-          <p><strong>URL:</strong> ${processedUrl}</p>
-          <button onclick="downloadQRImage('${data.qrCode}', 'url-qr')" class="btn btn-outline">📥 Download QR</button>
-        </div>
-      `;
+//     if (data.success && data.qrCode) {
+//       // Show the QR code in output section
+//       document.getElementById("output").innerHTML = `
+//         <div class="qr-result">
+//           <img src="${data.qrCode}" alt="QR Code">
+//           <p class="success-message">✅ QR Code Generated Successfully!</p>
+//           <p><strong>URL:</strong> ${processedUrl}</p>
+//           <button onclick="downloadQRImage('${data.qrCode}', 'url-qr')" class="btn btn-outline">📥 Download QR</button>
+//         </div>
+//       `;
 
-      showNotification("URL QR generated successfully!", "success");
-      closeQuickGenerator();
+//       showNotification("URL QR generated successfully!", "success");
+//       closeQuickGenerator();
 
-      // Scroll to show the result
-      document.getElementById("basic").scrollIntoView({ behavior: "smooth" });
-    } else {
-      throw new Error(data.error || "Failed to generate QR");
-    }
-  } catch (error) {
-    console.error("Quick URL generation failed:", error);
-    showNotification("Failed to generate QR: " + error.message, "error");
-  } finally {
-    hideLoader("urlLoader");
-  }
-}
+//       // Scroll to show the result
+//       document.getElementById("basic").scrollIntoView({ behavior: "smooth" });
+//     } else {
+//       throw new Error(data.error || "Failed to generate QR");
+//     }
+//   } catch (error) {
+//     console.error("Quick URL generation failed:", error);
+//     showNotification("Failed to generate QR: " + error.message, "error");
+//   } finally {
+//     hideLoader("urlLoader");
+//   }
+// }
 
-async function generateQuickText() {
-  const text = document.getElementById("quickText").value.trim();
-  if (!text) {
-    showNotification("Please enter some text", "error");
-    return;
-  }
+// async function generateQuickText() {
+//   const text = document.getElementById("quickText").value.trim();
+//   if (!text) {
+//     showNotification("Please enter some text", "error");
+//     return;
+//   }
 
-  // For quick text, we'll generate a basic QR without encryption
-  try {
-    showLoader("textLoader", "Generating QR");
+//   // For quick text, we'll generate a basic QR without encryption
+//   try {
+//     showLoader("textLoader", "Generating QR");
 
-    // DIRECT API CALL for basic text QR (not encrypted)
-    const response = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: text }), // Using URL endpoint for simple text
-    });
+//     // DIRECT API CALL for basic text QR (not encrypted)
+//     const response = await fetch("/api/generate", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({ url: text }), // Using URL endpoint for simple text
+//     });
 
-    const data = await response.json();
+//     const data = await response.json();
 
-    if (data.success && data.qrCode) {
-      // Show the QR code in secure text output section
-      document.getElementById("qrOutput").innerHTML = `
-        <div class="qr-result">
-          <img src="${data.qrCode}" alt="QR Code">
-          <p class="success-message">✅ Text QR Generated Successfully!</p>
-          <p><strong>Text:</strong> ${text.substring(0, 50)}${
-            text.length > 50 ? "..." : ""
-          }</p>
-          <button onclick="downloadQRImage('${
-            data.qrCode
-          }', 'text-qr')" class="btn btn-outline">📥 Download QR</button>
-        </div>
-      `;
+//     if (data.success && data.qrCode) {
+//       // Show the QR code in secure text output section
+//       document.getElementById("qrOutput").innerHTML = `
+//         <div class="qr-result">
+//           <img src="${data.qrCode}" alt="QR Code">
+//           <p class="success-message">✅ Text QR Generated Successfully!</p>
+//           <p><strong>Text:</strong> ${text.substring(0, 50)}${
+//             text.length > 50 ? "..." : ""
+//           }</p>
+//           <button onclick="downloadQRImage('${
+//             data.qrCode
+//           }', 'text-qr')" class="btn btn-outline">📥 Download QR</button>
+//         </div>
+//       `;
 
-      showNotification("Text QR generated successfully!", "success");
-      closeQuickGenerator();
+//       showNotification("Text QR generated successfully!", "success");
+//       closeQuickGenerator();
 
-      // Scroll to show the result
-      document.getElementById("secure").scrollIntoView({ behavior: "smooth" });
-    } else {
-      throw new Error(data.error || "Failed to generate QR");
-    }
-  } catch (error) {
-    console.error("Quick text generation failed:", error);
-    showNotification("Failed to generate QR: " + error.message, "error");
-  } finally {
-    hideLoader("textLoader");
-  }
-}
+//       // Scroll to show the result
+//       document.getElementById("secure").scrollIntoView({ behavior: "smooth" });
+//     } else {
+//       throw new Error(data.error || "Failed to generate QR");
+//     }
+//   } catch (error) {
+//     console.error("Quick text generation failed:", error);
+//     showNotification("Failed to generate QR: " + error.message, "error");
+//   } finally {
+//     hideLoader("textLoader");
+//   }
+// }
 
-async function generateQuickWifi() {
-  const ssid = document.getElementById("quickSSID").value.trim();
-  const password = document.getElementById("quickPassword").value.trim();
+// async function generateQuickWifi() {
+//   const ssid = document.getElementById("quickSSID").value.trim();
+//   const password = document.getElementById("quickPassword").value.trim();
 
-  if (!ssid || !password) {
-    showNotification("Please enter WiFi name and password", "error");
-    return;
-  }
+//   if (!ssid || !password) {
+//     showNotification("Please enter WiFi name and password", "error");
+//     return;
+//   }
 
-  try {
-    // DIRECT API CALL to your WiFi endpoint
-    const response = await fetch("/api/generate-wifi", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ssid: ssid,
-        password: password,
-        encryption: "WPA",
-      }),
-    });
+//   try {
+//     // DIRECT API CALL to your WiFi endpoint
+//     const response = await fetch("/api/generate-wifi", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({
+//         ssid: ssid,
+//         password: password,
+//         encryption: "WPA",
+//       }),
+//     });
 
-    const data = await response.json();
+//     const data = await response.json();
 
-    if (data.success && data.qrCode) {
-      // Show the QR code in WiFi output section
-      document.getElementById("wifiOutput").innerHTML = `
-        <div class="qr-result">
-          <img src="${data.qrCode}" alt="WiFi QR Code">
-          <p class="success-message">✅ WiFi QR Generated Successfully!</p>
-          <p><strong>Network:</strong> ${ssid}</p>
-          <button onclick="downloadQRImage('${data.qrCode}', 'wifi-qr')" class="btn btn-outline">📥 Download QR</button>
-        </div>
-      `;
+//     if (data.success && data.qrCode) {
+//       // Show the QR code in WiFi output section
+//       document.getElementById("wifiOutput").innerHTML = `
+//         <div class="qr-result">
+//           <img src="${data.qrCode}" alt="WiFi QR Code">
+//           <p class="success-message">✅ WiFi QR Generated Successfully!</p>
+//           <p><strong>Network:</strong> ${ssid}</p>
+//           <button onclick="downloadQRImage('${data.qrCode}', 'wifi-qr')" class="btn btn-outline">📥 Download QR</button>
+//         </div>
+//       `;
 
-      showNotification("WiFi QR generated successfully!", "success");
-      closeQuickGenerator();
+//       showNotification("WiFi QR generated successfully!", "success");
+//       closeQuickGenerator();
 
-      // Scroll to show the result
-      document
-        .getElementById("advanced")
-        .scrollIntoView({ behavior: "smooth" });
-    } else {
-      throw new Error(data.error || "Failed to generate WiFi QR");
-    }
-  } catch (error) {
-    console.error("Quick WiFi generation failed:", error);
-    showNotification("Failed to generate WiFi QR: " + error.message, "error");
-  }
-}
+//       // Scroll to show the result
+//       document
+//         .getElementById("advanced")
+//         .scrollIntoView({ behavior: "smooth" });
+//     } else {
+//       throw new Error(data.error || "Failed to generate WiFi QR");
+//     }
+//   } catch (error) {
+//     console.error("Quick WiFi generation failed:", error);
+//     showNotification("Failed to generate WiFi QR: " + error.message, "error");
+//   }
+// }
 
 // ==================== ENHANCED DASHBOARD FEATURES ====================
 
@@ -919,22 +979,26 @@ async function loadRealStats() {
 
 // Fix vCard QR generation in advanced section
 async function generateVCardQR() {
-  const name = document.getElementById("vcardName").value.trim();
-  const phone = document.getElementById("vcardPhone").value.trim();
-
+  const name = (document.getElementById("vcardName") || {}).value || "";
+  const phone = (document.getElementById("vcardPhone") || {}).value || "";
+  const email = (document.getElementById("vcardEmail") || {}).value || "";
+  const company = (document.getElementById("vcardCompany") || {}).value || "";
+  const output = document.getElementById("vcardOutput");
   if (!name || !phone) {
-    showNotification("Name and phone are required for vCard", "error");
+    if (output)
+      output.innerHTML = `<div class="error-message">Name and phone required</div>`;
     return;
   }
-
+  showLoader("textLoader", "Generating vCard QR");
   try {
-    const email = document.getElementById("vcardEmail").value.trim();
-    const company = document.getElementById("vcardCompany").value.trim();
-
+    const headers = Object.assign(
+      { "Content-Type": "application/json" },
+      getAuthHeaders()
+    );
     // DIRECT API CALL to your vCard endpoint
     const response = await fetch("/api/generate-vcard", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({
         name: name,
         phone: phone,
@@ -942,11 +1006,14 @@ async function generateVCardQR() {
         company: company,
       }),
     });
-
+    if (!response.ok) {
+      const { data } = await parseJSONSafe(response);
+      throw new Error(data?.error || `Server error: ${response.status}`);
+    }
     const data = await response.json();
 
     if (data.success && data.qrCode) {
-      document.getElementById("vcardOutput").innerHTML = `
+      output.innerHTML = `
         <div class="qr-result">
           <img src="${data.qrCode}" alt="vCard QR Code">
           <p class="success-message">✅ vCard QR Generated Successfully!</p>
@@ -957,7 +1024,8 @@ async function generateVCardQR() {
 
       showNotification("vCard QR generated successfully!", "success");
     } else {
-      throw new Error(data.error || "Failed to generate vCard QR");
+      if (output)
+        output.innerHTML = `<div class="error-message">${data.error || "Failed"}</div>`;
     }
   } catch (error) {
     console.error("vCard QR generation failed:", error);
@@ -967,16 +1035,21 @@ async function generateVCardQR() {
 
 // Fix WiFi QR generation in advanced section
 async function generateWifiQR() {
-  const ssid = document.getElementById("wifiSsid").value.trim();
-  const password = document.getElementById("wifiPassword").value.trim();
-  const encryption = document.getElementById("wifiEncryption").value;
-
+  const ssid = (document.getElementById("wifiSsid") || {}).value || "";
+  const password = (document.getElementById("wifiPassword") || {}).value || "";
+  const encryption =
+    (document.getElementById("wifiEncryption") || {}).value || "WPA";
+  const output = document.getElementById("wifiOutput");
   if (!ssid || !password) {
     showNotification("SSID and password are required for WiFi QR", "error");
     return;
   }
-
+  showLoader("textLoader", "Generating WiFi QR");
   try {
+    const headers = Object.assign(
+      { "Content-Type": "application/json" },
+      getAuthHeaders()
+    );
     // DIRECT API CALL to your WiFi endpoint
     const response = await fetch("/api/generate-wifi", {
       method: "POST",
@@ -991,7 +1064,7 @@ async function generateWifiQR() {
     const data = await response.json();
 
     if (data.success && data.qrCode) {
-      document.getElementById("wifiOutput").innerHTML = `
+      output.innerHTML = `
         <div class="qr-result">
           <img src="${data.qrCode}" alt="WiFi QR Code">
           <p class="success-message">✅ WiFi QR Generated Successfully!</p>
@@ -1013,33 +1086,33 @@ async function generateWifiQR() {
 // Fix file encryption
 async function encryptFile() {
   const fileInput = document.getElementById("fileInput");
-  const passphrase = document.getElementById("filePassphrase").value.trim();
+  const file = fileInput && fileInput.files && fileInput.files[0];
+  const passphrase =
+    (document.getElementById("filePassphrase") || {}).value?.trim() || "";
+  const fileOutput = document.getElementById("fileOutput");
 
-  if (!fileInput.files[0]) {
-    showNotification("Please select a file to encrypt", "error");
-    return;
-  }
-
-  if (!passphrase) {
-    showNotification("Please enter an encryption passphrase", "error");
+  if (!file || !passphrase) {
+    showNotification("Please enter an encryption passphrase and File", "error");
     return;
   }
 
   try {
     showLoader("fileLoader", "Encrypting file");
 
-    const file = fileInput.files[0];
     const reader = new FileReader();
 
     reader.onload = async function (e) {
       try {
-        const base64 = e.target.result.split(",")[1]; // Remove data URL prefix
+        const base64 = reader.result.split(",")[1]; // Remove data URL prefix
         const filename = file.name;
-
+        const headers = Object.assign(
+          { "Content-Type": "application/json" },
+          getAuthHeaders()
+        );
         // DIRECT API CALL to file encryption endpoint
         const response = await fetch("/api/encrypt-file", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             base64: base64,
             passphrase: passphrase,
@@ -1050,7 +1123,7 @@ async function encryptFile() {
         const data = await response.json();
 
         if (data.success && data.qrCode) {
-          document.getElementById("fileOutput").innerHTML = `
+          fileOutput.innerHTML = `
             <div class="qr-result">
               <img src="${data.qrCode}" alt="Encrypted File QR Code">
               <p class="success-message">✅ File Encrypted & QR Generated!</p>
@@ -1103,9 +1176,11 @@ async function encryptFile() {
 }
 
 async function decryptText() {
-  const cipher = document.getElementById("qrCipher").value.trim();
-  const passphrase = document.getElementById("userPassphrase").value.trim();
-
+  const cipher =
+    (document.getElementById("qrCipher") || {}).value?.trim() || "";
+  const passphrase =
+    (document.getElementById("userPassphrase") || {}).value?.trim() || "";
+  const output = document.getElementById("decryptedOutput");
   if (!cipher || !passphrase) {
     showNotification("Ciphertext and passphrase are required", "error");
     return;
@@ -1113,21 +1188,30 @@ async function decryptText() {
 
   try {
     showLoader("decryptLoader", "Decrypting");
-
+    const headers = Object.assign(
+      { "Content-Type": "application/json" },
+      getAuthHeaders()
+    );
     // DIRECT API CALL to decryption endpoint
     const response = await fetch("/api/decrypt", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({
         cipher: cipher,
         passphrase: passphrase,
       }),
     });
+    const parsed = await parseJSONSafe(response);
+    if (!response.ok) {
+      const msg = parsed.data?.error || `Server error: ${response.status}`;
+      if (output) output.innerText = msg;
+      return;
+    }
 
-    const data = await response.json();
+    const data = parsed.data;
 
-    if (data.success && data.decrypted) {
-      document.getElementById("decryptedOutput").innerHTML = `
+    if (data.success && data.decrypted && data) {
+      output.innerHTML = `
         <div class="success-message">
           <h4>✅ Decryption Successful!</h4>
           <p><strong>Decrypted Text:</strong></p>
@@ -1145,7 +1229,9 @@ async function decryptText() {
 
       showNotification("Text decrypted successfully!", "success");
     } else {
-      throw new Error(data.error || "Decryption failed");
+      if (output)
+        output.innerText =
+          data.error || "Wrong passphrase or invalid ciphertext.";
     }
   } catch (error) {
     console.error("Text decryption failed:", error);
@@ -1156,12 +1242,12 @@ async function decryptText() {
 }
 async function decryptFile() {
   const fileInput = document.getElementById("fileDecryptInput");
+  const passphrase =
+    (document.getElementById("fileDecryptPassphrase") || {}).value?.trim() ||
+    "";
   const decryptedOutput = document.getElementById("decryptedFileOutput");
-  const passphrase = document
-    .getElementById("fileDecryptPassphrase")
-    .value.trim();
 
-  if (!fileInput.files.length || !passphrase) {
+  if (!fileInput || !fileInput.files.length || !passphrase) {
     showNotification("Attach the encrypted file and enter passphrase", "error");
     return;
   }
@@ -1175,20 +1261,29 @@ async function decryptFile() {
     reader.onload = async () => {
       try {
         const encryptedData = reader.result.trim();
-
+        const headers = Object.assign(
+          { "Content-Type": "application/json" },
+          getAuthHeaders()
+        );
         // API CALL to decryption endpoint
         const response = await fetch("/api/decrypt-file", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             encryptedData: encryptedData,
             passphrase: passphrase,
             filename: file.name,
           }),
         });
+        const parsed = await parseJSONSafe(response);
+        if (!response.ok) {
+          const msg = parsed.data?.error || `Server error: ${response.status}`;
+          if (output) output.innerText = msg;
+          hideLoader("decryptLoader");
+          return;
+        }
 
-        const data = await response.json();
-
+        const data = parsed.data;
         if (data.success && data.decryptedBase64) {
           // Convert Base64 to downloadable file
           const byteCharacters = atob(data.decryptedBase64);
