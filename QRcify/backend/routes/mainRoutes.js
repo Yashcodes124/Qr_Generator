@@ -84,45 +84,83 @@ router.post("/generate-encryptedText", async (req, res) => {
   }
 });
 
-// 🟨 3️⃣ Encrypt file
 router.post("/encrypt-file", async (req, res) => {
-  const { base64, passphrase, filename } = req.body;
-  if (!base64 || !passphrase || !filename || !validatePassphrase(passphrase))
+  const { base64, passphrase, filename, fileType } = req.body; // ← Add fileType
+
+  if (!base64 || !passphrase || !filename || !validatePassphrase(passphrase)) {
     return res.status(400).json({ error: "Missing required data" });
+  }
+
+  // ✅ NEW: Validate file type
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/svg+xml",
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "text/plain",
+    "text/csv",
+    "application/zip",
+    "application/x-rar-compressed",
+    "video/mp4",
+    "video/quicktime",
+    "audio/mpeg",
+    "audio/wav",
+  ];
+
+  // ✅ NEW: Security check
+  const maxFileSize = 10 * 1024 * 1024; // 10MB in bytes
+  const fileSize = Math.ceil((base64.length * 3) / 4); // Base64 to bytes
+
+  if (fileSize > maxFileSize) {
+    return res.status(400).json({
+      error: `File too large. Maximum size is 10MB. Your file is ${(fileSize / 1024 / 1024).toFixed(2)}MB`,
+    });
+  }
 
   try {
     const combined = encryptData(base64, passphrase);
-
     const fileId = Math.floor(100000 + Math.random() * 900000);
     const encryptedDir = path.join(__dirname, "../encrypted");
-    if (!fs.existsSync(encryptedDir))
+
+    if (!fs.existsSync(encryptedDir)) {
       fs.mkdirSync(encryptedDir, { recursive: true });
+    }
 
     const filePath = path.join(encryptedDir, `${filename}_${fileId}.enc`);
     fs.writeFileSync(filePath, combined);
 
-    // If too large for QR, send QR with download link
+    // ✅ IMPROVED: Dynamic URL based on environment
+    const baseUrl =
+      process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+
     let qrTarget =
-      combined.length > 1200 //if file is large send this downladable link
-        ? `http://localhost:3000/encrypted/${filename}_${fileId}.enc`
-        : combined; //else send the normal encryted one for QR
-    //   QR generation for both bases
+      combined.length > 1200
+        ? `${baseUrl}/encrypted/${filename}_${fileId}.enc`
+        : combined;
+
     const qrPng = qr.imageSync(qrTarget, { type: "png" });
     const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
 
-    // Adding DB logging
-    await logQRGeneration("encrypted_file", base64.length, req);
+    await logQRGeneration("file", base64.length, req);
 
-    // 6️⃣ Send response
     res.json({
       success: true,
       qrCode: qrBase64,
       downloadUrl: `/encrypted/${filename}_${fileId}.enc`,
-      encrypted: combined, // important!
+      encrypted: combined,
+      fileSize: fileSize,
       message: "Encrypted file saved successfully.",
     });
   } catch (error) {
-    console.error("File encryption failed at server:", error);
+    console.error("File encryption failed:", error);
     res.status(500).json({ error: "File encryption failed" });
   }
 });

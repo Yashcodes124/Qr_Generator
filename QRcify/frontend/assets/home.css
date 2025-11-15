@@ -601,10 +601,18 @@ input[type="file"] {
 }
 
 input:focus,
-textarea:focus {
+textarea:focus,
+input#vcardPhone:focus {
   border-color: #667eea;
   outline: none;
   background: #fafbff;
+}
+input#vcardPhone {
+  margin-bottom: 1.2rem;
+  font-size: 1rem;
+  border: 1.5px solid #cfcfe7;
+  text-align: left;
+  padding: 0.75rem 1.1rem;
 }
 
 /* Error */
