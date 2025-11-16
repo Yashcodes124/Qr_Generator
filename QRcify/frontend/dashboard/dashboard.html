@@ -79,8 +79,124 @@
           <div class="action-btn" onclick="toggleDarkMode()">
             <i class="fas fa-moon" id="themeIcon"></i>
           </div>
-          <div class="action-btn" onclick="alert('Profile')">
+          <button class="action-btn" onclick="openEnhancedMenu()">
             <i class="fas fa-user"></i>
+          </button>
+          <!-- Enhanced Navigation Menu -->
+          <div class="enhanced-menu" id="enhancedMenu" style="display: none">
+            <div class="menu-overlay" onclick="closeEnhancedMenu()"></div>
+
+            <div class="menu-panel">
+              <div class="menu-header">
+                <h3>🔐 QRcify Pro</h3>
+                <button class="close-menu-btn" onclick="closeEnhancedMenu()">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <!-- User Info Section -->
+              <div class="menu-user-section">
+                <div class="menu-user-avatar">JD</div>
+                <div class="menu-user-info">
+                  <div class="menu-user-name">John Doe</div>
+                  <div class="menu-user-email">john@example.com</div>
+                </div>
+              </div>
+
+              <!-- Menu Sections -->
+              <div class="menu-sections">
+                <!-- Dashboard Section -->
+                <div class="menu-section">
+                  <div class="menu-section-title">Dashboard</div>
+                  <a href="/dashboard/dashboard.html" class="menu-item">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                  </a>
+                  <a href="#" onclick="showAnalyticsPage()" class="menu-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                  </a>
+                  <a href="#" onclick="showMyQRCodes()" class="menu-item">
+                    <i class="fas fa-folder-open"></i>
+                    <span>My QR Codes</span>
+                    <span class="menu-badge">12</span>
+                  </a>
+                </div>
+
+                <!-- Generators Section -->
+                <div class="menu-section">
+                  <div class="menu-section-title">QR Generators</div>
+                  <a href="/index.html#basic" class="menu-item">
+                    <i class="fas fa-link"></i>
+                    <span>URL QR</span>
+                  </a>
+                  <a href="/index.html#secure" class="menu-item">
+                    <i class="fas fa-lock"></i>
+                    <span>Encrypted Text</span>
+                  </a>
+                  <a href="/index.html#secure" class="menu-item">
+                    <i class="fas fa-file-shield"></i>
+                    <span>File Encryption</span>
+                  </a>
+                  <a href="/index.html#advanced" class="menu-item">
+                    <i class="fas fa-address-card"></i>
+                    <span>vCard QR</span>
+                  </a>
+                  <a href="/index.html#advanced" class="menu-item">
+                    <i class="fas fa-wifi"></i>
+                    <span>WiFi QR</span>
+                  </a>
+                </div>
+
+                <!-- Tools Section -->
+                <div class="menu-section">
+                  <div class="menu-section-title">Tools</div>
+                  <a href="/index.html#decrypt" class="menu-item">
+                    <i class="fas fa-unlock"></i>
+                    <span>Decrypt</span>
+                  </a>
+                  <a href="#" onclick="showBulkGenerator()" class="menu-item">
+                    <i class="fas fa-layer-group"></i>
+                    <span>Bulk Generate</span>
+                    <span class="menu-badge-new">New</span>
+                  </a>
+                  <a href="#" onclick="showTemplates()" class="menu-item">
+                    <i class="fas fa-th-large"></i>
+                    <span>Templates</span>
+                  </a>
+                </div>
+
+                <!-- Account Section -->
+                <div class="menu-section">
+                  <div class="menu-section-title">Account</div>
+                  <a href="#" onclick="showSettings()" class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                  </a>
+                  <a href="#" onclick="showBilling()" class="menu-item">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Billing</span>
+                  </a>
+                  <a href="#" onclick="showTeam()" class="menu-item">
+                    <i class="fas fa-users"></i>
+                    <span>Team</span>
+                    <span class="menu-badge">3</span>
+                  </a>
+                  <a href="#" onclick="showHelp()" class="menu-item">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Help & Support</span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Menu Footer -->
+              <div class="menu-footer">
+                <button class="menu-logout-btn" onclick="handleLogout()">
+                  <i class="fas fa-sign-out-alt"></i>
+                  <span>Logout</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

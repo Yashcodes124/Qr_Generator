@@ -1,18 +1,56 @@
-// ----------------->  Checking auth  <------------------
+// ==================== AUTH CHECK ====================
 const token =
   localStorage.getItem("token") || localStorage.getItem("userToken");
 const userData = localStorage.getItem("userData");
-console.log("Token Found:", token ? "Yes" : "No");
+
+console.log("🔑 Token found:", token ? "Yes" : "No");
+console.log("👤 User data:", userData);
+
 if (!token) {
-  console.log("❌ No token found, redirecting to login...");
+  console.log("❌ No token, redirecting to login...");
   window.location.href = "../index.html";
 }
 
+// ==================== API HELPER ====================
+async function apiFetch(endpoint, options = {}) {
+  const defaultOptions = {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  };
+
+  const mergedOptions = {
+    ...defaultOptions,
+    ...options,
+    headers: {
+      ...defaultOptions.headers,
+      ...options.headers,
+    },
+  };
+
+  try {
+    const response = await fetch(endpoint, mergedOptions);
+
+    if (response.status === 401) {
+      console.error("❌ Unauthorized - redirecting to login");
+      localStorage.clear();
+      window.location.href = "../index.html";
+      throw new Error("Session expired");
+    }
+
+    return response;
+  } catch (error) {
+    console.error("API Fetch error:", error);
+    throw error;
+  }
+}
+
+// ==================== SIDEBAR & THEME ====================
 function toggleSidebar() {
   document.getElementById("sidebar").classList.toggle("collapsed");
 }
 
-// -----------------> SIDE bar and MODE(theme) <-----------------
 function toggleDarkMode() {
   const html = document.documentElement;
   const icon = document.getElementById("themeIcon");
@@ -29,116 +67,113 @@ function toggleDarkMode() {
   }
 }
 
-// Loading User Data
+// ==================== LOAD USER DATA ====================
 window.addEventListener("DOMContentLoaded", () => {
+  console.log("📊 Dashboard loading...");
+
+  // Load theme
   const savedTheme = localStorage.getItem("theme");
   if (savedTheme === "dark") {
     document.documentElement.setAttribute("data-theme", "dark");
     document.getElementById("themeIcon").className = "fas fa-sun";
   }
+
+  // Load user name
   try {
     const user = JSON.parse(userData);
-    document.querySelector(".header-title h1").textContent =
-      `Welcome back, ${user.name}! 👋`;
-  } catch (error) {
-    document.querySelector(".header-title h1").textContent = `Welcome back! 👋`;
+    const headerTitle = document.querySelector(".header-title h1");
+    if (headerTitle) {
+      headerTitle.textContent = `Welcome back, ${user.name}! 👋`;
+    }
+    console.log("✅ User loaded:", user.name);
+  } catch (e) {
+    console.error("❌ Failed to parse user data:", e);
   }
-  loadDashboardData(); //real DATA from Dashboard.
+
+  // ✅ LOAD REAL DATA FROM BACKEND
+  loadDashboardData();
 });
 
-// -----------------> Loading Dashboard Data <-----------------
+// ==================== LOAD DASHBOARD DATA ====================
 async function loadDashboardData() {
+  console.log("🔄 Fetching real dashboard data...");
+
   try {
     // Fetch dashboard stats
-    const statsResponse = await fetch("/api/dashboard/stats", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
+    const statsResponse = await apiFetch("/api/dashboard/stats");
     const statsData = await statsResponse.json();
 
+    console.log("📊 Stats response:", statsData);
+
     if (statsData.success) {
-      // Update stats
-      animateValue("totalQRs", 0, statsData.stats.totalQRs, 2000);
+      // ✅ UPDATE REAL DATA
+      const stats = statsData.stats;
 
-      document.querySelector(
+      // Update total QRs with animation
+      animateValue("totalQRs", 0, stats.totalQRs || 0, 2000);
+
+      // Update other stats
+      const scanElement = document.querySelector(
         ".stat-card:nth-child(2) .stat-value"
-      ).textContent = formatNumber(statsData.stats.totalScans);
+      );
+      if (scanElement) {
+        scanElement.textContent = formatNumber(stats.totalScans || 0);
+      }
 
-      document.querySelector(
+      const activityElement = document.querySelector(
         ".stat-card:nth-child(3) .stat-value"
-      ).textContent = statsData.stats.todayActivity;
+      );
+      if (activityElement) {
+        activityElement.textContent = stats.todayActivity || 0;
+      }
 
-      document.querySelector(
+      const popularElement = document.querySelector(
         ".stat-card:nth-child(4) .stat-value"
-      ).textContent = statsData.stats.popularType.toUpperCase();
+      );
+      if (popularElement) {
+        popularElement.textContent = (
+          stats.popularType || "None"
+        ).toUpperCase();
+      }
+
+      console.log("✅ Dashboard stats updated:", {
+        totalQRs: stats.totalQRs,
+        todayActivity: stats.todayActivity,
+        popularType: stats.popularType,
+      });
+    } else {
+      console.error("❌ Stats API returned error:", statsData);
     }
+
     // Fetch recent activity
-    const historyResponse = await fetch("/api/qr/history", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const historyResponse = await apiFetch("/api/qr/history");
     const historyData = await historyResponse.json();
+
+    console.log("📋 History response:", historyData);
 
     if (historyData.success && historyData.history.length > 0) {
       updateActivityList(historyData.history);
+      console.log(
+        "✅ Activity list updated with",
+        historyData.history.length,
+        "items"
+      );
+    } else {
+      console.log("ℹ️ No history found");
     }
   } catch (error) {
-    console.error("Failed to load dashboard data:", error);
-    showNotification("Failed to load data. Using demo data.", "warning");
+    console.error("❌ Failed to load dashboard data:", error);
+    showNotification("Failed to load data. Using demo mode.", "warning");
   }
 }
 
-async function loadDashboardData() {
-  try {
-    // Fetch dashboard stats
-    const statsResponse = await fetch("/api/dashboard/stats", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const statsData = await statsResponse.json();
-
-    if (statsData.success) {
-      // Update stats
-      animateValue("totalQRs", 0, statsData.stats.totalQRs, 2000);
-
-      document.querySelector(
-        ".stat-card:nth-child(2) .stat-value"
-      ).textContent = formatNumber(statsData.stats.totalScans);
-
-      document.querySelector(
-        ".stat-card:nth-child(3) .stat-value"
-      ).textContent = statsData.stats.todayActivity;
-
-      document.querySelector(
-        ".stat-card:nth-child(4) .stat-value"
-      ).textContent = statsData.stats.popularType.toUpperCase();
-    }
-
-    // Fetch recent activity
-    const historyResponse = await fetch("/api/qr/history", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const historyData = await historyResponse.json();
-
-    if (historyData.success && historyData.history.length > 0) {
-      updateActivityList(historyData.history);
-    }
-  } catch (error) {
-    console.error("Failed to load dashboard data:", error);
-    showNotification("Failed to load data. Using demo data.", "warning");
-  }
-} // -----------------> Updated Activity List <-----------------
-
+// ==================== UPDATE ACTIVITY LIST ====================
 function updateActivityList(history) {
   const activityList = document.querySelector(".activity-list");
+  if (!activityList) {
+    console.error("❌ Activity list element not found");
+    return;
+  }
 
   const iconMap = {
     url: { icon: "fa-link", color: "blue", title: "URL QR Generated" },
@@ -166,7 +201,7 @@ function updateActivityList(history) {
         </div>
         <div class="activity-content">
           <div class="activity-title">${config.title}</div>
-          <div class="activity-desc">${item.dataSize} bytes</div>
+          <div class="activity-desc">${item.dataSize || 0} bytes</div>
         </div>
         <div class="activity-time">${item.timeAgo}</div>
       </div>
@@ -178,7 +213,10 @@ function updateActivityList(history) {
 // ==================== ANIMATE COUNTER ====================
 function animateValue(id, start, end, duration) {
   const element = document.getElementById(id);
-  if (!element) return;
+  if (!element) {
+    console.error(`❌ Element #${id} not found`);
+    return;
+  }
 
   const range = end - start;
   const increment = range / (duration / 16);
@@ -201,9 +239,14 @@ function formatNumber(num) {
   return num.toString();
 }
 
-// -----------------> Page Navigation For Sidebar<-----------------
+// ==================== PAGE NAVIGATION ====================
 function switchPage(page) {
+  console.log("📍 Navigating to:", page);
+
   switch (page) {
+    case "dashboard":
+      loadDashboardData();
+      break;
     case "generators":
       window.location.href = "../index.html#basic";
       break;
@@ -223,11 +266,11 @@ function switchPage(page) {
       window.open("https://github.com/Yashcodes124/Qr_Generator", "_blank");
       break;
     default:
-      loadDashboardData(); // Refresh dashboard
+      console.log("Unknown page:", page);
   }
 }
 
-// -----------------> QR modal for login and register <-----------------
+// ==================== QR MODAL ====================
 function openQRModal() {
   document.getElementById("qrModal").classList.add("show");
 }
@@ -240,7 +283,7 @@ document.getElementById("qrModal")?.addEventListener("click", function (e) {
   if (e.target === this) closeQRModal();
 });
 
-// -----------------> Notification for all msg types <-----------------
+// ==================== NOTIFICATION SYSTEM ====================
 function showNotification(message, type = "info") {
   const notification = document.createElement("div");
   notification.style.cssText = `
@@ -250,7 +293,6 @@ function showNotification(message, type = "info") {
     padding: 16px 24px;
     background: ${type === "success" ? "#10b981" : type === "warning" ? "#f59e0b" : type === "error" ? "#ef4444" : "#3b82f6"};
     color: white;
-    border:1px solid white;
     border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     z-index: 10000;
@@ -267,20 +309,8 @@ function showNotification(message, type = "info") {
   }, 3000);
 }
 
-// Add notification CSS animations
-const style = document.createElement("style");
-style.textContent = `
-  @keyframes slideIn {
-    from { transform: translateX(400px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-  }
-  @keyframes slideOut {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(400px); opacity: 0; }
-  }
-`;
-document.head.appendChild(style);
-
+// ==================== AUTO REFRESH ====================
 // Refresh stats every 30 seconds
-// -----------------> AUTO REFRESH <-----------------
 setInterval(loadDashboardData, 30000);
+
+console.log("✅ Dashboard initialized successfully");

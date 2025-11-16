@@ -1,5 +1,3 @@
-// backend/index.js : main file for backend
-
 import express from "express";
 import cors from "cors";
 import path from "path";
@@ -11,34 +9,29 @@ import { config } from "./config/config.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import "dotenv/config";
 
-// const requiredEnvVars = ["JWT_SECRET"];
-// const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
-
-// if (missingVars.length > 0) {
-//   console.error("❌ FATAL ERROR: Missing required environment variables:");
-//   missingVars.forEach((varName) => {
-//     console.error(`   - ${varName}`);
-//   });
-//   console.error("\n💡 Create a .env file with:");
-//   console.error("   JWT_SECRET=your_secure_random_string_here\n");
-//   process.exit(1);
-// }
-
-// console.log("Environment variables validated");
-console.log(" Environment Loaded:", process.env.DB_DIALECT, process.env.PORT);
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = config.PORT;
-connectDB();
 
-// ✅ IMPROVED: Proper CORS configuration
+// ✅ PROPER JWT_SECRET VALIDATION
+if (
+  !process.env.JWT_SECRET ||
+  process.env.JWT_SECRET === "your_jwt_secret_here"
+) {
+  console.warn("⚠️  WARNING: Using default JWT_SECRET for development");
+  console.warn("💡 For production, set a secure JWT_SECRET in .env file");
+  process.env.JWT_SECRET = "qrcify_dev_jwt_secret_2025_" + Date.now();
+} else {
+  console.log("✅ JWT_SECRET configured");
+}
+
+// ✅ IMPROVED CORS Configuration
 const corsOptions = {
   origin:
     process.env.NODE_ENV === "production"
-      ? process.env.FRONTEND_URL || "https://your-domain.com"
+      ? process.env.FRONTEND_URL || "*"
       : [
           "http://localhost:3000",
           "http://localhost:5173",
@@ -50,57 +43,57 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-console.log("✅ CORS configured for:", corsOptions.origin);
+console.log("✅ CORS configured");
 
-// Allow larger JSON payloads for file uploads (up to 50mb)
+// Middleware
 app.use(express.json({ limit: config.MAX_FILE_SIZE }));
 app.use(express.urlencoded({ limit: config.MAX_FILE_SIZE, extended: true }));
-// request logging middleware
+
+// Request logging middleware
 app.use((req, res, next) => {
   req.clientIp = req.ip || req.connection.remoteAddress;
   next();
 });
-app.use("/api/auth", authRoutes);
+
+// Static files
 app.use(express.static(path.join(__dirname, "../frontend")));
+app.use("/dashboard", express.static(path.join(__dirname, "../dashboard")));
 app.use("/encrypted", express.static(path.join(__dirname, "encrypted")));
 
-// Routes
+// API Routes
+app.use("/api/auth", authRoutes);
 app.use("/api", mainRoutes);
+
 // Serve main page
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
+
+// Serve dashboard
 app.get("/dashboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/dashboard/dashboard.html"));
-});
-// Catch-all fallback for unknown routes
-app.use((req, res, next) => {
-  if (req.path.startsWith("/api")) {
-    return res.status(404).json({ success: false, error: "Not Found" });
-    next(error);
-  }
-  res.sendFile(path.join(__dirname, "../frontend/index.html"));
+  res.sendFile(path.join(__dirname, "../dashboard/dashboard.html"));
 });
 
+
+// Error handler
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`🚀 Server running at http://localhost:${port}`);
-});
+// ✅ PROPER DATABASE CONNECTION WITH ERROR HANDLING
+async function startServer() {
+  try {
+    await connectDB();
 
+    app.listen(port, () => {
+      console.log(`🚀 Server running at http://localhost:${port}`);
+      console.log(
+        `📊 Dashboard: http://localhost:${port}/dashboard/dashboard.html`
+      );
+      console.log(`🔐 API: http://localhost:${port}/api`);
+    });
+  } catch (error) {
+    console.error("❌ Failed to start server:", error);
+    process.exit(1);
+  }
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+startServer();

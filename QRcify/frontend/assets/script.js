@@ -337,6 +337,68 @@ function updateUIForLoggedInUser(user) {
   }
 }
 
+function createProfileMenu(user) {
+  return `
+    <div class="profile-menu" id="profileMenu">
+      <div class="profile-menu-header">
+        <div class="profile-menu-title">
+          <div class="user-name">${user.name}</div>
+          <div class="user-email" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">${user.email}</div>
+        </div>
+        <button class="close-profile-menu" onclick="closeProfileMenu()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      
+      <div class="profile-menu-section" style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
+        <div class="menu-item" onclick="window.location.href='/dashboard/dashboard.html'" style="padding: 0.75rem; border-radius: 8px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+          <i class="fas fa-tachometer-alt" style="width: 20px; color: var(--primary);"></i>
+          <span style="font-weight: 500;">Dashboard</span>
+        </div>
+        
+        <div class="menu-item" onclick="showAnalytics(); closeProfileMenu();" style="padding: 0.75rem; border-radius: 8px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+          <i class="fas fa-chart-line" style="width: 20px; color: var(--success);"></i>
+          <span style="font-weight: 500;">Analytics</span>
+        </div>
+        
+        <div class="menu-item" onclick="alert('My QR Codes - Coming Soon!'); closeProfileMenu();" style="padding: 0.75rem; border-radius: 8px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+          <i class="fas fa-qrcode" style="width: 20px; color: var(--warning);"></i>
+          <span style="font-weight: 500;">My QR Codes</span>
+        </div>
+        
+        <div class="menu-item" onclick="alert('Settings - Coming Soon!'); closeProfileMenu();" style="padding: 0.75rem; border-radius: 8px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+          <i class="fas fa-cog" style="width: 20px; color: var(--text-secondary);"></i>
+          <span style="font-weight: 500;">Settings</span>
+        </div>
+        
+        <div class="menu-item" onclick="window.open('https://github.com/Yashcodes124/Qr_Generator', '_blank'); closeProfileMenu();" style="padding: 0.75rem; border-radius: 8px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+          <i class="fas fa-question-circle" style="width: 20px; color: var(--info);"></i>
+          <span style="font-weight: 500;">Help & Support</span>
+        </div>
+      </div>
+      
+      <div class="profile-menu-section" style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
+        <div class="plan-info" style="background: var(--bg-primary); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span style="font-weight: 600; color: var(--text-primary);">Free Plan</span>
+            <span style="background: var(--success); color: white; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">Active</span>
+          </div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">
+            Unlimited QR codes • Basic analytics
+          </div>
+          <button onclick="alert('Upgrade to Pro - Coming Soon!'); closeProfileMenu();" style="width: 100%; margin-top: 0.75rem; padding: 0.5rem; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
+            Upgrade to Pro
+          </button>
+        </div>
+      </div>
+      
+      <button class="logout-btn" onclick="handleLogout()" style="width: 100%; padding: 0.75rem; background: var(--danger); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+        <i class="fas fa-sign-out-alt"></i>
+        Logout
+      </button>
+    </div>
+  `;
+}
 function toggleProfileMenu() {
   const profileMenu = document.getElementById("profileMenu");
   if (profileMenu) {
@@ -354,25 +416,6 @@ function toggleProfileMenu() {
       document.addEventListener("click", closeProfileMenuOutside);
     }, 100);
   }
-}
-
-function createProfileMenu(user) {
-  return `
-    <div class="profile-menu" id="profileMenu">
-      <div class="profile-menu-header">
-        <div class="profile-menu-title">
-          <div class="user-name">${user.name}</div>
-        </div>
-        <button class="close-profile-menu" onclick="closeProfileMenu()">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <div class="user-info">
-        <div class="user-email">${user.email}</div>
-      </div>
-      <button class="logout-btn" onclick="handleLogout()">Logout</button>
-    </div>
-  `;
 }
 
 function closeProfileMenu() {
@@ -769,7 +812,6 @@ async function decryptFile() {
         const data = await response.json();
 
         hideLoader("decryptLoader");
-
         if (data.success && data.decryptedBase64) {
           const byteCharacters = atob(data.decryptedBase64);
           const byteNumbers = new Array(byteCharacters.length)
@@ -1210,11 +1252,10 @@ document.addEventListener("DOMContentLoaded", function () {
       closeProfileMenu();
     }
   });
-});
 
-// Add CSS animations for notifications
-const style = document.createElement("style");
-style.textContent = `
+  // Add CSS animations for notifications
+  const style = document.createElement("style");
+  style.textContent = `
   @keyframes slideIn {
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
@@ -1224,4 +1265,22 @@ style.textContent = `
     to { transform: translateX(100%); opacity: 0; }
   }
 `;
-document.head.appendChild(style);
+  document.head.appendChild(style);
+  // Add this in DOMContentLoaded section
+  const menuStyle = document.createElement("style");
+  menuStyle.textContent = `
+  .menu-item:hover {
+    background: var(--bg-primary) !important;
+    transform: translateX(4px);
+  }
+  
+  .menu-item i {
+    transition: transform 0.2s;
+  }
+  
+  .menu-item:hover i {
+    transform: scale(1.1);
+  }
+`;
+  document.head.appendChild(menuStyle);
+});
