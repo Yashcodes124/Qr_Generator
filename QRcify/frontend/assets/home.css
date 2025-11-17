@@ -590,7 +590,8 @@ input[type="password"],
 textarea,
 input[type="file"] {
   width: 100%;
-  padding: 0.75rem 1.1rem;
+  padding:1rem;
+  padding-left: 2.5rem;
   border: 1.5px solid #cfcfe7;
   border-radius: 9px;
   margin-bottom: 1.2rem;
@@ -865,6 +866,7 @@ textarea.error {
 
 .auth-form {
   display: none;
+  padding: 2rem;
   animation: slideInForm 0.4s ease;
 }
 
@@ -885,18 +887,20 @@ textarea.error {
 
 /* Form Header */
 .form-header {
-  margin-bottom: 28px;
+  margin-bottom: 2rem;
+  text-align: center;
 }
 
 .form-header h3 {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   color: #212529;
   margin-bottom: 8px;
   margin-top: 20px;
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 0.5rem;
 }
 
 .form-header p {
@@ -911,21 +915,26 @@ textarea.error {
 
 .input-wrapper {
   position: relative;
+  width: 100%;
 }
 
 .input-icon {
   position: absolute;
+  width:10%;
+  top:40%;
   left: 16px;
-  top: 50%;
+  right: 20px;
   transform: translateY(-50%);
-  color: #adb5bd;
-  font-size: 16px;
+  color: #596878;
+  font-size: 18px;
+  pointer-events: none;
+  z-index: 1;
   transition: color 0.2s ease;
 }
 
 .form-input {
   width: 100%;
-  padding: 14px 16px 14px 48px;
+  padding: 14px 48px 14px 48px;
   border: 2px solid #e9ecef;
   border-radius: 12px;
   font-size: 15px;
@@ -960,14 +969,20 @@ textarea.error {
   color: #adb5bd;
   cursor: pointer;
   font-size: 16px;
-  padding: 4px;
+  padding: 8px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: color 0.2s ease;
 }
 
 .password-toggle:hover {
   color: #667eea;
 }
-
+.password-toggle:focus {
+  outline: none;
+}
 /* Submit Button */
 .submit-btn {
   width: 100%;
@@ -992,7 +1007,29 @@ textarea.error {
 .submit-btn:active {
   transform: translateY(0);
 }
-
+.submit-btn.loading {
+  pointer-events: none;
+  opacity: 0.7;
+  position: relative;
+}
+.submit-btn.loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid white;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+@keyframes spin {
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
 /* Forgot Password */
 .forgot-password {
   text-align: right;

@@ -42,8 +42,7 @@ router.post("/generate", async (req, res) => {
     const qrPng = qr.imageSync(url, { type: "png" });
     const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
 
-    // Log to database
-    // await logQRGeneration("url", url.length, req);
+    await logQRGeneration("url", url.length, req);
 
     fs.appendFileSync("urls.txt", url + "\n");
     res.json({ success: true, qrCode: qrBase64 });
@@ -91,39 +90,39 @@ router.post("/encrypt-file", async (req, res) => {
     return res.status(400).json({ error: "Missing required data" });
   }
 
-  // ✅ NEW: Validate file type
-  const allowedTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "image/svg+xml",
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/vnd.ms-powerpoint",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "text/plain",
-    "text/csv",
-    "application/zip",
-    "application/x-rar-compressed",
-    "video/mp4",
-    "video/quicktime",
-    "audio/mpeg",
-    "audio/wav",
-  ];
+  //  NEW: Validate file type
+  // const allowedTypes = [
+  //   "image/jpeg",
+  //   "image/png",
+  //   "image/gif",
+  //   "image/webp",
+  //   "image/svg+xml",
+  //   "application/pdf",
+  //   "application/msword",
+  //   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  //   "application/vnd.ms-excel",
+  //   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  //   "application/vnd.ms-powerpoint",
+  //   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  //   "text/plain",
+  //   "text/csv",
+  //   "application/zip",
+  //   "application/x-rar-compressed",
+  //   "video/mp4",
+  //   "video/quicktime",
+  //   "audio/mpeg",
+  //   "audio/wav",
+  // ];
 
-  // ✅ NEW: Security check
-  const maxFileSize = 10 * 1024 * 1024; // 10MB in bytes
-  const fileSize = Math.ceil((base64.length * 3) / 4); // Base64 to bytes
+  // //  NEW: Security check
+  // const maxFileSize = 10 * 1024 * 1024; // 10MB in bytes
+  // const fileSize = Math.ceil((base64.length * 3) / 4); // Base64 to bytes
 
-  if (fileSize > maxFileSize) {
-    return res.status(400).json({
-      error: `File too large. Maximum size is 10MB. Your file is ${(fileSize / 1024 / 1024).toFixed(2)}MB`,
-    });
-  }
+  // if (fileSize > maxFileSize) {
+  //   return res.status(400).json({
+  //     error: `File too large. Maximum size is 10MB. Your file is ${(fileSize / 1024 / 1024).toFixed(2)}MB`,
+  //   });
+  // }
 
   try {
     const combined = encryptData(base64, passphrase);
@@ -164,14 +163,13 @@ router.post("/encrypt-file", async (req, res) => {
     res.status(500).json({ error: "File encryption failed" });
   }
 });
-// 🆕 Generate QR with different types
-router.post("/generate-vcard", (req, res) => {
+router.post("/generate-vcard", async (req, res) => {
   const { name, phone, email, company } = req.body;
 
   if (!name || !phone) {
-    console.log("❌ vCard missing name or phone");
     return res.status(400).json({ error: "Name and phone are required" });
   }
+
   try {
     const vcard = `BEGIN:VCARD
 VERSION:3.0
@@ -181,21 +179,21 @@ EMAIL:${email}
 ORG:${company}
 END:VCARD`;
 
-    // Generate QR from vcard string
     const qrPng = qr.imageSync(vcard, { type: "png" });
     const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
 
+    await logQRGeneration("vcard", vcard.length, req);
+
     res.json({ success: true, qrCode: qrBase64 });
-    console.log("✅ vCard QR generated successfully");
   } catch (error) {
-    console.error("❌ vCard QR generation failed:", error);
+    console.error("vCard QR generation failed:", error);
     res
       .status(500)
       .json({ error: "vCard QR generation failed: " + error.message });
   }
 });
 
-router.post("/generate-wifi", (req, res) => {
+router.post("/generate-wifi", async (req, res) => {
   const { ssid, password, encryption = "WPA" } = req.body;
   // 🔒 VALIDATION: Network credentials check before passing data
   if (!ssid || !password) {
@@ -216,6 +214,7 @@ router.post("/generate-wifi", (req, res) => {
     const qrPng = qr.imageSync(wifiString, { type: "png" });
     const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
 
+    await logQRGeneration("wifi", wifiString.length, req);
     res.json({ success: true, qrCode: qrBase64 });
     console.log("✅ WiFi QR generated successfully");
   } catch (error) {
@@ -245,8 +244,10 @@ router.post("/decrypt", (req, res) => {
       message: "Decryption successfull.",
     });
   } catch (error) {
-    console.error("Decryption failed at server:", error);
-    res.status(500).json({ error: "Invalid passphrase or corrupted text" });
+    res.status(400).json({
+      success: false,
+      error: err.message || "Decryption failed",
+    });
   }
 });
 

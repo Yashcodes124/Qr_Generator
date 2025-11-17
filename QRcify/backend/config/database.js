@@ -2,10 +2,16 @@
 import { Sequelize } from "sequelize";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Make sure database directory exists
+const dbDir = path.join(__dirname, "../../database");
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
 const sequelize = new Sequelize({
   dialect: "sqlite",
   storage: path.join(__dirname, "../../database/qr_generator.sqlite"),
@@ -29,11 +35,16 @@ export const connectDB = async () => {
     console.log("✅ SQLite Database Connected Successfully");
 
     // Sync with force: true to update schema (drops existing tables!)
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ alter: true, force: false }); //Avoid using  force in production
     console.log("✅ Database tables synchronized ");
     return true;
   } catch (error) {
     console.error("❌ Database connection failed:", error.message);
+    if (error.message.includes("FOREIGN KEY constraint")) {
+      console.log("\n💡 Fix: Delete database and restart:");
+      console.log("   rm -rf database/qr_generator.sqlite");
+      console.log("   npm start\n");
+    }
     throw error;
   }
 };

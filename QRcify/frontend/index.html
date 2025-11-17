@@ -33,6 +33,7 @@
             <form onsubmit="handleLogin(event)">
               <div class="input-group">
                 <div class="input-wrapper">
+                  
                   <i class="fas fa-envelope input-icon"></i>
                   <input
                     type="email"
@@ -46,7 +47,9 @@
 
               <div class="input-group">
                 <div class="input-wrapper">
-                  <i class="fas fa-lock input-icon"></i>
+                  <div class="feature-icon">
+                        <i class="fas fa-lock"></i>
+                  </div>
                   <input
                     type="password"
                     id="loginPassword"
@@ -59,7 +62,9 @@
                     class="password-toggle"
                     onclick="togglePassword('loginPassword')"
                   >
-                    <i class="fas fa-eye"></i>
+                  <div class="feature-icon">
+                       <i class="fas fa-eye"></i>
+                  </div>
                   </button>
                 </div>
               </div>
@@ -213,10 +218,10 @@
           <a href="#decrypt" class="nav-link">Decrypt</a>
           <!-- Auth Buttons (shown when logged out) -->
           <div id="authButtons" >
-            <button onclick="openAuthModal()" class="btn ">
+            <button onclick="openAuthModal()" class="btn " style="text-decoration: none;">
               Login
             </button>
-            <button onclick="openRegisterModal()" class="btn">
+            <button onclick="openRegisterModal()" class="btn" style="text-decoration: none;">
               Register
             </button>
           </div>

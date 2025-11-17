@@ -752,14 +752,20 @@ async function decryptText() {
     hideLoader("decryptLoader");
 
     if (data.success && data.decrypted) {
+      const escapedText = data.decrypted
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
       decryptedOutput.innerHTML = `
         <div class="success-message" style="margin-top: 1rem;">
           <h4 style="margin-bottom: 1rem;">✅ Decryption Successful!</h4>
           <p style="margin-bottom: 0.5rem;"><strong>Decrypted Text:</strong></p>
-          <div style="background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-top: 1rem; word-wrap: break-word;">
-            ${data.decrypted}
+          <div style="background: var(--bg-primary, #f8f9fa); padding: 1rem; border-radius: 8px; border: 1px solid var(--border, #dee2e6); margin-top: 1rem; word-wrap: break-word; white-space: pre-wrap; font-family: 'Courier New', monospace;">
+            ${escapedText}
           </div>
-          <button onclick="copyToClipboard(\`${data.decrypted.replace(/`/g, "\\`")}\`)" class="btn btn-outline" style="margin-top: 1rem;">
+          <button onclick="copyDecryptedText('${data.decrypted.replace(/'/g, "\\'")}');" class="btn btn-outline" style="margin-top: 1rem;">
             📋 Copy Text
           </button>
         </div>
@@ -821,7 +827,6 @@ async function decryptFile() {
           const blob = new Blob([byteArray], {
             type: "application/octet-stream",
           });
-
           decryptedOutput.innerHTML = `
             <div class="success-message" style="margin-top: 1rem;">
               <h4 style="margin-bottom: 1rem;">✅ File Decryption Successful!</h4>
