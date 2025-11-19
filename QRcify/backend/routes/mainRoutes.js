@@ -90,40 +90,6 @@ router.post("/encrypt-file", async (req, res) => {
     return res.status(400).json({ error: "Missing required data" });
   }
 
-  //  NEW: Validate file type
-  // const allowedTypes = [
-  //   "image/jpeg",
-  //   "image/png",
-  //   "image/gif",
-  //   "image/webp",
-  //   "image/svg+xml",
-  //   "application/pdf",
-  //   "application/msword",
-  //   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  //   "application/vnd.ms-excel",
-  //   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  //   "application/vnd.ms-powerpoint",
-  //   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  //   "text/plain",
-  //   "text/csv",
-  //   "application/zip",
-  //   "application/x-rar-compressed",
-  //   "video/mp4",
-  //   "video/quicktime",
-  //   "audio/mpeg",
-  //   "audio/wav",
-  // ];
-
-  // //  NEW: Security check
-  // const maxFileSize = 10 * 1024 * 1024; // 10MB in bytes
-  // const fileSize = Math.ceil((base64.length * 3) / 4); // Base64 to bytes
-
-  // if (fileSize > maxFileSize) {
-  //   return res.status(400).json({
-  //     error: `File too large. Maximum size is 10MB. Your file is ${(fileSize / 1024 / 1024).toFixed(2)}MB`,
-  //   });
-  // }
-
   try {
     const combined = encryptData(base64, passphrase);
     const fileId = Math.floor(100000 + Math.random() * 900000);
@@ -147,7 +113,7 @@ router.post("/encrypt-file", async (req, res) => {
 
     const qrPng = qr.imageSync(qrTarget, { type: "png" });
     const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
-
+    const fileSize = Buffer.from(base64, "base64").length;
     await logQRGeneration("file", base64.length, req);
 
     res.json({
@@ -231,7 +197,7 @@ router.post("/decrypt", (req, res) => {
     return res.status(400).json({ error: "Missing ciphertext or passphrase" });
 
   try {
-    const decrypted = decryptData(cipher, passphrase);
+    const decrypted = decryptData(cipher.trim(), passphrase.trim());
     if (!decrypted) {
       return res.status(400).json({
         success: false,
@@ -244,9 +210,10 @@ router.post("/decrypt", (req, res) => {
       message: "Decryption successfull.",
     });
   } catch (error) {
-    res.status(400).json({
+    console.log(" TXET DECRYTION ERROR:", error);
+    return res.status(400).json({
       success: false,
-      error: err.message || "Decryption failed",
+      error: error.message || "Decryption failed",
     });
   }
 });
@@ -254,21 +221,34 @@ router.post("/decrypt", (req, res) => {
 router.post("/decrypt-file", (req, res) => {
   const { encryptedData, passphrase, filename } = req.body;
   if (!encryptedData || !passphrase)
-    return res.status(400).json({ error: "Missing data" });
+    return res
+      .status(400)
+      .json({ error: "Missing Encrypted Data or Passphrase" });
 
   try {
-    const decryptedBase64 = decryptData(encryptedData, passphrase);
-    if (!decryptedBase64) throw new Error("Decryption failed or wrong key.");
+    const decryptedBase64 = decryptData(
+      encryptedData.trim(),
+      passphrase.trim()
+    );
+    if (!decryptedBase64) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid passphrase or corrupted file",
+      });
+    }
     // 4️⃣ Send Base64 data back to frontend
     const cleanFilename = filename.replace(".enc", "").replace(/_\d+$/, "");
     res.json({
       success: true,
-      decryptedBase64: decryptedBase64,
+      decryptedBase64,
       suggestedFilename: cleanFilename,
     });
   } catch (error) {
     console.error("File decryption failed at server:", error);
-    res.status(500).json({ error: "Decryption failed" });
+    res.status(500).json({
+      success: false,
+      error: error.message || "File decryption failed",
+    });
   }
 });
 

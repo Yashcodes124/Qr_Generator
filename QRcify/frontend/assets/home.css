@@ -266,6 +266,15 @@ nav #authButtons .btn:hover {
   transform: scale(0.95);
 }
 
+.psdEye-icon {
+  top: 12px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  left: 15px;
+  color: #697582;
+  position: absolute;
+}
+
 .feature {
   border: none;
   width: 12em;
@@ -590,7 +599,7 @@ input[type="password"],
 textarea,
 input[type="file"] {
   width: 100%;
-  padding:1rem;
+  padding: 1rem;
   padding-left: 2.5rem;
   border: 1.5px solid #cfcfe7;
   border-radius: 9px;
@@ -862,11 +871,13 @@ textarea.error {
   position: relative;
   padding: 0 32px 32px;
   overflow: hidden;
+  max-height: 700px;
 }
 
 .auth-form {
   display: none;
   padding: 2rem;
+  padding-top: 0.5rem;
   animation: slideInForm 0.4s ease;
 }
 
@@ -909,9 +920,6 @@ textarea.error {
 }
 
 /* Input Groups */
-.input-group {
-  margin-bottom: 20px;
-}
 
 .input-wrapper {
   position: relative;
@@ -920,8 +928,8 @@ textarea.error {
 
 .input-icon {
   position: absolute;
-  width:10%;
-  top:40%;
+  width: 10%;
+  top: 40%;
   left: 16px;
   right: 20px;
   transform: translateY(-50%);
@@ -962,13 +970,13 @@ textarea.error {
 .password-toggle {
   position: absolute;
   right: 16px;
-  top: 50%;
+  top: 40%;
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: #adb5bd;
+  color: #697582;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 1.2rem;
   padding: 8px;
   z-index: 2;
   display: flex;
@@ -1129,6 +1137,12 @@ textarea.error {
 
 .terms a:hover {
   text-decoration: underline;
+}
+/* login here derirect link */
+.nav-login {
+  text-decoration: none;
+  color: rgb(215, 90, 90);
+  font-size: 1rem;
 }
 /* =============================== AUTH   END ===================================== */
 /* ==================== success and error messages  ====================== */
@@ -1742,12 +1756,6 @@ textarea.error {
   gap: 20px;
   z-index: 2;
   padding: 1.5rem;
-}
-
-.feature-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 }
 
 .feature-title {

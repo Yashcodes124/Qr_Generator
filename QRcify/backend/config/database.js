@@ -19,7 +19,7 @@ const sequelize = new Sequelize({
   define: {
     timestamps: true,
     underscored: false,
-    freezeTableName: false,
+    freezeTableName: true,
   },
   pool: {
     max: 5,
@@ -33,9 +33,7 @@ export const connectDB = async () => {
   try {
     await sequelize.authenticate();
     console.log("✅ SQLite Database Connected Successfully");
-
-    // Sync with force: true to update schema (drops existing tables!)
-    await sequelize.sync({ alter: true, force: false }); //Avoid using  force in production
+    await sequelize.sync({ alter: false, force: false }); //Avoid using  force in production
     console.log("✅ Database tables synchronized ");
     return true;
   } catch (error) {

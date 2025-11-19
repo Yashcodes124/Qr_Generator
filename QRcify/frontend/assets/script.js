@@ -122,6 +122,10 @@ function showNotification(message, type = "info") {
 function openAuthModal() {
   document.getElementById("authModal").style.display = "flex";
   showLoginForm();
+  window.addEventListener("load", function () {
+    document.getElementById("loginForm").reset();
+    this.document.getElementById("registerForm").reset();
+  });
 }
 
 function openRegisterModal() {
@@ -758,14 +762,20 @@ async function decryptText() {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+      const isDark =
+        document.documentElement.getAttribute("data-theme") === "dark";
+      const bgColor = isDark ? "#2d2d2d" : "#f8f9fa";
+      const borderColor = isDark ? "#495057" : "#dee2e6";
+      const textColor = isDark ? "#e9ecef" : "#212529";
+
       decryptedOutput.innerHTML = `
-        <div class="success-message" style="margin-top: 1rem;">
-          <h4 style="margin-bottom: 1rem;">✅ Decryption Successful!</h4>
-          <p style="margin-bottom: 0.5rem;"><strong>Decrypted Text:</strong></p>
-          <div style="background: var(--bg-primary, #f8f9fa); padding: 1rem; border-radius: 8px; border: 1px solid var(--border, #dee2e6); margin-top: 1rem; word-wrap: break-word; white-space: pre-wrap; font-family: 'Courier New', monospace;">
+        <div style="margin-top: 1rem; padding: 1.5rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 12px;">
+          <h4 style="margin-bottom: 1rem; color: #155724;">✅ Decryption Successful!</h4>
+          <p style="margin-bottom: 0.5rem; font-weight: 600; color: ${textColor};"><strong>Decrypted Text:</strong></p>
+          <div style="background: ${bgColor}; padding: 1.5rem; border-radius: 8px; border: 1px solid ${borderColor}; margin-top: 1rem; word-wrap: break-word; white-space: pre-wrap; font-family: 'Courier New', monospace; color: ${textColor}; max-height: 400px; overflow-y: auto;">
             ${escapedText}
           </div>
-          <button onclick="copyDecryptedText('${data.decrypted.replace(/'/g, "\\'")}');" class="btn btn-outline" style="margin-top: 1rem;">
+          <button onclick="copyDecryptedText(\`${data.decrypted.replace(/`/g, "\\`").replace(/\$/g, "\\$")}\`)" class="btn btn-outline" style="margin-top: 1rem; padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
             📋 Copy Text
           </button>
         </div>
@@ -782,6 +792,15 @@ async function decryptText() {
     showNotification("Decryption failed: " + error.message, "error");
   }
 }
+function copyDecryptedText(text) {
+  navigator.clipboard
+    .writeText(text)
+    .then(() => showNotification("✅ Text copied to clipboard!", "success"))
+    .catch((err) => {
+      console.error("Copy failed:", err);
+      showNotification("❌ Failed to copy text", "error");
+    });
+}
 async function decryptFile() {
   const fileInput = document.getElementById("fileDecryptInput");
   const passphrase = document
@@ -791,12 +810,12 @@ async function decryptFile() {
 
   if (!fileInput.files.length || !passphrase) {
     decryptedOutput.innerHTML =
-      '<div class="error-message">❌ Select encrypted file and enter passphrase</div>';
+      '<div class="error-message" style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px;">❌ Select encrypted file and enter passphrase</div>';
     return;
   }
 
   try {
-    showLoader("decryptLoader", "Decrypting");
+    showLoader("decryptLoader", "Decrypting file");
 
     const file = fileInput.files[0];
     const reader = new FileReader();
@@ -818,6 +837,7 @@ async function decryptFile() {
         const data = await response.json();
 
         hideLoader("decryptLoader");
+
         if (data.success && data.decryptedBase64) {
           const byteCharacters = atob(data.decryptedBase64);
           const byteNumbers = new Array(byteCharacters.length)
@@ -827,35 +847,36 @@ async function decryptFile() {
           const blob = new Blob([byteArray], {
             type: "application/octet-stream",
           });
+
           decryptedOutput.innerHTML = `
-            <div class="success-message" style="margin-top: 1rem;">
-              <h4 style="margin-bottom: 1rem;">✅ File Decryption Successful!</h4>
-              <p><strong>Original File:</strong> ${file.name}</p>
-              <p><strong>Decrypted File:</strong> ${data.suggestedFilename}</p>
+            <div style="margin-top: 1rem; padding: 1.5rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 12px;">
+              <h4 style="margin-bottom: 1rem; color: #155724;">✅ File Decryption Successful!</h4>
+              <p style="margin-bottom: 0.5rem;"><strong>Original File:</strong> ${file.name}</p>
+              <p style="margin-bottom: 1rem;"><strong>Decrypted File:</strong> ${data.suggestedFilename}</p>
               <div style="margin-top: 1.5rem;">
-                <a href="${URL.createObjectURL(blob)}" download="${data.suggestedFilename}" class="btn btn-primary">
+                <a href="${URL.createObjectURL(blob)}" download="${data.suggestedFilename}" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
                   📥 Download Decrypted File
                 </a>
               </div>
             </div>
           `;
-          showNotification("File decrypted successfully!", "success");
+          showNotification("✅ File decrypted successfully!", "success");
         } else {
-          decryptedOutput.innerHTML = `<div class="error-message">❌ ${data.error || "Decryption failed - wrong passphrase?"}</div>`;
-          showNotification("Decryption failed", "error");
+          decryptedOutput.innerHTML = `<div class="error-message" style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px;">❌ ${data.error || "Decryption failed - wrong passphrase?"}</div>`;
+          showNotification("❌ Decryption failed", "error");
         }
       } catch (error) {
         hideLoader("decryptLoader");
         console.error("File decryption failed:", error);
-        decryptedOutput.innerHTML = `<div class="error-message">❌ Decryption failed: ${error.message}</div>`;
-        showNotification("Decryption failed: " + error.message, "error");
+        decryptedOutput.innerHTML = `<div class="error-message" style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px;">❌ Decryption failed: ${error.message}</div>`;
+        showNotification("Decryption failed", "error");
       }
     };
 
     reader.onerror = function () {
       hideLoader("decryptLoader");
       decryptedOutput.innerHTML =
-        '<div class="error-message">❌ Failed to read encrypted file</div>';
+        '<div class="error-message" style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px;">❌ Failed to read encrypted file</div>';
       showNotification("Failed to read file", "error");
     };
 
@@ -863,8 +884,8 @@ async function decryptFile() {
   } catch (error) {
     hideLoader("decryptLoader");
     console.error("File decryption failed:", error);
-    decryptedOutput.innerHTML = `<div class="error-message">❌ Decryption failed: ${error.message}</div>`;
-    showNotification("Decryption failed: " + error.message, "error");
+    decryptedOutput.innerHTML = `<div class="error-message" style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px;">❌ Decryption failed: ${error.message}</div>`;
+    showNotification("Decryption failed", "error");
   }
 }
 // ==================== HELPER FUNCTIONS ====================

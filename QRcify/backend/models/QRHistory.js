@@ -15,10 +15,6 @@ const QRHistory = sequelize.define(
     userId: {
       type: DataTypes.INTEGER,
       allowNull: true, // Allow null for now (backward compatibility)
-      references: {
-        model: "users",
-        key: "id",
-      },
     },
     type: {
       type: DataTypes.ENUM("url", "encrypted_text", "file", "vcard", "wifi"),
@@ -39,7 +35,19 @@ const QRHistory = sequelize.define(
   },
   {
     tableName: "qr_history", // Actual table name in PostgreSQL
-    timestamps: true, // ✅ Automatically adds createdAt & updatedAt
+    timestamps: true,
+    freezeTableName: true,
+    indexes: [
+      {
+        fields: ["userId"],
+      },
+      {
+        fields: ["type"],
+      },
+      {
+        fields: ["createdAt"],
+      },
+    ],
   }
 );
 
