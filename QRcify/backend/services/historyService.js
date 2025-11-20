@@ -29,24 +29,26 @@ export const getStats = async (req) => {
     const userId = req?.user?.userId;
     if (!userId) {
       console.error("❌ No userId found in request");
+      console.error("   Request user object:", req?.user);
       return {
         totalQRs: 0,
         byType: [],
         recentActivity: 0,
         todayActivity: 0,
         popularType: "None",
+        error: "User not authenticated.",
       };
     }
+    console.log(`Fetching stats for user: ${userId}`);
     // 1. TOTAL QR CODES GENERATED
     const totalQRs = await QRHistory.count({
-      where: { userId },
-    }); // SQL: SELECT COUNT(*) FROM qr_history;
-    // Today's activity
+      where: { userId }, //filter by user
+    });
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     // 2. BREAKDOWN BY QR TYPE
     const byType = await QRHistory.findAll({
-      // Find with conditions
+      where: { userId },
       attributes: [
         "type",
         [Sequelize.fn("COUNT", Sequelize.col("id")), "count"],
@@ -58,6 +60,7 @@ export const getStats = async (req) => {
     // 3. RECENT ACTIVITY (last 24 hours)
     const recentActivity = await QRHistory.count({
       where: {
+        userId,
         createdAt: {
           [Sequelize.Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000),
         },
@@ -97,8 +100,8 @@ export const getStats = async (req) => {
       byType: [],
       recentActivity: 0,
       todayActivity: 0,
-      popularType:"None",
-      error: "Failed to fetch statistics",
+      popularType: "None",
+      error: "Failed to fetch statistics at service.",
     };
   }
 };

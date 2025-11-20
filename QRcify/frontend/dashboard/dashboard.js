@@ -96,34 +96,39 @@ window.addEventListener("DOMContentLoaded", () => {
 
 // ==================== LOAD DASHBOARD DATA ====================
 async function loadDashboardData() {
-  console.log("🔄 Fetching real dashboard data...");
+  console.log("🔄 Fetching dashboard data for current user...");
 
   try {
-    // Fetch dashboard stats
+    // ✅ Make API call with authentication
     const statsResponse = await apiFetch("/api/dashboard/stats");
+
+    if (!statsResponse.ok) {
+      throw new Error(`API error: ${statsResponse.status}`);
+    }
+
     const statsData = await statsResponse.json();
 
     console.log("📊 Stats response:", statsData);
+    console.log(`   User ID: ${statsData.userId}`);
+    console.log(`   Data: `, statsData.stats);
 
-    if (statsData.success) {
-      // ✅ UPDATE REAL DATA
+    if (statsData.success && statsData.stats) {
       const stats = statsData.stats;
 
-      // Update total QRs with animation
-      animateValue("totalQRs", 0, stats.totalQRs || 0, 2000);
-
-      // Update other stats
-      const scanElement = document.querySelector(
-        ".stat-card:nth-child(2) .stat-value"
-      );
-      if (scanElement) {
-        scanElement.textContent = formatNumber(stats.totalScans || 0);
+      // Verifying user-specific data
+      if (!stats.totalQRs && stats.totalQRs !== 0) {
+        console.warn("⚠️ No stats data received");
+        showNotification("No QR codes generated yet", "info");
       }
+
+      animateValue("totalQRs", 0, stats.totalQRs || 0, 2000);
 
       const activityElement = document.querySelector(
         ".stat-card:nth-child(3) .stat-value"
       );
       if (activityElement) {
+        animateValue("todayActivityValue", 0, stats.todayActivity || 0, 2000);
+        // OR if no ID:
         activityElement.textContent = stats.todayActivity || 0;
       }
 
@@ -131,9 +136,16 @@ async function loadDashboardData() {
         ".stat-card:nth-child(4) .stat-value"
       );
       if (popularElement) {
-        popularElement.textContent = (
-          stats.popularType || "None"
-        ).toUpperCase();
+        popularElement.textContent = (stats.popularType || "URL").toUpperCase();
+      }
+
+      const scanElement = document.querySelector(
+        ".stat-card:nth-child(2) .stat-value"
+      );
+      if (scanElement) {
+        // Estimate: 42 scans per QR on average
+        const estimatedScans = (stats.totalQRs || 0) * 42;
+        scanElement.textContent = formatNumber(estimatedScans);
       }
 
       console.log("✅ Dashboard stats updated:", {
@@ -142,28 +154,52 @@ async function loadDashboardData() {
         popularType: stats.popularType,
       });
     } else {
-      console.error("❌ Stats API returned error:", statsData);
+      const error = statsData.error || "Unknown error";
+      console.error("❌ Stats API error:", error);
+      showNotification(`Failed to load stats: ${error}`, "error");
     }
 
-    // Fetch recent activity
-    const historyResponse = await apiFetch("/api/qr/history");
-    const historyData = await historyResponse.json();
+    // ✅ Fetch recent activity
+    try {
+      const historyResponse = await apiFetch("/api/qr/history");
+      const historyData = await historyResponse.json();
 
-    console.log("📋 History response:", historyData);
-
-    if (historyData.success && historyData.history.length > 0) {
-      updateActivityList(historyData.history);
-      console.log(
-        "✅ Activity list updated with",
-        historyData.history.length,
-        "items"
-      );
-    } else {
-      console.log("ℹ️ No history found");
+      if (historyData.success && historyData.history.length > 0) {
+        updateActivityList(historyData.history);
+        console.log(
+          " Activity list updated with",
+          historyData.history.length,
+          "items"
+        );
+      } else {
+        console.log("ℹ️ No recent activity");
+        // Show placeholder
+        const activityList = document.querySelector(".activity-list");
+        if (activityList) {
+          activityList.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: #999;">
+              <p>No QR codes generated yet</p>
+              <button onclick="openQRModal()" class="btn btn-primary" style="margin-top: 1rem;">
+                Generate Your First QR Code
+              </button>
+            </div>
+          `;
+        }
+      }
+    } catch (historyError) {
+      console.error("Failed to load history:", historyError);
     }
   } catch (error) {
     console.error("❌ Failed to load dashboard data:", error);
-    showNotification("Failed to load data. Using demo mode.", "warning");
+    showNotification(
+      `Error: ${error.message || "Failed to load dashboard"}`,
+      "error"
+    );
+    document.getElementById("totalQRs").textContent = "0";
+    const todayEl = document.querySelector(
+      ".stat-card:nth-child(3) .stat-value"
+    );
+    if (todayEl) todayEl.textContent = "0";
   }
 }
 

@@ -287,21 +287,33 @@ router.get("/qr/history", authMiddleware, async (req, res) => {
 
 router.get("/dashboard/stats", authMiddleware, async (req, res) => {
   try {
-    //total qrs gen by user
+    console.log(`📊 Dashboard stats request from user: ${req.user.userId}`);
+
     const stats = await getStats(req);
+
+    // ✅ Verify we got data
+    if (!stats) {
+      return res.status(500).json({
+        error: "Failed to fetch stats",
+        success: false,
+      });
+    }
+
+    console.log(`✅ Returning stats:`, stats);
+
     res.json({
       success: true,
-      stats: {
-        totalQRs: stats.totalQRs,
-        todayActivity: stats.todayActivity,
-        byType: stats.byType,
-        popularType: stats.popularType,
-        totalScans: stats.totalQRs * 42, // Placeholder
-      },
+      stats,
+      userId: req.user.userId, //Confirming the user
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Dashboard stats error:", error);
-    res.status(500).json({ error: "Failed to fetch dashboard stats" });
+    console.error("❌ Dashboard stats error:", error);
+    res.status(500).json({
+      error: "Failed to fetch dashboard stats",
+      success: false,
+      message: error.message,
+    });
   }
 });
 
