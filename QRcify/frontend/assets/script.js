@@ -1,3 +1,10 @@
+// ✅ Store registration data temporarily
+let pendingRegistration = {
+  name: null,
+  email: null,
+  password: null,
+};
+
 // ==================== GLOBAL ERROR HANDLER ====================
 window.addEventListener("error", function (event) {
   console.error("❌ Global error:", event.error);
@@ -138,19 +145,40 @@ function showLoginForm() {
   document.getElementById("registerForm").style.display = "none";
 }
 
+// ✅ FIXED: Safely close auth modal
+function closeAuthModal() {
+  document.getElementById("authModal").style.display = "none";
+
+  // ✅ FIX: Check if elements exist before accessing
+  const step1 = document.getElementById("registerFormStep1");
+  const step2 = document.getElementById("registerFormStep2");
+
+  if (step1) step1.style.display = "block";
+  if (step2) step2.style.display = "none";
+
+  // ✅ Clear form inputs safely
+  const loginEmail = document.getElementById("loginEmail");
+  const loginPassword = document.getElementById("loginPassword");
+  const registerName = document.getElementById("registerName");
+  const registerEmail = document.getElementById("registerEmail");
+  const registerPassword = document.getElementById("registerPassword");
+  const otpInput = document.getElementById("otpInput");
+
+  if (loginEmail) loginEmail.value = "";
+  if (loginPassword) loginPassword.value = "";
+  if (registerName) registerName.value = "";
+  if (registerEmail) registerEmail.value = "";
+  if (registerPassword) registerPassword.value = "";
+  if (otpInput) otpInput.value = "";
+
+  clearMessages();
+}
+// ✅ UPDATED: Show Register Form - Reset to step 1
 function showRegisterForm() {
   document.getElementById("loginForm").style.display = "none";
   document.getElementById("registerForm").style.display = "block";
-}
-
-function closeAuthModal() {
-  document.getElementById("authModal").style.display = "none";
-  document.getElementById("loginEmail").value = "";
-  document.getElementById("loginPassword").value = "";
-  document.getElementById("registerName").value = "";
-  document.getElementById("registerEmail").value = "";
-  document.getElementById("registerPassword").value = "";
-  clearMessages();
+  document.getElementById("registerFormStep1").style.display = "block";
+  document.getElementById("registerFormStep2").style.display = "none";
 }
 
 function showSuccess(message) {
@@ -228,7 +256,14 @@ async function handleLogin(event) {
         window.location.href = "/dashboard/dashboard.html";
       }, 1000);
     } else {
-      showError(data.error || "Login failed. Please try again.");
+      if (data.unverified) {
+        showError(
+          "Email not verified. Check your email for OTP or request a new one."
+        );
+        console.log("⚠️ User email not verified");
+      } else {
+        showError(data.error || "Login failed. Please try again.");
+      }
     }
   } catch (error) {
     console.error("Login error:", error);
@@ -261,6 +296,7 @@ async function handleRegister(event) {
   btn.textContent = "Creating account...";
 
   try {
+    console("Registering User:", email);
     const response = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -270,6 +306,23 @@ async function handleRegister(event) {
     const data = await response.json();
 
     if (data.success) {
+      console.log("✅ Registration successful");
+
+      // ✅ Save registration data
+      pendingRegistration = { name, email, password };
+
+      // ✅ Show OTP verification form
+      document.getElementById("registerFormStep1").style.display = "none";
+      document.getElementById("registerFormStep2").style.display = "block";
+      document.getElementById("verificationEmail").textContent =
+        `📧 OTP sent to: ${email}`;
+
+      showSuccess("Check your email for the OTP!");
+
+      if (data.emailSent === false) {
+        showError("⚠️ Email config not set up. Check server logs for OTP.");
+      }
+
       showSuccess("Account created! Logging you in...");
 
       setTimeout(async () => {
@@ -298,6 +351,100 @@ async function handleRegister(event) {
   } finally {
     btn.classList.remove("loading");
     btn.textContent = "Create Account";
+  }
+}
+
+// ✅ NEW: Verify OTP
+async function handleVerifyOTP(event) {
+  event.preventDefault();
+
+  const otp = document.getElementById("otpInput").value.trim();
+  const email = pendingRegistration.email;
+  const btn = document.getElementById("verifyOTPBtn");
+
+  if (!otp || otp.length !== 6) {
+    showError("Please enter a valid 6-digit OTP");
+    return;
+  }
+
+  btn.classList.add("loading");
+  btn.textContent = "Verifying...";
+
+  try {
+    console.log("🔍 Verifying OTP for:", email);
+
+    const response = await fetch("/api/auth/verify-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      console.log("✅ Email verified!");
+
+      // ✅ Save token
+      localStorage.setItem("userToken", data.token);
+      localStorage.setItem("userData", JSON.stringify(data.user));
+
+      showSuccess("Email verified! Redirecting to dashboard...");
+
+      setTimeout(() => {
+        closeAuthModal();
+        window.location.href = "/dashboard/dashboard.html";
+      }, 1500);
+    } else {
+      showError(data.error || "Verification failed");
+    }
+  } catch (error) {
+    console.error("OTP verification error:", error);
+    showError("Verification failed. Please try again.");
+  } finally {
+    btn.classList.remove("loading");
+    btn.textContent = "Verify Email";
+  }
+}
+
+// ✅ NEW: Resend OTP
+async function handleResendOTP(event) {
+  event.preventDefault();
+
+  const email = pendingRegistration.email;
+  const btn = event.target;
+
+  btn.disabled = true;
+  btn.textContent = "Sending...";
+
+  try {
+    console.log("📧 Resending OTP for:", email);
+
+    const response = await fetch("/api/auth/resend-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showSuccess("OTP resent! Check your email.");
+      btn.textContent = "OTP Sent ✓";
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = "Resend OTP";
+      }, 10000); // Re-enable after 10 seconds
+    } else {
+      showError(data.error || "Failed to resend OTP");
+      btn.disabled = false;
+      btn.textContent = "Resend OTP";
+    }
+  } catch (error) {
+    console.error("Resend OTP error:", error);
+    showError("Failed to resend OTP");
+    btn.disabled = false;
+    btn.textContent = "Resend OTP";
   }
 }
 
