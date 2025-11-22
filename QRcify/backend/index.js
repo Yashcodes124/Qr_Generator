@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import path from "path";
@@ -7,7 +8,6 @@ import authRoutes from "./routes/authRoutes.js";
 import { connectDB } from "./config/database.js";
 import { config } from "./config/config.js";
 import { errorHandler } from "./middleware/errorHandler.js";
-import "dotenv/config";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -73,7 +73,6 @@ app.get("/", (req, res) => {
 app.get("/dashboard", (req, res) => {
   res.sendFile(path.join(__dirname, "../dashboard/dashboard.html"));
 });
-
 
 // Error handler
 app.use(errorHandler);

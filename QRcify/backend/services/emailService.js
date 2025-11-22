@@ -4,6 +4,8 @@ import nodemailer from "nodemailer";
 let transporter;
 
 try {
+  console.log("📧 Initializing email transporter...");
+  console.log("   Email:", process.env.EMAIL_USER);
   transporter = nodemailer.createTransport({
     service: "gmail", // Or your email service
     auth: {
@@ -13,7 +15,7 @@ try {
       // Setup: https://support.google.com/accounts/answer/185833
     },
   });
-
+  console.log("✅ Email transporter created successfully");
   // ✅ Verify connection
   transporter.verify((error, success) => {
     if (error) {
@@ -32,7 +34,7 @@ export function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// ✅ Calculate OTP expiry (15 minutes from now)
+// ✅ Calculate OTP expiry (30sec from now)
 export function getOTPExpiry() {
   const expiry = new Date();
   expiry.setMinutes(expiry.getSeconds() + 30);
@@ -72,7 +74,7 @@ export async function sendOTPEmail(email, otp, userName) {
                 ${otp}
               </p>
               <p style="color: #999; margin: 0.5rem 0 0 0; font-size: 0.85rem;">
-                Valid for 15 minutes
+                Valid for 30 sec
               </p>
             </div>
             
@@ -87,7 +89,7 @@ export async function sendOTPEmail(email, otp, userName) {
               <br/>
               • QRcify will never ask for your OTP via email
               <br/>
-              • This code expires in 15 minutes
+              • This code expires in 30 sec
             </p>
             
             <div style="background: #f0f7ff; border-left: 4px solid #3498db; padding: 1rem; margin-top: 2rem; border-radius: 4px;">

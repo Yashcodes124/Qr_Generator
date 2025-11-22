@@ -296,7 +296,7 @@ async function handleRegister(event) {
   btn.textContent = "Creating account...";
 
   try {
-    console("Registering User:", email);
+    console.log("Registering User:", email);
     const response = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

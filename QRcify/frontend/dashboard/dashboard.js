@@ -46,6 +46,13 @@ async function apiFetch(endpoint, options = {}) {
   }
 }
 
+// ===================== Log out ===========================
+function handleLogout() {
+  localStorage.removeItem("userToken");
+  localStorage.removeItem("userData");
+  window.location.href = "/index.html";
+  showNotification("👋 Logged out successfully!", "success");
+}
 // ==================== SIDEBAR & THEME ====================
 function toggleSidebar() {
   document.getElementById("sidebar").classList.toggle("collapsed");
@@ -179,7 +186,15 @@ async function loadDashboardData() {
           activityList.innerHTML = `
             <div style="text-align: center; padding: 2rem; color: #999;">
               <p>No QR codes generated yet</p>
-              <button onclick="openQRModal()" class="btn btn-primary" style="margin-top: 1rem;">
+              <button onclick="openQRModal()" class="btn btn-primary" style="margin-top: 1rem;padding: 16px;
+                    background: linear-gradient(135deg, #3b82f6, #2563eb);
+                    color: white;
+                    border: none;
+                    border-radius: 12px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: transform 0.2s;
+                }">
                 Generate Your First QR Code
               </button>
             </div>
