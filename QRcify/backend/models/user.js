@@ -41,11 +41,19 @@ const User = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    resetToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    resetTokenExpires: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     tableName: "users",
     timestamps: true,
-    freezeTableName: true,// to prevent table recreation
+    freezeTableName: true, // to prevent table recreation
   }
 );
 

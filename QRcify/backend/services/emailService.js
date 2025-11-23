@@ -171,3 +171,57 @@ export async function sendWelcomeEmail(email, userName) {
     return false;
   }
 }
+
+export async function sendPasswordResetEmail(email, resetLink, userName) {
+  console.log("📧 Attempting to send password reset email to:", email);
+  if (!transporter) {
+    console.warn("⚠️  Email transporter not configured");
+    console.log(`Reset link would be: ${resetLink}`);
+    return true;
+  }
+
+  try {
+    console.log("📧 Creating email...");
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "🔐 QRcify Pro - Password Reset Request",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0;">🔐 Password Reset</h1>
+          </div>
+          
+          <div style="background: #f9fafb; padding: 2rem; border-radius: 0 0 10px 10px;">
+            <h2 style="color: #2c3e50; margin-top: 0;">Hello ${userName}! 👋</h2>
+            
+            <p style="color: #555; line-height: 1.6;">
+              We received a request to reset your password. Click the button below to set a new password.
+            </p>
+            
+            <div style="text-align: center; margin: 2rem 0;">
+              <a href="${resetLink}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.75rem 2rem; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                Reset Password
+              </a>
+            </div>
+            
+            <p style="color: #999; font-size: 0.9rem; line-height: 1.6;">
+              This link expires in 1 hour. If you didn't request a password reset, please ignore this email.
+            </p>
+            
+            <p style="color: #999; font-size: 0.85rem;">
+              Or copy this link:<br/>
+              ${resetLink}
+            </p>
+          </div>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error("Failed to send reset email:", error);
+    return false;
+  }
+}

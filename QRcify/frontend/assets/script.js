@@ -173,12 +173,20 @@ function closeAuthModal() {
 
   clearMessages();
 }
-// ✅ UPDATED: Show Register Form - Reset to step 1
+
 function showRegisterForm() {
   document.getElementById("loginForm").style.display = "none";
   document.getElementById("registerForm").style.display = "block";
   document.getElementById("registerFormStep1").style.display = "block";
   document.getElementById("registerFormStep2").style.display = "none";
+}
+function openForgotPasswordModal() {
+  document.getElementById("forgotPasswordModal").style.display = "flex";
+  closeAuthModal();
+}
+
+function closeForgotPasswordModal() {
+  document.getElementById("forgotPasswordModal").style.display = "none";
 }
 
 function showSuccess(message) {
@@ -218,59 +226,6 @@ function togglePassword(inputId) {
     input.type = "password";
     icon.classList.remove("fa-eye-slash");
     icon.classList.add("fa-eye");
-  }
-}
-
-async function handleLogin(event) {
-  event.preventDefault();
-
-  const email = document.getElementById("loginEmail").value.trim();
-  const password = document.getElementById("loginPassword").value.trim();
-  const btn = document.getElementById("loginBtn");
-
-  if (!email || !password) {
-    showError("Please fill in all fields");
-    return;
-  }
-
-  btn.classList.add("loading");
-  btn.textContent = "Logging in...";
-
-  try {
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      localStorage.setItem("userToken", data.token);
-      localStorage.setItem("userData", JSON.stringify(data.user));
-
-      showSuccess("Login successful! Redirecting...");
-
-      setTimeout(() => {
-        closeAuthModal();
-        window.location.href = "/dashboard/dashboard.html";
-      }, 1000);
-    } else {
-      if (data.unverified) {
-        showError(
-          "Email not verified. Check your email for OTP or request a new one."
-        );
-        console.log("⚠️ User email not verified");
-      } else {
-        showError(data.error || "Login failed. Please try again.");
-      }
-    }
-  } catch (error) {
-    console.error("Login error:", error);
-    showError("Connection error. Please check your internet.");
-  } finally {
-    btn.classList.remove("loading");
-    btn.textContent = "Login to Account";
   }
 }
 
@@ -353,8 +308,95 @@ async function handleRegister(event) {
     btn.textContent = "Create Account";
   }
 }
+async function handleLogin(event) {
+  event.preventDefault();
 
-// ✅ NEW: Verify OTP
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value.trim();
+  const btn = document.getElementById("loginBtn");
+
+  if (!email || !password) {
+    showError("Please fill in all fields");
+    return;
+  }
+
+  btn.classList.add("loading");
+  btn.textContent = "Logging in...";
+
+  try {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      localStorage.setItem("userToken", data.token);
+      localStorage.setItem("userData", JSON.stringify(data.user));
+
+      showSuccess("Login successful! Redirecting...");
+
+      setTimeout(() => {
+        closeAuthModal();
+        window.location.href = "/dashboard/dashboard.html";
+      }, 1000);
+    } else {
+      if (data.unverified) {
+        showError(
+          "Email not verified. Check your email for OTP or request a new one."
+        );
+        console.log("⚠️ User email not verified");
+      } else {
+        showError(data.error || "Login failed. Please try again.");
+      }
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    showError("Connection error. Please check your internet.");
+  } finally {
+    btn.classList.remove("loading");
+    btn.textContent = "Login to Account";
+  }
+}
+
+async function handleForgotPassword(event) {
+  event.preventDefault();
+
+  const email = document.getElementById("resetEmail").value.trim();
+  const btn = document.getElementById("resetBtn");
+
+  btn.classList.add("loading");
+  btn.textContent = "Sending...";
+
+  try {
+    const response = await fetch("/api/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showSuccess("Reset link sent! Check your email");
+      setTimeout(() => {
+        closeForgotPasswordModal();
+        document.getElementById("resetEmail").value = "";
+      }, 2000);
+    } else {
+      showError(data.error || "Failed to send reset link");
+    }
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    showError("Failed to send reset link");
+  } finally {
+    btn.classList.remove("loading");
+    btn.textContent = "Send Reset Link";
+  }
+}
+
 async function handleVerifyOTP(event) {
   event.preventDefault();
 
@@ -406,7 +448,51 @@ async function handleVerifyOTP(event) {
   }
 }
 
-// ✅ NEW: Resend OTP
+function handlePasswordResetFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const resetToken = params.get("reset");
+
+  if (resetToken) {
+    showPasswordResetForm(resetToken);
+  }
+}
+
+function showPasswordResetForm(resetToken) {
+  // Show modal to enter new password
+  const newPassword = prompt("Enter new password (min 6 characters):");
+
+  if (!newPassword || newPassword.length < 6) {
+    showError("Password must be at least 6 characters");
+    return;
+  }
+
+  submitPasswordReset(resetToken, newPassword);
+}
+
+async function submitPasswordReset(resetToken, newPassword) {
+  try {
+    const response = await fetch("/api/auth/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resetToken, newPassword }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showSuccess("Password reset successfully! Please login");
+      setTimeout(() => {
+        window.location.href = "/index.html";
+      }, 1500);
+    } else {
+      showError(data.error || "Failed to reset password");
+    }
+  } catch (error) {
+    console.error("Reset password error:", error);
+    showError("Failed to reset password");
+  }
+}
+
 async function handleResendOTP(event) {
   event.preventDefault();
 
@@ -1338,6 +1424,7 @@ async function loadStats() {
 document.addEventListener("DOMContentLoaded", function () {
   console.log("🚀 QRcify Pro initialized successfully!");
 
+  handlePasswordResetFromURL();
   // Check if user is already logged in
   checkExistingLogin();
 

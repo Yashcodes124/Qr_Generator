@@ -70,7 +70,7 @@
               </div>
 
               <div class="forgot-password">
-                <a href="#" onclick="alert('Password reset coming soon!')"
+                <a href="#" onclick="openForgotPasswordModal()"
                   >Forgot password?</a
                 >
               </div>
@@ -252,6 +252,48 @@
             </div>
         </div>
         </div>
+      </div>
+    </div>
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" class="modal" style="display: none">
+      <div class="auth-modal-container">
+        <button class="close-modal" onclick="closeForgotPasswordModal()">
+          <i class="fas fa-times"></i>
+        </button>
+        
+        <div class="form-header">
+          <h3>
+            <i class="fas fa-key"></i>
+            Reset Password
+          </h3>
+          <p>Enter your email to receive reset password link</p>
+        </div>
+
+        <form onsubmit="handleForgotPassword(event)">
+          <div class="input-group">
+            <div class="input-wrapper">
+              <i class="fas fa-envelope input-icon"></i>
+              <input
+                type="email"
+                id="resetEmail"
+                class="form-input"
+                placeholder="Your email address"
+                required
+              />
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="resetBtn">
+            Send  Link
+          </button>
+        </form>
+
+        <p style="text-align: center; margin-top: 1rem;">
+          Remember your password?
+          <a href="#" onclick="closeForgotPasswordModal() ;showLoginForm()" style="color: #667eea; text-decoration: none; font-weight: 600;">
+            Login
+          </a>
+        </p>
       </div>
     </div>
     <!-- Enhanced Header -->

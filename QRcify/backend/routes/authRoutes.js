@@ -2,6 +2,12 @@ import express from "express";
 import bcrypt from "bcrypt";
 import { generateAuthToken } from "../utils/authUtils.js";
 import User from "../models/user.js";
+import { Sequelize } from "sequelize";
+import {
+  generateResetToken,
+  getResetTokenExpiry,
+  sendResetEmail,
+} from "../utils/passwordReset.js";
 import {
   generateOTP,
   getOTPExpiry,
@@ -148,7 +154,6 @@ router.post("/verify-otp", async (req, res) => {
   }
 });
 
-// ✅ NEW: Resend OTP Endpoint
 router.post("/resend-otp", async (req, res) => {
   try {
     const { email } = req.body;
@@ -195,6 +200,103 @@ router.post("/resend-otp", async (req, res) => {
       error: "Failed to resend OTP",
       message: error.message,
     });
+  }
+});
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    console.log("🔐 Forgot password request for:", email);
+
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    // Find user
+    const user = await User.findOne({ where: { email } });
+    console.log("👤 User found:", user ? "Yes" : "No");
+
+    if (!user) {
+      // Don't reveal if email exists
+      return res.json({
+        success: true,
+        message: "If email exists, reset link sent",
+      });
+    }
+
+    // Generate reset token
+    const resetToken = generateResetToken();
+    const resetTokenExpires = getResetTokenExpiry();
+    console.log(
+      "🔑 Reset token generated:",
+      resetToken.substring(0, 10) + "..."
+    );
+
+    // Save to database
+    user.resetToken = resetToken;
+    user.resetTokenExpires = resetTokenExpires;
+    await user.save();
+    console.log("💾 Reset token saved to database");
+
+    // ✅ THIS IS THE CRITICAL LINE - Send email
+    console.log("📧 Calling sendResetEmail function...");
+    const emailSent = await sendResetEmail(email, resetToken, user.name);
+    console.log("✅ Email result:", emailSent);
+
+    res.json({
+      success: true,
+      message: "Password reset link sent to email",
+      emailSent: emailSent,
+    });
+  } catch (error) {
+    console.error("❌ Forgot password error:", error);
+    res.status(500).json({
+      error: "Failed to process request",
+      message: error.message,
+    });
+  }
+});
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { resetToken, newPassword } = req.body;
+
+    if (!resetToken || !newPassword) {
+      return res.status(400).json({ error: "Token and password required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        error: "Password must be at least 6 characters",
+      });
+    }
+
+    const user = await User.findOne({
+      where: {
+        resetToken: resetToken,
+        resetTokenExpires: {
+          [Sequelize.Op.gt]: new Date(),
+        },
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        error: "Invalid or expired reset token",
+      });
+    }
+
+    // Updateing the new Password password
+    user.password = newPassword; // Will be hashed by beforeCreate hook
+    user.resetToken = null;
+    user.resetTokenExpires = null;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Password reset successfully",
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ error: "Failed to reset password" });
   }
 });
 
