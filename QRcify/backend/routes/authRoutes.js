@@ -258,7 +258,12 @@ router.post("/forgot-password", async (req, res) => {
 router.post("/reset-password", async (req, res) => {
   try {
     const { resetToken, newPassword } = req.body;
-
+    console.log("🔐 Reset password request received");
+    console.log(
+      "   Token:",
+      resetToken ? resetToken.substring(0, 10) + "..." : "MISSING"
+    );
+    console.log("   New password:", newPassword ? "***" : "MISSING");
     if (!resetToken || !newPassword) {
       return res.status(400).json({ error: "Token and password required" });
     }
@@ -268,7 +273,7 @@ router.post("/reset-password", async (req, res) => {
         error: "Password must be at least 6 characters",
       });
     }
-
+    console.log("🔍 Searching for user with token...");
     const user = await User.findOne({
       where: {
         resetToken: resetToken,
@@ -277,19 +282,21 @@ router.post("/reset-password", async (req, res) => {
         },
       },
     });
+    console.log("   User found:", user ? "YES" : "NO");
 
     if (!user) {
       return res.status(400).json({
         error: "Invalid or expired reset token",
       });
     }
-
+    console.log("✅ User found, updating password...");
     // Updateing the new Password password
     user.password = newPassword; // Will be hashed by beforeCreate hook
     user.resetToken = null;
     user.resetTokenExpires = null;
+    console.log("💾 Saving user...");
     await user.save();
-
+    console.log("✅ Password reset successfully for user:", user.email);
     res.json({
       success: true,
       message: "Password reset successfully",

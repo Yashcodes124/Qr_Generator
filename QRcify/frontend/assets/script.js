@@ -623,13 +623,13 @@ function createProfileMenu(user) {
           <div style="font-size: 0.85rem; color: var(--text-secondary);">
             Unlimited QR codes • Basic analytics
           </div>
-          <button onclick="alert('Upgrade to Pro - Coming Soon!'); closeProfileMenu();" style="width: 100%; margin-top: 0.75rem; padding: 0.5rem; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
+          <button onclick="alert('Upgrade to Pro - Coming Soon!'); closeProfileMenu();" style="width: 100%; margin-top: 0.75rem; padding: 0.5rem; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color:grey; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
             Upgrade to Pro
           </button>
         </div>
       </div>
       
-      <button class="logout-btn" onclick="handleLogout()" style="width: 100%; padding: 0.75rem; background: var(--danger); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+      <button class="logout-btn" onclick="handleLogout()" style="width: 100%; padding: 0.75rem; color:white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
         <i class="fas fa-sign-out-alt"></i>
         Logout
       </button>

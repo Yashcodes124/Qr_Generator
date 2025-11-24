@@ -59,8 +59,16 @@ const User = sequelize.define(
 
 // Hash password before saving
 //bycrypt: convert passward to fixed length, mke salt foreach
+// Hash password when creating a new user
 User.beforeCreate(async (user) => {
   user.password = await bcrypt.hash(user.password, 12);
+});
+
+// Hash password when updating an existing user (e.g., password reset)
+User.beforeUpdate(async (user) => {
+  if (user.changed("password")) {
+    user.password = await bcrypt.hash(user.password, 12);
+  }
 });
 
 export default User;
