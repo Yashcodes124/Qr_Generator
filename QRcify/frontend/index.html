@@ -943,6 +943,16 @@
             </button>
           </div>
         </section>
+        <section
+          id="batchQRGeneration"
+          class="section card"
+        >
+          <form id="batchQRForm" enctype="multipart/form-data">
+            <input type="file" id="csvfile" name="csvfile" accept=".csv"/>
+            <button type="submit">Generate Batch QR ZIP</button>
+          </form>
+          <div id="batchQRResult"></div>
+        </section>
       </div>
     </main>
 

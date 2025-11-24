@@ -12,7 +12,7 @@ import { getStats, getTimeAgo } from "../services/historyService.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { fileURLToPath } from "url";
 import QRHistory from "../models/QRHistory.js";
-
+import { generateBatch } from "../services/batchService.js";
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,6 +25,7 @@ router.use(
     "/encrypt-file",
     "/generate-vcard",
     "/generate-wifi",
+    "/generate-batch",
   ],
   authMiddleware,
   qrGenerationLimiter
@@ -188,6 +189,19 @@ router.post("/generate-wifi", async (req, res) => {
     res
       .status(500)
       .json({ error: "WiFi QR generation failed: " + error.message });
+  }
+});
+
+router.post("/generate-batch", upload.single("csvfile"), async (req, res) => {
+  try {
+    const csvText = req.file.buffer.toString("utf8");
+    const zipPath = path.join(os.tmpdir(), `batch_qr_${Date.now()}.zip`);
+    await generateBatch(zipPath, csvText);
+    res.download(zipPath, "qr_codes.zip", () => {
+      fs.unlink(zipPath, () => {}); // Cleanup temp file
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message || "Batch generation failed" });
   }
 });
 

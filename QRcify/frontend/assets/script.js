@@ -1419,6 +1419,37 @@ async function loadStats() {
       '<div class="error-message">Failed to load statistics</div>';
   }
 }
+// ======================BATCH QR GENERATION=========================
+document.getElementById("batchQRForm").onsubmit = async function (e) {
+  e.preventDefault();
+  const form = e.target;
+  const fileInput = form.csvfile;
+  if (!fileInput.files.length) return alert("Please upload a CSV file.");
+  const formData = new FormData();
+  formData.append("csvfile", fileInput.files[0]);
+
+  const resp = await fetch("/api/generate-batch", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (resp.ok) {
+    // Download ZIP file
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "qr_codes.zip";
+    a.click();
+    document.getElementById("batchQRResult").innerText =
+      "ZIP ready for download!";
+    URL.revokeObjectURL(url);
+  } else {
+    const error = await resp.json();
+    document.getElementById("batchQRResult").innerText =
+      "Error: " + error.error;
+  }
+};
 
 // ==================== INITIALIZATION ====================
 document.addEventListener("DOMContentLoaded", function () {
