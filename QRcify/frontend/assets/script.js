@@ -1420,37 +1420,161 @@ async function loadStats() {
   }
 }
 // ======================BATCH QR GENERATION=========================
-document.getElementById("batchQRForm").onsubmit = async function (e) {
-  e.preventDefault();
-  const form = e.target;
-  const fileInput = form.csvfile;
-  if (!fileInput.files.length) return alert("Please upload a CSV file.");
-  const formData = new FormData();
-  formData.append("csvfile", fileInput.files[0]);
+// Parse URLs from text (handles newlines or JSON array)
+function parseUrls(input) {
+  input = input.trim();
 
-  const resp = await fetch("/api/generate-batch", {
-    method: "POST",
-    body: formData,
-  });
-
-  if (resp.ok) {
-    // Download ZIP file
-    const blob = await resp.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "qr_codes.zip";
-    a.click();
-    document.getElementById("batchQRResult").innerText =
-      "ZIP ready for download!";
-    URL.revokeObjectURL(url);
-  } else {
-    const error = await resp.json();
-    document.getElementById("batchQRResult").innerText =
-      "Error: " + error.error;
+  // Try JSON array format
+  if (input.startsWith("[")) {
+    try {
+      const urls = JSON.parse(input);
+      if (Array.isArray(urls)) {
+        return urls.filter(
+          (url) => typeof url === "string" && url.startsWith("http")
+        );
+      }
+    } catch (e) {
+      console.warn("Invalid JSON array format");
+    }
   }
-};
 
+  // Parse newline-separated URLs
+  return input
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line && line.startsWith("http"));
+}
+
+// Generate batch QR codes
+async function generateBatchQR() {
+  const input = document.getElementById("batchUrls").value.trim();
+  const batchOutput = document.getElementById("batchOutput");
+
+  if (!input) {
+    showError("Please enter at least one URL");
+    return;
+  }
+
+  const urls = parseUrls(input);
+
+  if (urls.length === 0) {
+    showError("No valid URLs found (must start with http:// or https://)");
+    return;
+  }
+
+  console.log(`📦 Generating batch for ${urls.length} URLs`);
+  showLoader("batchLoader", "Generating QR codes");
+  batchOutput.innerHTML = "";
+
+  try {
+    const response = await apiFetch("/api/generate-batch", {
+      method: "POST",
+      body: JSON.stringify({ urls }),
+    });
+
+    if (response.ok) {
+      // File will auto-download
+      const filename = `qr_codes_batch_${Date.now()}.zip`;
+
+      batchOutput.innerHTML = `
+        <div style="margin-top: 1rem; padding: 1.5rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 12px;">
+          <h4 style="margin-top: 0; color: #155724;">✅ Batch QR Generated!</h4>
+          <p style="color: #155724;">
+            <strong>URLs processed:</strong> ${urls.length}<br>
+            <strong>File:</strong> ${filename}
+          </p>
+          <p style="color: #666; font-size: 0.9rem;">
+            Your ZIP file has been downloaded with all QR codes. Check your Downloads folder.
+          </p>
+          <button onclick="document.getElementById('batchUrls').value = ''; document.getElementById('batchOutput').innerHTML = '';" class="btn btn-outline" style="margin-top: 1rem;">
+            Generate Another Batch
+          </button>
+        </div>
+      `;
+
+      showNotification(
+        `✅ Batch QR generated for ${urls.length} URLs!`,
+        "success"
+      );
+    } else {
+      const data = await response.json();
+      throw new Error(data.error || "Batch generation failed");
+    }
+  } catch (error) {
+    console.error("Batch QR error:", error);
+    batchOutput.innerHTML = `<div class="error-message">${error.message}</div>`;
+    showError("Failed to generate batch: " + error.message);
+  } finally {
+    hideLoader("batchLoader");
+  }
+}
+
+// Generate batch from CSV file
+async function generateBatchFromCSV() {
+  const fileInput = document.getElementById("csvFile");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    showError("Please select a CSV file");
+    return;
+  }
+
+  console.log("📄 Reading CSV file:", file.name);
+  showLoader("batchLoader", "Processing CSV file");
+
+  try {
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+      try {
+        const csvData = e.target.result;
+        console.log("📄 CSV data read:", csvData.length, "characters");
+
+        const response = await apiFetch("/api/generatebatch-from-csv", {
+          method: "POST",
+          body: JSON.stringify({ csvData }),
+        });
+
+        if (response.ok) {
+          const batchOutput = document.getElementById("batchOutput");
+          batchOutput.innerHTML = `
+            <div style="margin-top: 1rem; padding: 1.5rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 12px;">
+              <h4 style="margin-top: 0; color: #155724;">✅ CSV Batch QR Generated!</h4>
+              <p style="color: #155724;">
+                <strong>File processed:</strong> ${file.name}<br>
+                <strong>Zip file:</strong> qr_codes_batch_${Date.now()}.zip
+              </p>
+              <p style="color: #666; font-size: 0.9rem;">
+                Check your Downloads folder for the ZIP file with all QR codes.
+              </p>
+            </div>
+          `;
+
+          showNotification("✅ CSV batch QR generated!", "success");
+        } else {
+          const data = await response.json();
+          throw new Error(data.error || "CSV batch generation failed");
+        }
+      } catch (error) {
+        console.error("CSV batch error:", error);
+        showError("Failed to process CSV: " + error.message);
+      } finally {
+        hideLoader("batchLoader");
+      }
+    };
+
+    reader.onerror = () => {
+      showError("Failed to read file");
+      hideLoader("batchLoader");
+    };
+
+    reader.readAsText(file);
+  } catch (error) {
+    console.error("CSV error:", error);
+    showError("Failed to process CSV");
+    hideLoader("batchLoader");
+  }
+}
 // ==================== INITIALIZATION ====================
 document.addEventListener("DOMContentLoaded", function () {
   console.log("🚀 QRcify Pro initialized successfully!");

@@ -1,7 +1,7 @@
 //  updated the imports and routes:
 
 import express from "express";
-import fs from "fs";
+import fs from "fs/promises";
 import path from "path";
 import qr from "qr-image";
 import { encryptData, decryptData } from "../utils/cryptoUtils.js";
@@ -12,7 +12,7 @@ import { getStats, getTimeAgo } from "../services/historyService.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { fileURLToPath } from "url";
 import QRHistory from "../models/QRHistory.js";
-import { generateBatch } from "../services/batchService.js";
+import { generateBatchQRs, createZipFile } from "../services/batchService.js";
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -192,16 +192,124 @@ router.post("/generate-wifi", async (req, res) => {
   }
 });
 
-router.post("/generate-batch", upload.single("csvfile"), async (req, res) => {
+router.post("/generate-batch", authMiddleware, async (req, res) => {
   try {
-    const csvText = req.file.buffer.toString("utf8");
-    const zipPath = path.join(os.tmpdir(), `batch_qr_${Date.now()}.zip`);
-    await generateBatch(zipPath, csvText);
-    res.download(zipPath, "qr_codes.zip", () => {
-      fs.unlink(zipPath, () => {}); // Cleanup temp file
+    const { urls } = req.body;
+    console.log(
+      `Batch request recieved. URLs count: ${urls ? urls.length : 0}`
+    );
+    if (!urls || !Array.isArray(urls) || urls.length === 0) {
+      return res.status(400).json({
+        error: "URLs array is required",
+        example: { urls: ["https://example.com", "https://google.com"] },
+      });
+    }
+    if (urls.length > 100) {
+      return res.status(400).json({
+        error: "Maximum 100 URLs per batch",
+      });
+    }
+    const batchId = Date.now();
+    const tempDir = path.join(__dirname, `../temp/batch_${batchId}`);
+    const zipPath = path.join(__dirname, `../temp/QR_Codes_${batchId}.zip`);
+    console.log(`batchId: ${batchId}`);
+    const qrFiles = await generateBatchQRs(urls, tempDir);
+
+    if (qrFiles.length === 0) {
+      return res.status(400).json({
+        error: "No valid URLs to process",
+      });
+    }
+
+    // Create ZIP file
+    await createZipFile(tempDir, zipPath);
+
+    //Storing in database
+    await logQRGeneration("batch", urls.length, req, {
+      batchSize: urls.length,
+      filesGenerated: qrFiles.length,
     });
-  } catch (err) {
-    res.status(400).json({ error: err.message || "Batch generation failed" });
+    // Send ZIP file
+    res.download(zipPath, `qr_codes_batch_${batchId}.zip`, (err) => {
+      if (err) {
+        console.error("❌ Error in Downloading QRs:", err);
+      } else {
+        console.log("✅ ZIP file sent to user end");
+      }
+
+      // Cleanup after download
+      try {
+        fs.rm(tempDir, { recursive: true, force: true });
+        fs.unlink(zipPath);
+        console.log("🧹 Cleaned up temporary files");
+      } catch (cleanupErr) {
+        console.warn("⚠️  Cleanup warning:", cleanupErr.message);
+      }
+    });
+  } catch (error) {
+    console.error("❌ Batch generation error:", error);
+    res.status(500).json({
+      error: "Failed to generate batch QR codes",
+      message: error.message,
+    });
+  }
+});
+
+router.post("/generatebatch-from-csv", authMiddleware, async (req, res) => {
+  const { csvData } = req.body;
+
+  console.log("📄 CSV batch request received");
+
+  if (!csvData) {
+    return res.status(400).json({ error: "CSV data is required" });
+  }
+
+  try {
+    // Parse CSV (simple format: one URL per line)
+    const urls = csvData
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line && line.startsWith("http"));
+
+    console.log(`📄 Parsed ${urls.length} URLs from CSV`);
+
+    if (urls.length === 0) {
+      return res.status(400).json({ error: "No valid URLs found in CSV" });
+    }
+
+    // Forward to batch generate
+    req.body.urls = urls;
+
+    // Create temporary directory
+    const batchId = Date.now();
+    const tempDir = path.join(__dirname, `../temp/batch_${batchId}`);
+    const zipPath = path.join(__dirname, `../temp/qr_codes_${batchId}.zip`);
+
+    const qrFiles = await generateBatchQRs(urls, tempDir);
+
+    if (qrFiles.length === 0) {
+      return res.status(400).json({ error: "No valid URLs to process" });
+    }
+
+    await createZipFile(tempDir, zipPath);
+
+    await logQRGeneration("batch_csv", urls.length, req);
+
+    res.download(zipPath, `qr_codes_batch_${batchId}.zip`, async (err) => {
+      if (err) console.error("Download error:", err);
+      try {
+        await fs.rm(tempDir, { recursive: true, force: true });
+        await fs.unlink(zipPath);
+      } catch (e) {
+        console.warn("Cleanup warning:", e.message);
+      }
+    });
+  } catch (error) {
+    console.error("❌ CSV batch error:", error);
+    res.status(500).json({
+      error: "Failed to process CSV batch",
+      message: error.message,
+    });
   }
 });
 

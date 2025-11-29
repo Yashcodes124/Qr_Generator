@@ -1,29 +1,80 @@
-import csvParse from "csv-parse";
+// import pp from "papaparse";
 import qr from "qr-image";
+import { createWriteStream } from "fs";
 import archiver from "archiver";
-import fs from "fs/promises";
+import { mkdir } from "fs/promises";
 import path from "path";
-import os from "os";
+import { fileURLToPath } from "url";
+import { error } from "console";
 
-async function generateBatch(zipPath, csvText) {
-  // Parse CSV
-  const records = csvParse(csvText, { columns: false, trim: true });
-  // records: [["URL1"], ["URL2"], ...]
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-  // Create ZIP archive
-  const output = fs.createWriteStream(zipPath);
-  const archive = archiver("zip", { zlib: { level: 9 } });
+export async function generateBatchQRs(urls, outputDir) {
+  try {
+    console.log(`generating batch ${urls.length} QR codes...`);
+    await mkdir(outputDir, { recursive: true });
 
-  archive.pipe(output);
-  records.forEach(([text], i) => {
-    // Create QR PNG buffer (change to SVG if needed)
-    const qrBuffer = qr.imageSync(text, { type: "png" });
-    archive.append(qrBuffer, { name: `qr_${i + 1}.png` });
-  });
+    const qrFiles = [];
 
-  await archive.finalize();
-  // Wait for ZIP to finish then return path
-  await new Promise((res) => output.on("close", res));
-  return zipPath;
+    //generating QR foe each url
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i].trim();
+
+      if (!url || !url.startsWith("http")) {
+        console.log(
+          `⚠️ Skipping the Qr generation , Invalid URL at index ${i}: ${url}`
+        );
+        continue;
+      }
+      try {
+        // Generate QR code
+        const qrPng = qr.imageSync(url, { type: "png" });
+
+        // Create filename
+        const filename = `qr_${i + 1}_${encodeURIComponent(url.substring(0, 20))}.png`;
+        const filepath = path.join(outputDir, filename);
+
+        // Write to file
+        const writeStream = createWriteStream(filepath);
+        writeStream.write(qrPng);
+        writeStream.end();
+
+        qrFiles.push(filename);
+        console.log(`✅ QR ${i + 1}/${urls.length} generated: ${filename}`);
+      } catch (err) {
+        console.error(
+          `❌ Failed to generate QR for URL ${i + 1}: ${err.message}`
+        );
+      }
+    }
+
+    console.log(`✅ All QR codes generated: ${qrFiles.length} files`);
+    return qrFiles;
+  } catch (err) {
+    console.log("Batch QR generation error:", error);
+    throw error;
+  }
 }
-export default { generateBatch };
+
+export async function createZipFile(sourceDir, outputZipPath) {
+  return new Promise((resolve, reject) => {
+    console.log(`📦 Creating ZIP file: ${outputZipPath}`);
+
+    const output = createWriteStream(outputZipPath);
+    const archive = archiver("zip", { zlib: { level: 9 } });
+
+    output.on("close", () => {
+      console.log(`✅ ZIP file created: ${archive.pointer()} bytes`);
+      resolve(outputZipPath);
+    });
+
+    archive.on("error", (err) => {
+      console.error("❌ ZIP creation error:", err);
+      reject(err);
+    });
+
+    archive.pipe(output);
+    archive.directory(sourceDir, " Your-QR-Codes");
+    archive.finalize();
+  });
+}
