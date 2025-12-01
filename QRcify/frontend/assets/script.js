@@ -1463,46 +1463,100 @@ async function generateBatchQR() {
   }
 
   console.log(`📦 Generating batch for ${urls.length} URLs`);
-  showLoader("batchLoader", "Generating QR codes");
+  showLoader("batchLoader", "Generating QR codes...");
   batchOutput.innerHTML = "";
-
   try {
-    const response = await apiFetch("/api/generate-batch", {
+    console.log("📤 Sending request to /api/batch-generate");
+    console.log("📝 URLs:", urls);
+
+    const response = await apiFetch("/api/batch-generate", {
       method: "POST",
       body: JSON.stringify({ urls }),
     });
 
-    if (response.ok) {
-      // File will auto-download
-      const filename = `qr_codes_batch_${Date.now()}.zip`;
+    console.log("📥 Response status:", response.status);
+    console.log("📥 Response type:", response.type);
 
-      batchOutput.innerHTML = `
-        <div style="margin-top: 1rem; padding: 1.5rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 12px;">
-          <h4 style="margin-top: 0; color: #155724;">✅ Batch QR Generated!</h4>
-          <p style="color: #155724;">
-            <strong>URLs processed:</strong> ${urls.length}<br>
-            <strong>File:</strong> ${filename}
-          </p>
-          <p style="color: #666; font-size: 0.9rem;">
-            Your ZIP file has been downloaded with all QR codes. Check your Downloads folder.
-          </p>
-          <button onclick="document.getElementById('batchUrls').value = ''; document.getElementById('batchOutput').innerHTML = '';" class="btn btn-outline" style="margin-top: 1rem;">
-            Generate Another Batch
-          </button>
-        </div>
-      `;
+    // Check if response is OK
+    if (!response.ok) {
+      // Try to get error message
+      const contentType = response.headers.get("content-type");
+      let errorData;
 
-      showNotification(
-        `✅ Batch QR generated for ${urls.length} URLs!`,
-        "success"
-      );
-    } else {
-      const data = await response.json();
-      throw new Error(data.error || "Batch generation failed");
+      if (contentType && contentType.includes("application/json")) {
+        errorData = await response.json();
+        throw new Error(errorData.error || `Server error: ${response.status}`);
+      } else {
+        const text = await response.text();
+        console.error("❌ Non-JSON response:", text.substring(0, 200));
+        throw new Error(
+          `Server error ${response.status}: Invalid response format`
+        );
+      }
     }
+
+    // Get the blob (ZIP file)
+    const blob = await response.blob();
+    console.log(`📦 Received blob: ${blob.size} bytes, type: ${blob.type}`);
+
+    if (blob.size === 0) {
+      throw new Error("Received empty ZIP file");
+    }
+
+    // Verify it's actually a ZIP file
+    if (!blob.type.includes("zip") && !blob.type.includes("octet-stream")) {
+      console.warn(`⚠️ Unexpected blob type: ${blob.type}`);
+    }
+
+    console.log(`✅ Received ZIP file: ${blob.size} bytes`);
+
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `qr_codes_batch_${Date.now()}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+
+    console.log("✅ Download triggered");
+
+    // Show success message
+    batchOutput.innerHTML = `
+      <div style="margin-top: 1rem; padding: 1.5rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 12px;">
+        <h4 style="margin-top: 0; color: #155724; display: flex; align-items: center; gap: 0.5rem;">
+          <span>✅</span> Batch QR Generated!
+        </h4>
+        <p style="color: #155724; margin: 0.5rem 0;">
+          <strong>URLs processed:</strong> ${urls.length}<br>
+          <strong>File downloaded:</strong> qr_codes_batch_${Date.now()}.zip
+        </p>
+        <p style="color: #666; font-size: 0.9rem; margin: 0.5rem 0;">
+          Your ZIP file is being downloaded. Check your Downloads folder and extract it to view all QR codes.
+        </p>
+        <button onclick="document.getElementById('batchUrls').value = ''; document.getElementById('batchOutput').innerHTML = '';" class="btn btn-outline" style="margin-top: 1rem;">
+          ↻ Generate Another Batch
+        </button>
+      </div>
+    `;
+
+    showNotification(
+      `✅ Downloaded QR codes for ${urls.length} URLs!`,
+      "success"
+    );
   } catch (error) {
-    console.error("Batch QR error:", error);
-    batchOutput.innerHTML = `<div class="error-message">${error.message}</div>`;
+    console.error("❌ Batch QR error:", error);
+    console.error("❌ Error details:", error.stack);
+
+    batchOutput.innerHTML = `
+      <div style="margin-top: 1rem; padding: 1.5rem; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 12px; border-left: 4px solid #dc3545; color: #721c24;">
+        <strong>❌ Error:</strong> ${error.message}
+        <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #666;">
+          <p>Check browser console (F12) for more details</p>
+        </div>
+      </div>
+    `;
     showError("Failed to generate batch: " + error.message);
   } finally {
     hideLoader("batchLoader");
@@ -1513,14 +1567,21 @@ async function generateBatchQR() {
 async function generateBatchFromCSV() {
   const fileInput = document.getElementById("csvFile");
   const file = fileInput.files[0];
+  const batchOutput = document.getElementById("batchOutput");
 
   if (!file) {
     showError("Please select a CSV file");
     return;
   }
 
+  if (!file.name.match(/\.(csv|txt)$/i)) {
+    showError("Please select a .csv or .txt file");
+    return;
+  }
+
   console.log("📄 Reading CSV file:", file.name);
-  showLoader("batchLoader", "Processing CSV file");
+  showLoader("batchLoader", "Processing CSV file...");
+  batchOutput.innerHTML = "";
 
   try {
     const reader = new FileReader();
@@ -1530,33 +1591,62 @@ async function generateBatchFromCSV() {
         const csvData = e.target.result;
         console.log("📄 CSV data read:", csvData.length, "characters");
 
-        const response = await apiFetch("/api/generatebatch-from-csv", {
+        const response = await apiFetch("/api/batch-from-csv", {
           method: "POST",
           body: JSON.stringify({ csvData }),
         });
 
-        if (response.ok) {
-          const batchOutput = document.getElementById("batchOutput");
-          batchOutput.innerHTML = `
-            <div style="margin-top: 1rem; padding: 1.5rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 12px;">
-              <h4 style="margin-top: 0; color: #155724;">✅ CSV Batch QR Generated!</h4>
-              <p style="color: #155724;">
-                <strong>File processed:</strong> ${file.name}<br>
-                <strong>Zip file:</strong> qr_codes_batch_${Date.now()}.zip
-              </p>
-              <p style="color: #666; font-size: 0.9rem;">
-                Check your Downloads folder for the ZIP file with all QR codes.
-              </p>
-            </div>
-          `;
-
-          showNotification("✅ CSV batch QR generated!", "success");
-        } else {
+        if (!response.ok) {
           const data = await response.json();
           throw new Error(data.error || "CSV batch generation failed");
         }
+
+        // Get the blob (ZIP file)
+        const blob = await response.blob();
+
+        if (blob.size === 0) {
+          throw new Error("Received empty ZIP file");
+        }
+
+        console.log(`✅ Received ZIP file: ${blob.size} bytes`);
+
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `qr_codes_batch_${Date.now()}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        // Show success message
+        batchOutput.innerHTML = `
+          <div style="margin-top: 1rem; padding: 1.5rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 12px; border-left: 4px solid #28a745;">
+            <h4 style="margin-top: 0; color: #155724; display: flex; align-items: center; gap: 0.5rem;">
+              <span>✅</span> CSV Batch QR Generated!
+            </h4>
+            <p style="color: #155724; margin: 0.5rem 0;">
+              <strong>File processed:</strong> ${file.name}<br>
+              <strong>File downloaded:</strong> qr_codes_batch_${Date.now()}.zip
+            </p>
+            <p style="color: #666; font-size: 0.9rem; margin: 0.5rem 0;">
+              Check your Downloads folder for the ZIP file with all QR codes.
+            </p>
+            <button onclick="document.getElementById('csvFile').value = ''; document.getElementById('batchOutput').innerHTML = '';" class="btn btn-outline" style="margin-top: 1rem;">
+              ↻ Generate Another Batch
+            </button>
+          </div>
+        `;
+
+        showNotification("✅ CSV batch QR downloaded!", "success");
       } catch (error) {
-        console.error("CSV batch error:", error);
+        console.error("❌ CSV batch error:", error);
+        batchOutput.innerHTML = `
+          <div style="margin-top: 1rem; padding: 1.5rem; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 12px; border-left: 4px solid #dc3545; color: #721c24;">
+            <strong>❌ Error:</strong> ${error.message}
+          </div>
+        `;
         showError("Failed to process CSV: " + error.message);
       } finally {
         hideLoader("batchLoader");
@@ -1570,7 +1660,7 @@ async function generateBatchFromCSV() {
 
     reader.readAsText(file);
   } catch (error) {
-    console.error("CSV error:", error);
+    console.error("❌ CSV error:", error);
     showError("Failed to process CSV");
     hideLoader("batchLoader");
   }

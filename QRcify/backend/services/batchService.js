@@ -1,29 +1,25 @@
-// import pp from "papaparse";
+import path from "path";
+import { fileURLToPath } from "url";
 import qr from "qr-image";
 import { createWriteStream } from "fs";
 import archiver from "archiver";
 import { mkdir } from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
-import { error } from "console";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export async function generateBatchQRs(urls, outputDir) {
   try {
-    console.log(`generating batch ${urls.length} QR codes...`);
+    console.log(`📦 Generating ${urls.length} QR codes...`);
     await mkdir(outputDir, { recursive: true });
 
     const qrFiles = [];
 
-    //generating QR foe each url
+    // Generate QR for each url
     for (let i = 0; i < urls.length; i++) {
       const url = urls[i].trim();
 
       if (!url || !url.startsWith("http")) {
-        console.log(
-          `⚠️ Skipping the Qr generation , Invalid URL at index ${i}: ${url}`
-        );
+        console.warn(`⚠️ Skipping invalid URL at index ${i}: ${url}`);
         continue;
       }
       try {
@@ -51,8 +47,8 @@ export async function generateBatchQRs(urls, outputDir) {
     console.log(`✅ All QR codes generated: ${qrFiles.length} files`);
     return qrFiles;
   } catch (err) {
-    console.log("Batch QR generation error:", error);
-    throw error;
+    console.error("❌ Batch QR generation error:", err);
+    throw err;
   }
 }
 
@@ -74,7 +70,7 @@ export async function createZipFile(sourceDir, outputZipPath) {
     });
 
     archive.pipe(output);
-    archive.directory(sourceDir, " Your-QR-Codes");
+    archive.directory(sourceDir, "QR-Codes");
     archive.finalize();
   });
 }
