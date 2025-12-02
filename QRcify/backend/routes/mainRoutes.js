@@ -12,6 +12,15 @@ import { getStats, getTimeAgo } from "../services/historyService.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { fileURLToPath } from "url";
 import QRHistory from "../models/QRHistory.js";
+import {
+  shortenURL,
+  resolveShortURL,
+  getUserShortenedURLs,
+  getURLStats,
+  deleteShortURL,
+  toggleURLStatus,
+} from "../services/urlShortenerService.js";
+
 const router = express.Router();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -24,7 +33,7 @@ router.use(
     "/encrypt-file",
     "/generate-vcard",
     "/generate-wifi",
-    "/generate-batch",
+    "/batch-generate",
   ],
   authMiddleware,
   qrGenerationLimiter
@@ -243,7 +252,10 @@ router.post("/batch-generate", authMiddleware, async (req, res) => {
     console.log(`✅ ZIP file verified: ${stats.size} bytes`);
 
     // Log to database (if you have this function)
-    // await logQRGeneration("batch", urls.length, req, { batchSize: urls.length, filesGenerated: qrFiles.length });
+    await logQRGeneration("batch", urls.length, req, {
+      batchSize: urls.length,
+      filesGenerated: qrFiles.length,
+    });
 
     // Send ZIP file with proper headers
     const filename = `qr_codes_batch_${batchId}.zip`;
@@ -343,7 +355,7 @@ router.post("/batch-from-csv", authMiddleware, async (req, res) => {
     console.log(`✅ ZIP file verified: ${stats.size} bytes`);
 
     // Log to database (if you have this function)
-    // await logQRGeneration("batch_csv", urls.length, req);
+    await logQRGeneration("batch_csv", urls.length, req);
 
     // Send ZIP file with proper headers
     const filename = `qr_codes_batch_${batchId}.zip`;
@@ -451,6 +463,171 @@ router.post("/decrypt-file", (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message || "File decryption failed",
+    });
+  }
+});
+
+router.post("/shorten", authMiddleware, async (req, res) => {
+  try {
+    console.log("🔗 Shortening URL request received");
+
+    const result = await shortenURL(req.body, req);
+
+    res.json({
+      success: true,
+      data: result,
+      message: "URL shortened successfully",
+    });
+  } catch (error) {
+    console.error("❌ URL shortening error:", error);
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+router.get("/urls", authMiddleware, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const offset = parseInt(req.query.offset) || 0;
+
+    const result = await getUserShortenedURLs(req, limit, offset);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error("❌ Failed to get URLs:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// GET /api/urls/:id/stats - Get URL statistics
+router.get("/urls/:id/stats", authMiddleware, async (req, res) => {
+  try {
+    const stats = await getURLStats(parseInt(req.params.id), req);
+
+    res.json({
+      success: true,
+      data: stats,
+    });
+  } catch (error) {
+    console.error("❌ Failed to get URL stats:", error);
+    res.status(404).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// DELETE /api/urls/:id - Delete shortened URL
+router.delete("/urls/:id", authMiddleware, async (req, res) => {
+  try {
+    const result = await deleteShortURL(parseInt(req.params.id), req);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error("❌ Failed to delete URL:", error);
+    res.status(404).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// PATCH /api/urls/:id/toggle - Toggle URL active status
+router.patch("/urls/:id/toggle", authMiddleware, async (req, res) => {
+  try {
+    const result = await toggleURLStatus(parseInt(req.params.id), req);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error("❌ Failed to toggle URL:", error);
+    res.status(404).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// GET /s/:shortCode - Redirect to original URL (PUBLIC - NO AUTH NEEDED)
+router.get("/s/:shortCode", async (req, res) => {
+  try {
+    const { shortCode } = req.params;
+    console.log(`🔗 Redirect request for: ${shortCode}`);
+
+    const url = await resolveShortURL(shortCode);
+
+    // Redirect to original URL
+    res.redirect(301, url.originalURL);
+  } catch (error) {
+    console.error("❌ Redirect error:", error);
+    res.status(404).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// GET /api/shorten-batch - Shorten multiple URLs for batch QR
+router.post("/shorten-batch", authMiddleware, async (req, res) => {
+  try {
+    const { urls } = req.body;
+
+    if (!urls || !Array.isArray(urls) || urls.length === 0) {
+      return res.status(400).json({
+        error: "URLs array is required",
+      });
+    }
+
+    if (urls.length > 100) {
+      return res.status(400).json({
+        error: "Maximum 100 URLs per batch",
+      });
+    }
+
+    console.log(`🔗 Shortening batch of ${urls.length} URLs`);
+
+    const shortenedURLs = [];
+    const errors = [];
+
+    for (let i = 0; i < urls.length; i++) {
+      try {
+        const result = await shortenURL({ originalURL: urls[i] }, req);
+        shortenedURLs.push(result);
+      } catch (error) {
+        errors.push({
+          url: urls[i],
+          error: error.message,
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        shortenedURLs,
+        errors,
+        total: urls.length,
+        successful: shortenedURLs.length,
+        failed: errors.length,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Batch shortening error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
     });
   }
 });

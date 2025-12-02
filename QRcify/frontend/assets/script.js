@@ -1665,6 +1665,254 @@ async function generateBatchFromCSV() {
     hideLoader("batchLoader");
   }
 }
+// ==================== URL SHORTENER =====================
+async function shortenSingleURL() {
+  const originalURL = document.getElementById("originalURL").value.trim();
+  const customAlias = document.getElementById("customAlias").value.trim();
+  const title = document.getElementById("urlTitle").value.trim();
+  const output = document.getElementById("shortenerOutput");
+
+  if (!originalURL) {
+    showError("Please enter a URL to shorten");
+    return;
+  }
+
+  showLoader("shortenerLoader", "Shortening URL...");
+  output.innerHTML = "";
+
+  try {
+    const response = await apiFetch("/api/shorten", {
+      method: "POST",
+      body: JSON.stringify({
+        originalURL,
+        customAlias: customAlias || undefined,
+        title: title || undefined,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      const shortLink = data.data;
+
+      output.innerHTML = `
+        <div style="margin-top: 1.5rem; padding: 1.5rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 12px;">
+          <h4 style="margin-top: 0; color: #155724;">✅ URL Shortened Successfully!</h4>
+          
+          <div style="margin: 1rem 0; padding: 1rem; background: white; border-radius: 8px;">
+            <p style="margin: 0.5rem 0;"><strong>Short Link:</strong></p>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <input type="text" value="${shortLink.shortURL}" readonly style="flex: 1; padding: 0.75rem; border: 1px solid #dee2e6; border-radius: 6px; font-family: monospace;" />
+              <button onclick="copyToClipboard('${shortLink.shortURL}')" class="btn btn-outline" style="padding: 0.75rem 1rem;">
+                📋 Copy
+              </button>
+            </div>
+          </div>
+
+          <div style="margin: 1rem 0; padding: 1rem; background: white; border-radius: 8px;">
+            <p style="margin: 0.5rem 0;"><strong>Original URL:</strong></p>
+            <p style="margin: 0; word-break: break-all; color: #666;">${shortLink.originalURL}</p>
+          </div>
+
+          <div style="margin: 1rem 0; padding: 1rem; background: white; border-radius: 8px; text-align: center;">
+            <p style="margin: 0.5rem 0;"><strong>QR Code for Short Link:</strong></p>
+            <img src="${shortLink.qrCode}" alt="QR Code" style="max-width: 150px; margin-top: 0.5rem;" />
+            <button onclick="downloadQRImage('${shortLink.qrCode}', 'shortlink-qr')" class="btn btn-outline" style="margin-top: 0.5rem;">
+              📥 Download QR
+            </button>
+          </div>
+
+          <button onclick="document.getElementById('originalURL').value = ''; document.getElementById('customAlias').value = ''; document.getElementById('urlTitle').value = ''; document.getElementById('shortenerOutput').innerHTML = '';" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+            ↻ Shorten Another
+          </button>
+        </div>
+      `;
+
+      showNotification("✅ URL shortened successfully!", "success");
+      loadUserShortenedURLs();
+    } else {
+      throw new Error(data.error || "Failed to shorten URL");
+    }
+  } catch (error) {
+    console.error("❌ URL shortening error:", error);
+    output.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 1rem; border-radius: 8px;">❌ Error: ${error.message}</div>`;
+    showError("Failed to shorten URL: " + error.message);
+  } finally {
+    hideLoader("shortenerLoader");
+  }
+}
+
+async function loadUserShortenedURLs() {
+  try {
+    const response = await apiFetch("/api/urls?limit=20");
+    const data = await response.json();
+
+    if (data.success) {
+      displayUserShortenedURLs(data.data.urls);
+    }
+  } catch (error) {
+    console.error("❌ Failed to load URLs:", error);
+  }
+}
+
+function displayUserShortenedURLs(urls) {
+  const container = document.getElementById("userShortenedURLsList");
+  if (!container) return;
+
+  if (urls.length === 0) {
+    container.innerHTML = `<p style="text-align: center; color: #666;">No shortened URLs yet. Create your first one above!</p>`;
+    return;
+  }
+
+  const html = `
+    <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+      <thead>
+        <tr style="background: #f0f7ff; border-bottom: 2px solid #3498db;">
+          <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Short Code</th>
+          <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Original URL</th>
+          <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Clicks</th>
+          <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Created</th>
+          <th style="padding: 0.75rem; text-align: center; font-weight: 600;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${urls
+          .map(
+            (url) => `
+          <tr style="border-bottom: 1px solid #dee2e6;">
+            <td style="padding: 0.75rem; font-family: monospace; font-weight: 600;">${url.shortCode}</td>
+            <td style="padding: 0.75rem;">
+              <span title="${url.originalURL}" style="display: block; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                ${url.originalURL.substring(0, 40)}...
+              </span>
+            </td>
+            <td style="padding: 0.75rem;">
+              <span style="background: #e3f2fd; color: #1976d2; padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600;">
+                ${url.clicks}
+              </span>
+            </td>
+            <td style="padding: 0.75rem; font-size: 0.9rem; color: #666;">
+              ${new Date(url.createdAt).toLocaleDateString()}
+            </td>
+            <td style="padding: 0.75rem; text-align: center;">
+              <button onclick="copyToClipboard('${url.shortURL}')" class="btn btn-outline" style="padding: 0.5rem 0.75rem; font-size: 0.85rem; margin-right: 0.25rem;">📋</button>
+              <button onclick="deleteShortenedURL(${url.id})" class="btn btn-outline" style="padding: 0.5rem 0.75rem; font-size: 0.85rem; background: #f8d7da; color: #721c24;">🗑️</button>
+            </td>
+          </tr>
+        `
+          )
+          .join("")}
+      </tbody>
+    </table>
+  `;
+
+  container.innerHTML = html;
+}
+
+async function deleteShortenedURL(urlId) {
+  if (!confirm("Are you sure you want to delete this shortened URL?")) return;
+
+  try {
+    const response = await apiFetch(`/api/urls/${urlId}`, {
+      method: "DELETE",
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showNotification("✅ URL deleted successfully", "success");
+      loadUserShortenedURLs();
+    }
+  } catch (error) {
+    console.error("❌ Failed to delete URL:", error);
+    showError("Failed to delete URL: " + error.message);
+  }
+}
+
+async function shortenBatchURLs() {
+  const input = document.getElementById("batchUrlsToShorten").value.trim();
+  const batchOutput = document.getElementById("shortenerBatchOutput");
+
+  if (!input) {
+    showError("Please enter at least one URL");
+    return;
+  }
+
+  const urls = input
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line && line.startsWith("http"));
+
+  if (urls.length === 0) {
+    showError("No valid URLs found");
+    return;
+  }
+
+  showLoader("batchShortenerLoader", "Shortening URLs...");
+  batchOutput.innerHTML = "";
+
+  try {
+    const response = await apiFetch("/api/shorten-batch", {
+      method: "POST",
+      body: JSON.stringify({ urls }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      const { shortenedURLs, errors } = data.data;
+
+      batchOutput.innerHTML = `
+        <div style="margin-top: 1.5rem; padding: 1.5rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 12px;">
+          <h4 style="margin-top: 0; color: #155724;">✅ Batch URLs Shortened!</h4>
+          <p style="color: #155724; margin: 0.5rem 0;">
+            <strong>Successful:</strong> ${shortenedURLs.length}<br>
+            ${errors.length > 0 ? `<strong>Failed:</strong> ${errors.length}<br>` : ""}
+            <strong>Total:</strong> ${data.data.total}
+          </p>
+
+          <div style="margin: 1rem 0; max-height: 300px; overflow-y: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+              <thead>
+                <tr style="background: #fff3cd;">
+                  <th style="padding: 0.5rem; text-align: left; font-weight: 600;">Short Link</th>
+                  <th style="padding: 0.5rem; text-align: left; font-weight: 600;">Original</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${shortenedURLs
+                  .map(
+                    (url) => `
+                  <tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="padding: 0.5rem; font-family: monospace;">${url.shortCode}</td>
+                    <td style="padding: 0.5rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                      ${url.originalURL.substring(0, 30)}...
+                    </td>
+                  </tr>
+                `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+
+          <button onclick="document.getElementById('batchUrlsToShorten').value = ''; document.getElementById('shortenerBatchOutput').innerHTML = '';" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+            ↻ Shorten Another Batch
+          </button>
+        </div>
+      `;
+
+      showNotification(`✅ Shortened ${shortenedURLs.length} URLs!`, "success");
+    }
+  } catch (error) {
+    console.error("❌ Batch shortening error:", error);
+    batchOutput.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 1rem; border-radius: 8px;">❌ Error: ${error.message}</div>`;
+    showError("Failed to shorten batch: " + error.message);
+  } finally {
+    hideLoader("batchShortenerLoader");
+  }
+}
+
 // ==================== INITIALIZATION ====================
 document.addEventListener("DOMContentLoaded", function () {
   console.log("🚀 QRcify Pro initialized successfully!");

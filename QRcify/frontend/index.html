@@ -943,6 +943,83 @@
             </button>
           </div>
         </section>
+        
+          <!-- URL Shortener Section -->
+        <section id="shortenURL" class="section card">
+            <div class="section-header">
+              <h3>🔗 URL Shortener</h3>
+              <p>Create short, shareable links with QR codes</p>
+            </div>
+
+            <!-- Single URL Shortener -->
+            <div class="feature-card">
+              <h4>📝 Shorten a Single URL</h4>
+              <div class="form-group">
+                <input
+                  type="url"
+                  id="originalURL"
+                  placeholder="https://example.com/very/long/url"
+                  class="form-input"
+                />
+                <input
+                  type="text"
+                  id="customAlias"
+                  placeholder="Custom alias (optional)"
+                  class="form-input"
+                />
+                <input
+                  type="text"
+                  id="urlTitle"
+                  placeholder="URL title (optional)"
+                  class="form-input"
+                />
+                <button onclick="shortenSingleURL()" class="btn btn-primary">
+                  🔗 Shorten URL
+                </button>
+              </div>
+              <div id="shortenerLoader" class="loader-container" style="display: none; margin-top: 1rem;">
+                <div class="loader"></div>
+                <span>Shortening URL...</span>
+              </div>
+              <div id="shortenerOutput" class="output-container"></div>
+            </div>
+
+            <!-- Your Shortened URLs -->
+            <div class="feature-card" style="margin-top: 2rem;">
+              <h4>📋 Your Shortened URLs</h4>
+              <button onclick="loadUserShortenedURLs()" class="btn btn-outline" style="margin-bottom: 1rem;">
+                🔄 Load URLs
+              </button>
+              <div id="userShortenedURLsList" style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px;">
+                <p style="text-align: center; color: #666;">Click "Load URLs" to see your shortened links</p>
+              </div>
+            </div>
+
+            <!-- Batch URL Shortener -->
+            <div class="feature-card" style="margin-top: 2rem; padding: 1.5rem; background: #f0f7ff; border-radius: 12px; border-left: 4px solid #3498db;">
+              <h4 style="margin-top: 0; color: #2c3e50;">📦 Shorten Multiple URLs</h4>
+              <div class="form-group">
+                <label class="form-label">Enter URLs (one per line)</label>
+                <textarea
+                  id="batchUrlsToShorten"
+                  rows="6"
+                  placeholder="https://example1.com
+          https://example2.com
+          https://example3.com"
+                  class="form-textarea"
+                  style="font-family: monospace; padding: 1rem;"
+                ></textarea>
+                <button onclick="shortenBatchURLs()" class="btn btn-secondary" style="width: 100%; margin-top: 1rem;">
+                  📦 Shorten Batch
+                </button>
+              </div>
+              <div id="batchShortenerLoader" class="loader-container" style="display: none; margin-top: 1rem;">
+                <div class="loader"></div>
+                <span>Shortening URLs...</span>
+              </div>
+              <div id="shortenerBatchOutput" class="output-container"></div>
+            </div>
+         </section>
         <!-- Batch QR Generator Section -->
         <section id="batch" class="section card">
           <div class="section-header">
@@ -955,9 +1032,9 @@
             <textarea
               id="batchUrls"
               rows="6"
-              placeholder="https://example.com
-        https://google.com
-        https://github.com"
+              placeholder="https://example.com 
+              https://google.com
+              https://github.com"
               class="form-textarea"
               style="font-family: monospace; padding: 1rem;"
             ></textarea>
@@ -973,9 +1050,7 @@
           </div>
 
           <div id="batchOutput" class="output-container"></div>
-
-          <!-- CSV Upload Option -->
-          <div style="margin-top: 2rem; padding: 1.5rem; background: #f0f7ff; border-radius: 12px; border-left: 4px solid #3498db;">
+          <div style="margin-top: 2rem; padding: 1.5rem; background: #f0f7ff; border-radius: 12px;">    <!-- border-left: 4px solid #3498db; -->
             <h4 style="margin-top: 0; color: #2c3e50;">Or Upload CSV File</h4>
             <div class="form-group">
               <input
