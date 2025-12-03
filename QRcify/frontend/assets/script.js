@@ -1452,6 +1452,7 @@ async function generateBatchQR() {
 
   if (!input) {
     showError("Please enter at least one URL");
+    showNotification("Please enter at least one URL", "error");
     return;
   }
 
@@ -1570,12 +1571,12 @@ async function generateBatchFromCSV() {
   const batchOutput = document.getElementById("batchOutput");
 
   if (!file) {
-    showError("Please select a CSV file");
+    showNotification("Please select a CSV file", "error");
     return;
   }
 
   if (!file.name.match(/\.(csv|txt)$/i)) {
-    showError("Please select a .csv or .txt file");
+    showNotification("Please select a .csv or .txt file");
     return;
   }
 
@@ -1672,8 +1673,8 @@ async function shortenSingleURL() {
   const title = document.getElementById("urlTitle").value.trim();
   const output = document.getElementById("shortenerOutput");
 
-  if (!originalURL) {
-    showError("Please enter a URL to shorten");
+  if (!originalURL && originalURL.length === 0) {
+    showNotification("Please enter a URL to shorten");
     return;
   }
 
@@ -1834,7 +1835,7 @@ async function shortenBatchURLs() {
   const batchOutput = document.getElementById("shortenerBatchOutput");
 
   if (!input) {
-    showError("Please enter at least one URL");
+    showNotification("Please enter at least one URL");
     return;
   }
 
@@ -1844,7 +1845,7 @@ async function shortenBatchURLs() {
     .filter((line) => line && line.startsWith("http"));
 
   if (urls.length === 0) {
-    showError("No valid URLs found");
+    showNotification("No valid URLs found");
     return;
   }
 
