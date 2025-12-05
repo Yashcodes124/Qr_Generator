@@ -5,10 +5,13 @@ import fs from "fs/promises";
 import path from "path";
 import qr from "qr-image";
 import { encryptData, decryptData } from "../utils/cryptoUtils.js";
-import { logQRGeneration } from "../services/historyService.js";
+import {
+  logQRGeneration,
+  getStats,
+  getTimeAgo,
+} from "../services/historyService.js";
 import qrGenerationLimiter from "../middleware/rateLimit.js";
 import { validateUrl, validatePassphrase } from "../utils/validation.js";
-import { getStats, getTimeAgo } from "../services/historyService.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { fileURLToPath } from "url";
 import QRHistory from "../models/QRHistory.js";
@@ -20,6 +23,10 @@ import {
   deleteShortURL,
   toggleURLStatus,
 } from "../services/urlShortenerService.js";
+import {
+  generateCustomQR,
+  validateQROptions,
+} from "../services/qrCustomizationService.js";
 
 const router = express.Router();
 
@@ -642,6 +649,174 @@ router.get("/stats", authMiddleware, async (req, res) => {
   }
 });
 
+router.post("/generate-custom-qr", authMiddleware, async (req, res) => {
+  try {
+    const {
+      data,
+      darkColor,
+      lightColor,
+      size,
+      margin,
+      format,
+      errorCorrection,
+    } = req.body;
+
+    console.log("🎨 Custom QR request received");
+
+    if (!data) {
+      return res.status(400).json({ error: "Data is required" });
+    }
+
+    // Validate options
+    const validation = validateQROptions({
+      darkColor,
+      lightColor,
+      size,
+      margin,
+      format,
+      errorCorrection,
+    });
+
+    if (!validation.valid) {
+      return res.status(400).json({
+        error: "Invalid options",
+        details: validation.errors,
+      });
+    }
+
+    // Generate custom QR
+    const result = await generateCustomQR(data, {
+      darkColor: darkColor || "#000000",
+      lightColor: lightColor || "#FFFFFF",
+      size: size || 300,
+      margin: margin || 2,
+      format: format || "png",
+      errorCorrection: errorCorrection || "H",
+    });
+
+    // Log to database
+    await logQRGeneration("custom_qr", data.length, req, {
+      customOptions: {
+        darkColor,
+        lightColor,
+        size,
+        format,
+      },
+    });
+
+    res.json({
+      success: true,
+      qrCode: result.qrCode,
+      options: {
+        darkColor: result.darkColor,
+        lightColor: result.lightColor,
+        size: result.size,
+        format: result.format,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Custom QR error:", error);
+    res.status(500).json({
+      error: "Failed to generate custom QR",
+      message: error.message,
+    });
+  }
+});
+
+// POST /api/generate-qr-preview
+// Preview without saving
+router.post("/generate-qr-preview", async (req, res) => {
+  try {
+    const { data, darkColor, lightColor } = req.body;
+
+    if (!data) {
+      return res.status(400).json({ error: "Data is required" });
+    }
+
+    const result = await generateCustomQR(data, {
+      darkColor: darkColor || "#000000",
+      lightColor: lightColor || "#FFFFFF",
+      size: 200,
+      format: "png",
+    });
+
+    res.json({
+      success: true,
+      qrCode: result.qrCode,
+    });
+  } catch (error) {
+    console.error("❌ QR preview error:", error);
+    res.status(500).json({ error: "Failed to generate QR preview" });
+  }
+});
+
+// GET /api/qr-templates
+// Get preset color templates
+router.get("/qr-templates", (req, res) => {
+  const templates = [
+    {
+      id: "classic",
+      name: "Classic",
+      darkColor: "#000000",
+      lightColor: "#FFFFFF",
+      icon: "⬛",
+    },
+    {
+      id: "ocean",
+      name: "Ocean Blue",
+      darkColor: "#0066CC",
+      lightColor: "#E6F2FF",
+      icon: "🌊",
+    },
+    {
+      id: "forest",
+      name: "Forest Green",
+      darkColor: "#1B5E20",
+      lightColor: "#E8F5E9",
+      icon: "🌲",
+    },
+    {
+      id: "sunset",
+      name: "Sunset",
+      darkColor: "#FF6B35",
+      lightColor: "#FFF3E0",
+      icon: "🌅",
+    },
+    {
+      id: "midnight",
+      name: "Midnight",
+      darkColor: "#1A1A2E",
+      lightColor: "#F0F0F0",
+      icon: "🌙",
+    },
+    {
+      id: "berry",
+      name: "Berry",
+      darkColor: "#6B2C91",
+      lightColor: "#F3E5F5",
+      icon: "🫐",
+    },
+    {
+      id: "vintage",
+      name: "Vintage",
+      darkColor: "#5D4037",
+      lightColor: "#EFEBE9",
+      icon: "📚",
+    },
+    {
+      id: "neon",
+      name: "Neon",
+      darkColor: "#FF00FF",
+      lightColor: "#000000",
+      icon: "⚡",
+    },
+  ];
+
+  res.json({
+    success: true,
+    templates,
+  });
+});
 router.get("/qr/history", authMiddleware, async (req, res) => {
   try {
     const history = await QRHistory.findAll({

@@ -5,18 +5,14 @@
   "scripts": {
     "dev": "nodemon QRcify/backend/index.js",
     "start": "node QRcify/backend/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "db:setup": "node backend/scripts/setupDB.js",
-    "migrate": "node QRcify/backend/utils/migrateDB.js",
-    "reset-db": "rm -rf QRcify/database/qr_generator.sqlite && node QRcify/backend/index.js",
-    "lint": "eslint 'backend/**/*.js'",
-    "format": "prettier --write 'backend/**/*.js'"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "qr",
-    "express",
-    "node",
-    "generator"
+    "qr-code",
+    "url-shortener",
+    "encryption",
+    "batch-generation",
+    "analytics"
   ],
   "author": "Yashwanth",
   "license": "MIT",
@@ -39,17 +35,14 @@
     "qr-image": "^3.2.0",
     "qrcode": "^1.5.0",
     "sequelize": "^6.37.7",
+    "sharp": "^0.34.5",
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
-    "eslint": "^9.39.1",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.4",
-    "jest": "^29.7.0",
-    "nodemon": "^3.0.3",
-    "prettier": "^3.6.2"
+    "nodemon": "^3.0.3"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   }
 }

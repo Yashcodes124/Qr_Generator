@@ -1,39 +1,35 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QRGen Pro - Advanced QR Code Generator</title>
-    <link rel="stylesheet" href="./assets/home.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    <title>QRcify Pro - Advanced QR Code Generator</title>
+    <link rel="stylesheet" href="./assets/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
   </head>
   <body>
     <!-- Auth Modal -->
-   
     <div id="authModal" class="modal" style="display: none">
       <div class="auth-modal-container">
-        <!-- Close Button -->
         <button class="close-modal" onclick="closeAuthModal()">
           <i class="fas fa-times"></i>
         </button>
         <div class="auth-forms">
-           <!-- Success/Error Messages -->
           <div id="successMessage" class="success-message"></div>
           <div id="errorMessage" class="error-message"></div>
+
           <!-- Login Form -->
-        <div  class="auth-form active" id="loginForm" >
+          <div class="auth-form active" id="loginForm">
             <div class="form-header">
-              <h3>
-                <i class="fas fa-lock"></i>
-                Welcome Back
-              </h3>
+              <h3><i class="fas fa-lock"></i> Welcome Back</h3>
               <p>Enter your credentials to access your account</p>
             </div>
             <form onsubmit="handleLogin(event)">
               <div class="input-group">
                 <div class="input-wrapper">
-                  
                   <i class="fas fa-envelope input-icon"></i>
                   <input
                     type="email"
@@ -44,12 +40,9 @@
                   />
                 </div>
               </div>
-
               <div class="input-group">
                 <div class="input-wrapper">
-                  <div class="  psdEye-icon">
-                        <i class="fas fa-lock"></i>
-                  </div>
+                  <i class="fas fa-lock"></i>
                   <input
                     type="password"
                     id="loginPassword"
@@ -62,66 +55,34 @@
                     class="password-toggle"
                     onclick="togglePassword('loginPassword')"
                   >
-                  <div class="feature-icon">
-                       <i class="fas fa-eye"></i>
-                  </div>
+                    <i class="fas fa-eye"></i>
                   </button>
                 </div>
               </div>
-
               <div class="forgot-password">
                 <a href="#" onclick="openForgotPasswordModal()"
                   >Forgot password?</a
                 >
               </div>
-
               <button type="submit" class="submit-btn" id="loginBtn">
                 Login to Account
               </button>
             </form>
-           <div class="divider">
-              <span>or continue with</span>
-            </div>
-
-            <div class="social-login">
-              <button
-                class="social-btn google"
-                onclick="alert('Google login coming soon!')"
-              >
-                <i class="fab fa-google"></i>
-                Google
-              </button>
-              <button
-                class="social-btn github"
-                onclick="alert('GitHub login coming soon!')"
-              >
-                <i class="fab fa-github"></i>
-                GitHub
-              </button>
-            </div>
             <p>
               Don't have an account?
-              <a
-                href="#"
-                style="text-decoration: none; color: rgb(215, 90, 90);font-size: 1rem;"
-                onclick="showRegisterForm()"
+              <a href="#" onclick="showRegisterForm()" style="color: #667eea"
                 >Register here</a
               >
             </p>
-        </div>
+          </div>
 
-        <!-- Register Form -->
-        <div class="auth-form" id="registerForm" style="display: none">
-           <div class="form-header">
-              <h3>
-                <i class="fas fa-user-plus"></i>
-                Create Account
-              </h3>
+          <!-- Register Form -->
+          <div class="auth-form" id="registerForm" style="display: none">
+            <div class="form-header">
+              <h3><i class="fas fa-user-plus"></i> Create Account</h3>
               <p>Sign up to get started with QRcify Pro</p>
             </div>
-
-            <!-- 1. Registration -->
-          <form id="registerFormStep1" onsubmit="handleRegister(event)">
+            <form id="registerFormStep1" onsubmit="handleRegister(event)">
               <div class="input-group">
                 <div class="input-wrapper">
                   <i class="fas fa-user input-icon"></i>
@@ -134,7 +95,6 @@
                   />
                 </div>
               </div>
-
               <div class="input-group">
                 <div class="input-wrapper">
                   <i class="fas fa-envelope input-icon"></i>
@@ -147,7 +107,6 @@
                   />
                 </div>
               </div>
-
               <div class="input-group">
                 <div class="input-wrapper">
                   <i class="fas fa-lock input-icon"></i>
@@ -159,41 +118,23 @@
                     required
                     minlength="6"
                   />
-                  <button
-                    type="button"
-                    class="password-toggle"
-                    onclick="togglePassword('registerPassword')"
-                  >
-                    <i class="fas fa-eye"></i>
-                  </button>
                 </div>
               </div>
-
               <button type="submit" class="submit-btn" id="registerBtn">
                 Create Account
               </button>
             </form>
-
-              <!-- 2. OTP Verification (Hidden by default) -->
-          <form id="registerFormStep2" style="display: none" onsubmit="handleVerifyOTP(event)">
-            <div class="form-header">
-              <h3>
-                <i class="fas fa-shield-alt"></i>
-                Verify Email
-              </h3>
-              <p>Enter the OTP sent to your email</p>
-            </div>
-
-            <div style="background: #f0f7ff; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #3498db;">
-              <p id="verificationEmail" style="margin: 0; font-weight: 600;"></p>
-              <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #666;">
-                Check your spam folder if you don't see the email
-              </p>
-            </div>
-
-            <div class="input-group">
-              <div class="input-wrapper">
-                <i class="fas fa-lock input-icon"></i>
+            <form
+              id="registerFormStep2"
+              style="display: none"
+              onsubmit="handleVerifyOTP(event)"
+            >
+              <div class="form-header">
+                <h3><i class="fas fa-shield-alt"></i> Verify Email</h3>
+                <p>Enter the OTP sent to your email</p>
+              </div>
+              <div id="verificationEmail"></div>
+              <div class="input-group">
                 <input
                   type="text"
                   id="otpInput"
@@ -204,123 +145,85 @@
                   required
                 />
               </div>
-            </div>
-
-            <p style="text-align: center; color: #666; font-size: 0.9rem; margin: 1rem 0;">
-              OTP expires in 15 minutes
-            </p>
-
-            <button type="submit" class="submit-btn" id="verifyOTPBtn">
-              Verify Email
-            </button>
-
-            <p style="text-align: center; margin-top: 1rem;">
-              Didn't receive OTP?
-              <a href="#" onclick="handleResendOTP(event)" style="color: #667eea; text-decoration: none; font-weight: 600;">
-                Resend OTP
-              </a>
-            </p>
-          </form>
-          <p>
-            Already have an account?
-            <a href="#" class="nav-login" onclick="showLoginForm()">Login here</a>
-          </p>
-          <div class="divider">
-              <span>or continue with</span>
-            </div>
-
-            <div class="social-login">
-              <button
-                class="social-btn google"
-                onclick="alert('Google signup coming soon!')"
-              >
-                <i class="fab fa-google"></i>
-                Google
+              <button type="submit" class="submit-btn" id="verifyOTPBtn">
+                Verify Email
               </button>
-              <button
-                class="social-btn github"
-                onclick="alert('GitHub signup coming soon!')"
+              <p style="text-align: center">
+                Didn't receive OTP?
+                <a
+                  href="#"
+                  onclick="handleResendOTP(event)"
+                  style="color: #667eea"
+                  >Resend OTP</a
+                >
+              </p>
+            </form>
+            <p>
+              Already have an account?
+              <a href="#" onclick="showLoginForm()" style="color: #667eea"
+                >Login here</a
               >
-                <i class="fab fa-github"></i>
-                GitHub
-              </button>
-            </div>
-            <div class="terms">
-              By creating an account, you agree to our<br />
-              <a href="#">Terms of Service</a> and
-              <a href="#">Privacy Policy</a>
-            </div>
-        </div>
+            </p>
+          </div>
         </div>
       </div>
     </div>
+
     <!-- Forgot Password Modal -->
     <div id="forgotPasswordModal" class="modal" style="display: none">
       <div class="auth-modal-container">
         <button class="close-modal" onclick="closeForgotPasswordModal()">
           <i class="fas fa-times"></i>
         </button>
-        
         <div class="form-header">
-          <h3>
-            <i class="fas fa-key"></i>
-            Reset Password
-          </h3>
-          <p>Enter your email to receive reset password link</p>
+          <h3><i class="fas fa-key"></i> Reset Password</h3>
+          <p>Enter your email to receive reset link</p>
         </div>
-
         <form onsubmit="handleForgotPassword(event)">
           <div class="input-group">
-            <div class="input-wrapper">
-              <i class="fas fa-envelope input-icon"></i>
-              <input
-                type="email"
-                id="resetEmail"
-                class="form-input"
-                placeholder="Your email address"
-                required
-              />
-            </div>
+            <input
+              type="email"
+              id="resetEmail"
+              class="form-input"
+              placeholder="Your email address"
+              required
+            />
           </div>
-
           <button type="submit" class="submit-btn" id="resetBtn">
-            Send  Link
+            Send Reset Link
           </button>
         </form>
-
-        <p style="text-align: center; margin-top: 1rem;">
+        <p style="text-align: center">
           Remember your password?
-          <a href="#" onclick="closeForgotPasswordModal() ;showLoginForm()" style="color: #667eea; text-decoration: none; font-weight: 600;">
-            Login
-          </a>
+          <a
+            href="#"
+            onclick="closeForgotPasswordModal(); showLoginForm()"
+            style="color: #667eea"
+            >Login</a
+          >
         </p>
       </div>
     </div>
-    <!-- Enhanced Header -->
+
+    <!-- Header -->
     <header class="header">
       <div class="container">
         <div class="logo">
-          <h1>🔐 QRcify Pro</h1>
-          <span class="tagline">Secure QR Code Generator</span>
+          <h1>🔗 QRcify Pro</h1>
+          <span class="tagline">Advanced QR Code Generator</span>
         </div>
-        <nav class="nav" aria-label="navbar">
+        <nav class="nav">
           <a href="#basic" class="nav-link">Basic QR</a>
           <a href="#secure" class="nav-link">Secure QR</a>
           <a href="#advanced" class="nav-link">Advanced</a>
           <a href="#decrypt" class="nav-link">Decrypt</a>
-          <!-- Auth Buttons (shown when logged out) -->
-          <div id="authButtons" >
-            <button onclick="openAuthModal()" class="btn " style="text-decoration: none;">
-              Login
-            </button>
-            <button onclick="openRegisterModal()" class="btn" style="text-decoration: none;">
-              Register
-            </button>
+          <a href="#batch" class="nav-link">Batch</a>
+          <a href="#shortener" class="nav-link">Shorten</a>
+          <div id="authButtons">
+            <button onclick="openAuthModal()" class="btn">Login</button>
+            <button onclick="openRegisterModal()" class="btn">Register</button>
           </div>
-             <div id="userMenuContainer" class="user-menu-container">
-                 <!-- Profile menu will be inserted here by JavaScript -->
-             </div>
-          
+          <div id="userMenuContainer" class="user-menu-container"></div>
         </nav>
       </div>
     </header>
@@ -328,266 +231,6 @@
     <!-- Main Content -->
     <main class="main">
       <div class="container">
-        <section class="hero">
-          <div class="hero-content">
-            <h2>Generate Secure QR Codes Instantly</h2>
-            <p>
-              Enterprise-grade QR code generation with military-grade encryption
-              for URLs, files, contacts, and WiFi networks
-            </p>
-            <div class="hero-buttons">
-              <button class="feature" onclick="">
-                <svg height="24" width="24" fill="#FFFFFF" viewBox="0 0 24 24" data-name="Layer 1" id="Layer_1" class="sparkle">
-                    <path d="M10,21.236,6.755,14.745.264,11.5,6.755,8.255,10,1.764l3.245,6.491L19.736,11.5l-6.491,3.245ZM18,21l1.5,3L21,21l3-1.5L21,18l-1.5-3L18,18l-3,1.5ZM19.333,4.667,20.5,7l1.167-2.333L24,3.5,21.667,2.333,20.5,0,19.333,2.333,17,3.5Z"></path>
-                </svg>
-
-                <span class="text">See Features</span>
-              </button>
-              <button class="cssbuttons-io-button">
-                Get started
-                <div class="icon">
-                  <svg
-                    height="24"
-                    width="24"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path d="M0 0h24v24H0z" fill="none"></path>
-                    <path
-                      d="M16.172 11l-5.364-5.364 1.414-1.414L20 12l-7.778 7.778-1.414-1.414L16.172 13H4v-2z"
-                      fill="currentColor"
-                    ></path>
-                  </svg>
-                </div>
-              </button>
-            </div>
-            </div>
-            <div class="hero-stats">
-              <div class="stat">
-                <span class="stat-number">1K+</span>
-                <span class="stat-label">Users</span>
-              </div>
-              <div class="stat">
-                <span class="stat-number">10K+</span>
-                <span class="stat-label">QR Codes</span>
-              </div>
-              <div class="stat">
-                <span class="stat-number">99.9%</span>
-                <span class="stat-label">Uptime</span>
-              </div>
-            </div>
-          </div>
-        </section>
-        <!-- Enhanced Features Showcase -->
-        <section class="features-showcase">
-          <div class="container">
-            <div class="section-header">
-              <h3>✨ Enterprise-Grade Features</h3>
-              <p>Everything you need for professional QR code generation</p>
-            </div>
-
-            <div class="features-grid">
-              <!-- Feature 1: Military Encryption -->
-              <div class="feature-card-3d">
-                <div class="card-content">
-                  <div class="card-front">
-                    <div class="card-bg">
-                      <div class="circle circle-1"></div>
-                      <div class="circle circle-2"></div>
-                    </div>
-                    <div class="feature-icon">🔒</div>
-                    <h4 class="feature-title">Military-Grade Encryption</h4>
-                    <p class="feature-description">
-                      AES-256 with PBKDF2 key derivation
-                    </p>
-                    <div class="feature-badge">Security First</div>
-                  </div>
-                  <div class="card-back">
-                    <div class="back-content">
-                      <div class="feature-icon">🛡️</div>
-                      <h4>Secure by Design</h4>
-                      <p class="feature-description">
-                        Enterprise-level encryption for all your QR codes and
-                        files
-                      </p>
-                      <div class="feature-badge">AES-256</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Feature 2: Real-time Analytics -->
-              <div class="feature-card-3d">
-                <div class="card-content">
-                  <div class="card-front">
-                    <div class="card-bg">
-                      <div
-                        class="circle circle-1"
-                        style="background: #27ae60"
-                      ></div>
-                      <div
-                        class="circle circle-2"
-                        style="background: #2ecc71"
-                      ></div>
-                    </div>
-                    <div class="feature-icon">📊</div>
-                    <h4 class="feature-title">Real-time Analytics</h4>
-                    <p class="feature-description">
-                      Track performance and engagement metrics
-                    </p>
-                    <div class="feature-badge">Live Data</div>
-                  </div>
-                  <div class="card-back">
-                    <div class="back-content">
-                      <div class="feature-icon">📈</div>
-                      <h4>Data Insights</h4>
-                      <p class="feature-description">
-                        Monitor QR code scans and user engagement in real-time
-                      </p>
-                      <div class="feature-badge">Live Tracking</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Feature 3: Multiple QR Types -->
-              <div class="feature-card-3d">
-                <div class="card-content">
-                  <div class="card-front">
-                    <div class="card-bg">
-                      <div
-                        class="circle circle-1"
-                        style="background: #e67e22"
-                      ></div>
-                      <div
-                        class="circle circle-2"
-                        style="background: #d35400"
-                      ></div>
-                    </div>
-                    <div class="feature-icon">🎨</div>
-                    <h4 class="feature-title">Multiple QR Types</h4>
-                    <p class="feature-description">
-                      URLs, WiFi, vCard, Files, and more
-                    </p>
-                    <div class="feature-badge">Versatile</div>
-                  </div>
-                  <div class="card-back">
-                    <div class="back-content">
-                      <div class="feature-icon">🔗</div>
-                      <h4>All Formats</h4>
-                      <p class="feature-description">
-                        Generate QR codes for URLs, contact info, WiFi, and
-                        encrypted files
-                      </p>
-                      <div class="feature-badge">6+ Types</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Feature 4: File Encryption -->
-              <div class="feature-card-3d">
-                <div class="card-content">
-                  <div class="card-front">
-                    <div class="card-bg">
-                      <div
-                        class="circle circle-1"
-                        style="background: #9b59b6"
-                      ></div>
-                      <div
-                        class="circle circle-2"
-                        style="background: #8e44ad"
-                      ></div>
-                    </div>
-                    <div class="feature-icon">📁</div>
-                    <h4 class="feature-title">Secure File Sharing</h4>
-                    <p class="feature-description">
-                      Encrypt and share files via QR codes
-                    </p>
-                    <div class="feature-badge">File Safe</div>
-                  </div>
-                  <div class="card-back">
-                    <div class="back-content">
-                      <div class="feature-icon">🔐</div>
-                      <h4>Encrypted Files</h4>
-                      <p class="feature-description">
-                        Share sensitive files securely with password-protected
-                        QR codes
-                      </p>
-                      <div class="feature-badge">Secure Transfer</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Feature 5: Quick Generation -->
-              <div class="feature-card-3d">
-                <div class="card-content">
-                  <div class="card-front">
-                    <div class="card-bg">
-                      <div
-                        class="circle circle-1"
-                        style="background: #3498db"
-                      ></div>
-                      <div
-                        class="circle circle-2"
-                        style="background: #2980b9"
-                      ></div>
-                    </div>
-                    <div class="feature-icon">⚡</div>
-                    <h4 class="feature-title">Instant Generation</h4>
-                    <p class="feature-description">
-                      Generate QR codes in seconds
-                    </p>
-                    <div class="feature-badge">Fast</div>
-                  </div>
-                  <div class="card-back">
-                    <div class="back-content">
-                      <div class="feature-icon">🚀</div>
-                      <h4>Lightning Fast</h4>
-                      <p class="feature-description">
-                        Quick generator modal for instant QR code creation
-                      </p>
-                      <div class="feature-badge">Quick Actions</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Feature 6: Professional Dashboard -->
-              <div class="feature-card-3d">
-                <div class="card-content">
-                  <div class="card-front">
-                    <div class="card-bg">
-                      <div
-                        class="circle circle-1"
-                        style="background: #e74c3c"
-                      ></div>
-                      <div
-                        class="circle circle-2"
-                        style="background: #c0392b"
-                      ></div>
-                    </div>
-                    <div class="feature-icon">💼</div>
-                    <h4 class="feature-title">Professional Dashboard</h4>
-                    <p class="feature-description">Clean, modern interface</p>
-                    <div class="feature-badge">Enterprise UI</div>
-                  </div>
-                  <div class="card-back">
-                    <div class="back-content">
-                      <div class="feature-icon">🎯</div>
-                      <h4>User Friendly</h4>
-                      <p class="feature-description">
-                        Intuitive dashboard with analytics and quick actions
-                      </p>
-                      <div class="feature-badge">Modern Design</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
         <!-- Basic QR Section -->
         <section id="basic" class="section card">
           <div class="section-header">
@@ -601,13 +244,18 @@
               placeholder="https://example.com"
               class="form-input"
             />
-            <button id="generateBtn" class="btn btn-primary">
-              Generate QR Code
-            </button>
           </div>
+          <div id="basicQRCustomizer"></div>
+          <button
+            id="generateBtn"
+            class="btn btn-primary"
+            style="width: 100%; margin-top: 1.5rem"
+          >
+            Generate QR Code
+          </button>
           <div id="urlLoader" class="loader-container" style="display: none">
             <div class="loader"></div>
-            <span id="urlLoaderText">Generating QR Code...</span>
+            <span>Generating QR Code...</span>
           </div>
           <div id="output" class="output-container"></div>
         </section>
@@ -631,13 +279,18 @@
               placeholder="Encryption passphrase"
               class="form-input"
             />
-            <button id="encryptTextBtn" class="btn btn-secondary">
-              Generate Secure QR
-            </button>
           </div>
+          <div id="secureQRCustomizer"></div>
+          <button
+            id="encryptTextBtn"
+            class="btn btn-secondary"
+            style="width: 100%; margin-top: 1.5rem"
+          >
+            Generate Secure QR
+          </button>
           <div id="textLoader" class="loader-container" style="display: none">
             <div class="loader"></div>
-            <span id="textLoaderText">Encrypting and generating...</span>
+            <span>Encrypting...</span>
           </div>
           <div id="qrOutput" class="output-container"></div>
         </section>
@@ -656,18 +309,22 @@
               placeholder="File encryption passphrase"
               class="form-input"
             />
-            <button id="encryptFileBtn" class="btn btn-secondary">
-              Encrypt & Generate QR
-            </button>
           </div>
+          <button
+            id="encryptFileBtn"
+            class="btn btn-secondary"
+            style="width: 100%"
+          >
+            Encrypt & Generate QR
+          </button>
           <div id="fileLoader" class="loader-container" style="display: none">
             <div class="loader"></div>
-            <span id="fileLoaderText">Encrypting file...</span>
+            <span>Encrypting file...</span>
           </div>
           <div id="fileOutput" class="output-container"></div>
         </section>
 
-        <!-- Advanced Features Section -->
+        <!-- Advanced QR Types Section -->
         <section id="advanced" class="section card">
           <div class="section-header">
             <h3>⚡ Advanced QR Types</h3>
@@ -703,11 +360,14 @@
                 class="form-input"
               />
             </div>
-            <button onclick="generateVCardQR()" class="btn btn-outline">
+            <div id="vcardCustomizer"></div>
+            <button
+              onclick="generateVCardQR()"
+              class="btn btn-outline"
+              style="width: 100%; margin-top: 1rem"
+            >
               Generate vCard QR
             </button>
-
-            <!-- ✅ ADD THIS OUTPUT CONTAINER -->
             <div
               id="vcardOutput"
               class="output-container"
@@ -737,11 +397,14 @@
                 <option value="nopass">No Encryption</option>
               </select>
             </div>
-            <button onclick="generateWifiQR()" class="btn btn-outline">
+            <div id="wifiCustomizer"></div>
+            <button
+              onclick="generateWifiQR()"
+              class="btn btn-outline"
+              style="width: 100%; margin-top: 1rem"
+            >
               Generate WiFi QR
             </button>
-
-            <!-- ✅ ADD THIS OUTPUT CONTAINER -->
             <div
               id="wifiOutput"
               class="output-container"
@@ -749,6 +412,7 @@
             ></div>
           </div>
         </section>
+
         <!-- Decryption Section -->
         <section id="decrypt" class="section card">
           <div class="section-header">
@@ -762,7 +426,7 @@
             <div class="form-group">
               <textarea
                 id="qrCipher"
-                placeholder="Paste encrypted ciphertext from QR code..."
+                placeholder="Paste encrypted ciphertext..."
                 rows="3"
                 class="form-textarea"
               ></textarea>
@@ -772,7 +436,11 @@
                 placeholder="Decryption passphrase"
                 class="form-input"
               />
-              <button onclick="decryptText()" class="btn btn-warning">
+              <button
+                onclick="decryptText()"
+                class="btn btn-warning"
+                style="width: 100%"
+              >
                 Decrypt Text
               </button>
             </div>
@@ -783,7 +451,7 @@
             style="display: none"
           >
             <div class="loader"></div>
-            <span id="decryptLoaderText">Decrypting...</span>
+            <span>Decrypting...</span>
           </div>
           <div id="decryptedOutput" class="output-container"></div>
 
@@ -803,21 +471,199 @@
                 placeholder="File decryption passphrase"
                 class="form-input"
               />
-              <button onclick="decryptFile()" class="btn btn-warning">
+              <button
+                onclick="decryptFile()"
+                class="btn btn-warning"
+                style="width: 100%"
+              >
                 Decrypt File
               </button>
             </div>
           </div>
+          <div id="decryptedFileOutput" class="output-container"></div>
+        </section>
 
+        <!-- URL Shortener Section -->
+        <section id="shortener" class="section card">
+          <div class="section-header">
+            <h3>🔗 URL Shortener</h3>
+            <p>Create short, shareable links with QR codes</p>
+          </div>
+
+          <!-- Single URL Shortener -->
+          <div class="feature-card">
+            <h4>📝 Shorten a Single URL</h4>
+            <div class="form-group">
+              <input
+                type="url"
+                id="originalURL"
+                placeholder="https://example.com/very/long/url"
+                class="form-input"
+              />
+              <input
+                type="text"
+                id="customAlias"
+                placeholder="Custom alias (optional)"
+                class="form-input"
+              />
+              <input
+                type="text"
+                id="urlTitle"
+                placeholder="URL title (optional)"
+                class="form-input"
+              />
+            </div>
+            <div id="urlShortenerCustomizer"></div>
+            <button
+              onclick="shortenSingleURL()"
+              class="btn btn-primary"
+              style="width: 100%; margin-top: 1rem"
+            >
+              🔗 Shorten URL
+            </button>
+          </div>
           <div
-            id="decryptLoader"
+            id="shortenerLoader"
             class="loader-container"
-            style="display: none"
+            style="display: none; margin-top: 1rem"
           >
             <div class="loader"></div>
-            <span id="decryptLoaderFile">Decrypting...</span>
+            <span>Shortening URL...</span>
           </div>
-          <div id="decryptedFileOutput" class="output-container"></div>
+          <div id="shortenerOutput" class="output-container"></div>
+
+          <!-- Your Shortened URLs -->
+          <div class="feature-card" style="margin-top: 2rem">
+            <h4>📋 Your Shortened URLs</h4>
+            <button
+              onclick="loadUserShortenedURLs()"
+              class="btn btn-outline"
+              style="margin-bottom: 1rem"
+            >
+              🔄 Load URLs
+            </button>
+            <div
+              id="userShortenedURLsList"
+              style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px"
+            >
+              <p style="text-align: center; color: #666">
+                Click "Load URLs" to see your shortened links
+              </p>
+            </div>
+          </div>
+
+          <!-- Batch URL Shortener -->
+          <div
+            class="feature-card"
+            style="
+              margin-top: 2rem;
+              padding: 1.5rem;
+              background: #f0f7ff;
+              border-radius: 12px;
+              border-left: 4px solid #3498db;
+            "
+          >
+            <h4 style="margin-top: 0; color: #2c3e50">
+              📦 Shorten Multiple URLs
+            </h4>
+            <div class="form-group">
+              <label class="form-label">Enter URLs (one per line)</label>
+              <textarea
+                id="batchUrlsToShorten"
+                rows="6"
+                placeholder="https://example1.com&#10;https://example2.com"
+                class="form-textarea"
+                style="font-family: monospace; padding: 1rem"
+              ></textarea>
+              <button
+                onclick="shortenBatchURLs()"
+                class="btn btn-secondary"
+                style="width: 100%; margin-top: 1rem"
+              >
+                📦 Shorten Batch
+              </button>
+            </div>
+          </div>
+          <div
+            id="batchShortenerLoader"
+            class="loader-container"
+            style="display: none; margin-top: 1rem"
+          >
+            <div class="loader"></div>
+            <span>Shortening URLs...</span>
+          </div>
+          <div id="shortenerBatchOutput" class="output-container"></div>
+        </section>
+
+        <!-- Batch QR Section -->
+        <section id="batch" class="section card">
+          <div class="section-header">
+            <h3>📦 Batch QR Generator</h3>
+            <p>Generate multiple QR codes at once</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label"
+              >Enter URLs (one per line or JSON array)</label
+            >
+            <textarea
+              id="batchUrls"
+              rows="6"
+              placeholder="https://example.com&#10;https://google.com"
+              class="form-textarea"
+              style="font-family: monospace; padding: 1rem"
+            ></textarea>
+          </div>
+
+          <div id="batchCustomizer"></div>
+
+          <button
+            id="generateBatchBtn"
+            class="btn btn-primary"
+            onclick="generateBatchQR()"
+            style="width: 100%; margin-top: 1.5rem"
+          >
+            📦 Generate Batch QR Codes
+          </button>
+
+          <div
+            id="batchLoader"
+            class="loader-container"
+            style="display: none; margin-top: 1rem"
+          >
+            <div class="loader"></div>
+            <span>Generating QR codes...</span>
+          </div>
+
+          <div id="batchOutput" class="output-container"></div>
+
+          <!-- CSV Upload Option -->
+          <div
+            style="
+              margin-top: 2rem;
+              padding: 1.5rem;
+              background: #f0f7ff;
+              border-radius: 12px;
+              border-left: 4px solid #3498db;
+            "
+          >
+            <h4 style="margin-top: 0; color: #2c3e50">Or Upload CSV File</h4>
+            <div class="form-group">
+              <input
+                type="file"
+                id="csvFile"
+                accept=".csv,.txt"
+                class="file-input"
+              />
+            </div>
+            <button
+              class="btn btn-secondary"
+              onclick="generateBatchFromCSV()"
+              style="width: 100%"
+            >
+              📄 Generate from CSV
+            </button>
+          </div>
         </section>
 
         <!-- Stats Section -->
@@ -832,249 +678,17 @@
             </button>
           </div>
         </section>
-        <!-- Quick Generator Modal -->
-        <div id="quickGeneratorModal" class="modal" style="display: none">
-          <div class="modal-content">
-            <span class="close-modal" onclick="closeQuickGenerator()"
-              >&times;</span
-            >
-            <h3>🚀 Quick QR Generator</h3>
-
-            <div class="generator-tabs">
-              <button class="generator-tab active" onclick="switchQRTab('url')">
-                URL
-              </button>
-              <button class="generator-tab" onclick="switchQRTab('text')">
-                Text
-              </button>
-              <button class="generator-tab" onclick="switchQRTab('wifi')">
-                WiFi
-              </button>
-            </div>
-
-            <div id="urlTab" class="generator-content active">
-              <input
-                type="text"
-                id="quickUrl"
-                placeholder="https://example.com"
-                class="form-input"
-              />
-              <button
-                onclick="generateQuickURL()"
-                class="btn btn-primary"
-                style="margin-top: 1rem; width: 100%"
-              >
-                Generate QR Code
-              </button>
-            </div>
-
-            <div id="textTab" class="generator-content">
-              <textarea
-                id="quickText"
-                placeholder="Enter your text here..."
-                class="form-textarea"
-                rows="3"
-              ></textarea>
-              <button
-                onclick="generateQuickText()"
-                class="btn btn-primary"
-                style="margin-top: 1rem; width: 100%"
-              >
-                Generate QR Code
-              </button>
-            </div>
-
-            <div id="wifiTab" class="generator-content">
-              <input
-                type="text"
-                id="quickSSID"
-                placeholder="WiFi Network Name (SSID)"
-                class="form-input"
-              />
-              <input
-                type="password"
-                id="quickPassword"
-                placeholder="WiFi Password"
-                class="form-input"
-              />
-              <button
-                onclick="generateQuickWifi()"
-                class="btn btn-primary"
-                style="margin-top: 1rem; width: 100%"
-              >
-                Generate WiFi QR
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Analytics Dashboard -->
-        <section
-          id="analyticsDashboard"
-          class="section card"
-          style="display: none"
-        >
-          <div class="section-header">
-            <h3>📊 Your QR Analytics</h3>
-            <p>Track your QR code generation statistics</p>
-          </div>
-
-          <div class="metrics-grid">
-            <div class="metric-card">
-              <span class="metric-value" id="totalQrs">0</span>
-              <span class="metric-label">Total QR Codes</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-value" id="todayActivity">0</span>
-              <span class="metric-label">Recent Activity</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-value" id="popularType">-</span>
-              <span class="metric-label">Most Used Type</span>
-            </div>
-          </div>
-
-          <div style="text-align: center; margin-top: 2rem">
-            <button onclick="loadRealStats()" class="btn btn-outline">
-              🔄 Refresh Stats
-            </button>
-            <button onclick="hideAnalytics()" class="btn btn-primary">
-              ← Back to Generator
-            </button>
-          </div>
-        </section>
-        
-          <!-- URL Shortener Section -->
-        <section id="shortenURL" class="section card">
-            <div class="section-header">
-              <h3>🔗 URL Shortener</h3>
-              <p>Create short, shareable links with QR codes</p>
-            </div>
-
-            <!-- Single URL Shortener -->
-            <div class="feature-card">
-              <h4>📝 Shorten a Single URL</h4>
-              <div class="form-group">
-                <input
-                  type="url"
-                  id="originalURL"
-                  placeholder="https://example.com/very/long/url"
-                  class="form-input"
-                />
-                <input
-                  type="text"
-                  id="customAlias"
-                  placeholder="Custom alias (optional)"
-                  class="form-input"
-                />
-                <input
-                  type="text"
-                  id="urlTitle"
-                  placeholder="URL title (optional)"
-                  class="form-input"
-                />
-                <button onclick="shortenSingleURL()" class="btn btn-primary">
-                  🔗 Shorten URL
-                </button>
-              </div>
-              <div id="shortenerLoader" class="loader-container" style="display: none; margin-top: 1rem;">
-                <div class="loader"></div>
-                <span>Shortening URL...</span>
-              </div>
-              <div id="shortenerOutput" class="output-container"></div>
-            </div>
-
-            <!-- Your Shortened URLs -->
-            <div class="feature-card" style="margin-top: 2rem;">
-              <h4>📋 Your Shortened URLs</h4>
-              <button onclick="loadUserShortenedURLs()" class="btn btn-outline" style="margin-bottom: 1rem;">
-                🔄 Load URLs
-              </button>
-              <div id="userShortenedURLsList" style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px;">
-                <p style="text-align: center; color: #666;">Click "Load URLs" to see your shortened links</p>
-              </div>
-            </div>
-
-            <!-- Batch URL Shortener -->
-            <div class="feature-card" style="margin-top: 2rem; padding: 1.5rem; background: #f0f7ff; border-radius: 12px; border-left: 4px solid #3498db;">
-              <h4 style="margin-top: 0; color: #2c3e50;">📦 Shorten Multiple URLs</h4>
-              <div class="form-group">
-                <label class="form-label">Enter URLs (one per line)</label>
-                <textarea
-                  id="batchUrlsToShorten"
-                  rows="6"
-                  placeholder="https://example1.com
-          https://example2.com
-          https://example3.com"
-                  class="form-textarea"
-                  style="font-family: monospace; padding: 1rem;"
-                ></textarea>
-                <button onclick="shortenBatchURLs()" class="btn btn-secondary" style="width: 100%; margin-top: 1rem;">
-                  📦 Shorten Batch
-                </button>
-              </div>
-              <div id="batchShortenerLoader" class="loader-container" style="display: none; margin-top: 1rem;">
-                <div class="loader"></div>
-                <span>Shortening URLs...</span>
-              </div>
-              <div id="shortenerBatchOutput" class="output-container"></div>
-            </div>
-         </section>
-        <!-- Batch QR Generator Section -->
-        <section id="batch" class="section card">
-          <div class="section-header">
-            <h3>📦 Batch QR Generator</h3>
-            <p>Generate multiple QR codes at once</p>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Enter URLs (one per line or JSON array)</label>
-            <textarea
-              id="batchUrls"
-              rows="6"
-              placeholder="https://example.com 
-              https://google.com
-              https://github.com"
-              class="form-textarea"
-              style="font-family: monospace; padding: 1rem;"
-            ></textarea>
-          </div>
-
-          <button id="generateBatchBtn" class="btn btn-primary" onclick="generateBatchQR()">
-            📦 Generate Batch QR Codes
-          </button>
-
-          <div id="batchLoader" class="loader-container" style="display: none; margin-top: 1rem;">
-            <div class="loader"></div>
-            <span>Generating QR codes...</span>
-          </div>
-
-          <div id="batchOutput" class="output-container"></div>
-          <div style="margin-top: 2rem; padding: 1.5rem; background: #f0f7ff; border-radius: 12px;">    <!-- border-left: 4px solid #3498db; -->
-            <h4 style="margin-top: 0; color: #2c3e50;">Or Upload CSV File</h4>
-            <div class="form-group">
-              <input
-                type="file"
-                id="csvFile"
-                accept=".csv,.txt"
-                class="file-input"
-              />
-            </div>
-            <button class="btn btn-secondary" onclick="generateBatchFromCSV()">
-              📄 Generate from CSV
-            </button>
-          </div>
-        </section>
       </div>
     </main>
 
     <!-- Footer -->
     <footer class="footer">
       <div class="container">
-        <p>&copy; 2024 QRcify Pro. Built with PostgreSQL and ERN stack</p>
+        <p>&copy; 2025 QRcify Pro. Advanced QR Code Generator.</p>
       </div>
     </footer>
 
+    <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="./assets/script.js"></script>
   </body>

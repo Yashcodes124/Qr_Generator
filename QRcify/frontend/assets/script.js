@@ -1914,6 +1914,449 @@ async function shortenBatchURLs() {
   }
 }
 
+// ==================== QR CUSTOMIZATION ====================
+
+let qrTemplates = [];
+let currentQRPreview = null;
+
+async function loadQRTemplates() {
+  try {
+    const response = await fetch("/api/qr-templates");
+    const data = await response.json();
+    qrTemplates = data.templates;
+    displayQRTemplates();
+  } catch (error) {
+    console.error("❌ Failed to load templates:", error);
+  }
+}
+
+function displayQRTemplates() {
+  const container = document.getElementById("qrTemplatesContainer");
+  if (!container) return;
+
+  const html = qrTemplates
+    .map(
+      (template) => `
+    <div 
+      class="template-card"
+      onclick="applyTemplate('${template.id}', '${template.darkColor}', '${template.lightColor}')"
+      style="
+        padding: 1rem;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.3s;
+      "
+      onmouseover="this.style.borderColor='#667eea'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.3)'"
+      onmouseout="this.style.borderColor='#ddd'; this.style.boxShadow='none'"
+    >
+      <div style="font-size: 2rem; margin-bottom: 0.5rem;">${template.icon}</div>
+      <div style="font-weight: 600; margin-bottom: 0.25rem;">${template.name}</div>
+      <div style="font-size: 0.8rem; color: #666;">
+        <span style="display: inline-block; width: 16px; height: 16px; background: ${template.darkColor}; border-radius: 3px; margin-right: 0.25rem;"></span>
+        <span style="display: inline-block; width: 16px; height: 16px; background: ${template.lightColor}; border: 1px solid #999; border-radius: 3px;"></span>
+      </div>
+    </div>
+  `
+    )
+    .join("");
+
+  container.innerHTML = html;
+}
+
+function applyTemplate(templateId, darkColor, lightColor) {
+  document.getElementById("darkColor").value = darkColor;
+  document.getElementById("lightColor").value = lightColor;
+  generateQRPreview();
+}
+
+async function generateQRPreview() {
+  const data = document.getElementById("customQRData").value.trim();
+  const darkColor = document.getElementById("darkColor").value;
+  const lightColor = document.getElementById("lightColor").value;
+  const previewContainer = document.getElementById("qrPreviewContainer");
+
+  if (!data) {
+    previewContainer.innerHTML =
+      '<p style="color: #666; text-align: center;">Enter data to preview QR code</p>';
+    return;
+  }
+
+  showLoader("previewLoader", "Generating preview...");
+
+  try {
+    const response = await apiFetch("/api/generate-qr-preview", {
+      method: "POST",
+      body: JSON.stringify({
+        data,
+        darkColor,
+        lightColor,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      currentQRPreview = result.qrCode;
+      previewContainer.innerHTML = `
+        <div style="text-align: center;">
+          <img src="${result.qrCode}" alt="QR Preview" style="max-width: 200px; border: 2px solid #ddd; border-radius: 8px; padding: 1rem; background: white;" />
+          <p style="color: #666; margin-top: 0.5rem;">Live preview</p>
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error("❌ Preview error:", error);
+    previewContainer.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 1rem; border-radius: 8px; text-align: center;">Error generating preview</div>`;
+  } finally {
+    hideLoader("previewLoader");
+  }
+}
+
+async function generateCustomQRCode() {
+  const data = document.getElementById("customQRData").value.trim();
+  const darkColor = document.getElementById("darkColor").value;
+  const lightColor = document.getElementById("lightColor").value;
+  const size = parseInt(document.getElementById("qrSize").value);
+  const errorCorrection = document.getElementById("errorCorrection").value;
+  const output = document.getElementById("customQROutput");
+
+  if (!data) {
+    showError("Please enter data for QR code");
+    return;
+  }
+
+  showLoader("customQRLoader", "Generating custom QR...");
+  output.innerHTML = "";
+
+  try {
+    const response = await apiFetch("/api/generate-custom-qr", {
+      method: "POST",
+      body: JSON.stringify({
+        data,
+        darkColor,
+        lightColor,
+        size,
+        margin: 2,
+        format: "png",
+        errorCorrection,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      output.innerHTML = `
+        <div style="margin-top: 1.5rem; padding: 1.5rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 12px;">
+          <h4 style="margin-top: 0; color: #155724;">✅ Custom QR Generated!</h4>
+          
+          <div style="text-align: center; margin: 1rem 0;">
+            <img src="${result.qrCode}" alt="Custom QR" style="max-width: 300px; border: 2px solid #155724; border-radius: 8px; padding: 1rem; background: white;" />
+          </div>
+
+          <div style="background: white; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+            <p style="margin: 0.5rem 0;"><strong>Configuration:</strong></p>
+            <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+              <li>Dark Color: <span style="display: inline-block; width: 20px; height: 20px; background: ${result.options.darkColor}; border: 1px solid #999; border-radius: 3px; vertical-align: middle;"></span> ${result.options.darkColor}</li>
+              <li>Light Color: <span style="display: inline-block; width: 20px; height: 20px; background: ${result.options.lightColor}; border: 1px solid #999; border-radius: 3px; vertical-align: middle;"></span> ${result.options.lightColor}</li>
+              <li>Size: ${result.options.size}px</li>
+              <li>Format: ${result.options.format.toUpperCase()}</li>
+            </ul>
+          </div>
+
+          <button onclick="downloadQRImage('${result.qrCode}', 'custom-qr')" class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;">📥 Download QR Code</button>
+          <button onclick="copyToClipboard('${result.qrCode.replace(/'/g, "\\'")}'); showNotification('QR code copied!', 'success');" class="btn btn-outline" style="width: 100%;">📋 Copy QR Code</button>
+        </div>
+      `;
+
+      showNotification("✅ Custom QR generated successfully!", "success");
+    }
+  } catch (error) {
+    console.error("❌ Custom QR error:", error);
+    output.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 1rem; border-radius: 8px;">❌ Error: ${error.message}</div>`;
+    showError("Failed to generate QR: " + error.message);
+  } finally {
+    hideLoader("customQRLoader");
+  }
+}
+
+// Initialize on page load
+document.addEventListener("DOMContentLoaded", function () {
+  loadQRTemplates();
+});
+// ==================== REUSABLE QR CUSTOMIZER ====================
+
+class QRCustomizer {
+  constructor(options = {}) {
+    this.options = {
+      darkColor: options.darkColor || "#000000",
+      lightColor: options.lightColor || "#FFFFFF",
+      size: options.size || 300,
+      errorCorrection: options.errorCorrection || "H",
+      showTemplates: options.showTemplates !== false,
+      ...options,
+    };
+    this.templates = [];
+  }
+
+  // Load templates
+  async loadTemplates() {
+    try {
+      const response = await fetch("/api/qr-templates");
+      const data = await response.json();
+      this.templates = data.templates;
+    } catch (error) {
+      console.error("Failed to load templates:", error);
+    }
+  }
+
+  // Get current options
+  getOptions() {
+    return {
+      darkColor: this.options.darkColor,
+      lightColor: this.options.lightColor,
+      size: this.options.size,
+      errorCorrection: this.options.errorCorrection,
+    };
+  }
+
+  // Set options
+  setOptions(newOptions) {
+    this.options = { ...this.options, ...newOptions };
+  }
+
+  // Generate HTML
+  generateHTML(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+      console.error(`Container ${containerId} not found`);
+      return;
+    }
+
+    const templatesHTML = this.options.showTemplates
+      ? `
+        <div style="margin-bottom: 1.5rem;">
+          <label class="form-label" style="font-weight: 600; margin-bottom: 0.75rem; display: block;">
+            🎨 Quick Templates
+          </label>
+          <div id="${containerId}-templates" style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 0.75rem;
+          "></div>
+        </div>
+      `
+      : "";
+
+    const html = `
+      ${templatesHTML}
+      
+      <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; border-left: 4px solid #667eea;">
+        <h5 style="margin-top: 0; margin-bottom: 1rem; color: #2c3e50;">🎯 QR Code Style</h5>
+        
+        <!-- Colors -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+          <div>
+            <label class="form-label" style="font-size: 0.9rem;">Dark Color</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input
+                type="color"
+                id="${containerId}-darkColor"
+                value="${this.options.darkColor}"
+                class="form-input"
+                style="flex: 1; height: 45px; cursor: pointer;"
+              />
+              <input
+                type="text"
+                id="${containerId}-darkColorHex"
+                value="${this.options.darkColor}"
+                placeholder="#000000"
+                class="form-input"
+                style="flex: 1; font-size: 0.85rem;"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label" style="font-size: 0.9rem;">Light Color</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input
+                type="color"
+                id="${containerId}-lightColor"
+                value="${this.options.lightColor}"
+                class="form-input"
+                style="flex: 1; height: 45px; cursor: pointer;"
+              />
+              <input
+                type="text"
+                id="${containerId}-lightColorHex"
+                value="${this.options.lightColor}"
+                placeholder="#FFFFFF"
+                class="form-input"
+                style="flex: 1; font-size: 0.85rem;"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Size & Error Correction -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div>
+            <label class="form-label" style="font-size: 0.9rem;">Size</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <input
+                type="range"
+                id="${containerId}-size"
+                min="100"
+                max="1000"
+                value="${this.options.size}"
+                step="50"
+                class="form-input"
+                style="flex: 1; cursor: pointer;"
+              />
+              <span id="${containerId}-sizeValue" style="min-width: 45px; text-align: right; font-weight: 600; font-size: 0.9rem;">
+                ${this.options.size}px
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label" style="font-size: 0.9rem;">Error Correction</label>
+            <select id="${containerId}-errorCorrection" class="form-select">
+              <option value="L" ${this.options.errorCorrection === "L" ? "selected" : ""}>Low (7%)</option>
+              <option value="M" ${this.options.errorCorrection === "M" ? "selected" : ""}>Medium (15%)</option>
+              <option value="Q" ${this.options.errorCorrection === "Q" ? "selected" : ""}>Quartile (25%)</option>
+              <option value="H" ${this.options.errorCorrection === "H" ? "selected" : ""}>High (30%)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+    this.attachEventListeners(containerId);
+  }
+
+  // Attach event listeners
+  attachEventListeners(containerId) {
+    const darkColorInput = document.getElementById(`${containerId}-darkColor`);
+    const darkColorHex = document.getElementById(`${containerId}-darkColorHex`);
+    const lightColorInput = document.getElementById(
+      `${containerId}-lightColor`
+    );
+    const lightColorHex = document.getElementById(
+      `${containerId}-lightColorHex`
+    );
+    const sizeInput = document.getElementById(`${containerId}-size`);
+    const sizeValue = document.getElementById(`${containerId}-sizeValue`);
+    const errorCorrectionInput = document.getElementById(
+      `${containerId}-errorCorrection`
+    );
+
+    // Dark color sync
+    if (darkColorInput && darkColorHex) {
+      darkColorInput.addEventListener("input", (e) => {
+        darkColorHex.value = e.target.value;
+        this.options.darkColor = e.target.value;
+      });
+      darkColorHex.addEventListener("input", (e) => {
+        if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+          darkColorInput.value = e.target.value;
+          this.options.darkColor = e.target.value;
+        }
+      });
+    }
+
+    // Light color sync
+    if (lightColorInput && lightColorHex) {
+      lightColorInput.addEventListener("input", (e) => {
+        lightColorHex.value = e.target.value;
+        this.options.lightColor = e.target.value;
+      });
+      lightColorHex.addEventListener("input", (e) => {
+        if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+          lightColorInput.value = e.target.value;
+          this.options.lightColor = e.target.value;
+        }
+      });
+    }
+
+    // Size
+    if (sizeInput && sizeValue) {
+      sizeInput.addEventListener("input", (e) => {
+        this.options.size = parseInt(e.target.value);
+        sizeValue.textContent = `${this.options.size}px`;
+      });
+    }
+
+    // Error correction
+    if (errorCorrectionInput) {
+      errorCorrectionInput.addEventListener("change", (e) => {
+        this.options.errorCorrection = e.target.value;
+      });
+    }
+
+    // Load and attach templates
+    if (this.options.showTemplates) {
+      this.attachTemplates(containerId);
+    }
+  }
+
+  // Attach templates
+  attachTemplates(containerId) {
+    const templatesContainer = document.getElementById(
+      `${containerId}-templates`
+    );
+    if (!templatesContainer || this.templates.length === 0) return;
+
+    const html = this.templates
+      .map(
+        (template) => `
+      <div
+        onclick="window.qrCustomizers && window.qrCustomizers['${containerId}'] && window.qrCustomizers['${containerId}'].applyTemplate('${template.darkColor}', '${template.lightColor}')"
+        style="
+          padding: 0.75rem;
+          border: 2px solid #ddd;
+          border-radius: 6px;
+          cursor: pointer;
+          text-align: center;
+          transition: all 0.3s;
+        "
+        onmouseover="this.style.borderColor='#667eea'; this.style.boxShadow='0 2px 8px rgba(102, 126, 234, 0.3)'"
+        onmouseout="this.style.borderColor='#ddd'; this.style.boxShadow='none'"
+      >
+        <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">${template.icon}</div>
+        <div style="font-weight: 600; font-size: 0.75rem;">${template.name}</div>
+      </div>
+    `
+      )
+      .join("");
+
+    templatesContainer.innerHTML = html;
+  }
+
+  // Apply template
+  applyTemplate(darkColor, lightColor) {
+    this.options.darkColor = darkColor;
+    this.options.lightColor = lightColor;
+
+    const darkColorInput = document.getElementById(
+      `${this.containerId}-darkColor`
+    );
+    const lightColorInput = document.getElementById(
+      `${this.containerId}-lightColor`
+    );
+
+    if (darkColorInput) darkColorInput.value = darkColor;
+    if (lightColorInput) lightColorInput.value = lightColor;
+
+    // Trigger any callback
+    if (this.onTemplateApply) {
+      this.onTemplateApply();
+    }
+  }
+}
 // ==================== INITIALIZATION ====================
 document.addEventListener("DOMContentLoaded", function () {
   console.log("🚀 QRcify Pro initialized successfully!");
@@ -2037,4 +2480,274 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 `;
   document.head.appendChild(menuStyle);
+});
+
+// ==================== REUSABLE QR CUSTOMIZER CLASS ====================
+
+class QRCustomizer {
+  constructor(options = {}) {
+    this.options = {
+      darkColor: options.darkColor || "#000000",
+      lightColor: options.lightColor || "#FFFFFF",
+      size: options.size || 300,
+      errorCorrection: options.errorCorrection || "H",
+      showTemplates: options.showTemplates !== false,
+      ...options,
+    };
+    this.templates = [];
+    this.containerId = null;
+  }
+
+  async loadTemplates() {
+    try {
+      const response = await fetch("/api/qr-templates");
+      const data = await response.json();
+      this.templates = data.templates;
+    } catch (error) {
+      console.error("Failed to load templates:", error);
+    }
+  }
+
+  getOptions() {
+    return {
+      darkColor: this.options.darkColor,
+      lightColor: this.options.lightColor,
+      size: this.options.size,
+      errorCorrection: this.options.errorCorrection,
+    };
+  }
+
+  setOptions(newOptions) {
+    this.options = { ...this.options, ...newOptions };
+  }
+
+  generateHTML(containerId) {
+    this.containerId = containerId;
+    const container = document.getElementById(containerId);
+    if (!container) {
+      console.error(`Container ${containerId} not found`);
+      return;
+    }
+
+    const templatesHTML = this.options.showTemplates
+      ? `
+        <div style="margin-bottom: 1.5rem;">
+          <label class="form-label" style="font-weight: 600; margin-bottom: 0.75rem; display: block;">
+            🎨 Quick Templates
+          </label>
+          <div id="${containerId}-templates" style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 0.75rem;
+          "></div>
+        </div>
+      `
+      : "";
+
+    const html = `
+      ${templatesHTML}
+      
+      <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; border-left: 4px solid #667eea;">
+        <h5 style="margin-top: 0; margin-bottom: 1rem; color: #2c3e50;">🎯 QR Code Style</h5>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+          <div>
+            <label class="form-label" style="font-size: 0.9rem;">Dark Color</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input
+                type="color"
+                id="${containerId}-darkColor"
+                value="${this.options.darkColor}"
+                class="form-input"
+                style="flex: 1; height: 45px; cursor: pointer;"
+              />
+              <input
+                type="text"
+                id="${containerId}-darkColorHex"
+                value="${this.options.darkColor}"
+                placeholder="#000000"
+                class="form-input"
+                style="flex: 1; font-size: 0.85rem;"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label" style="font-size: 0.9rem;">Light Color</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input
+                type="color"
+                id="${containerId}-lightColor"
+                value="${this.options.lightColor}"
+                class="form-input"
+                style="flex: 1; height: 45px; cursor: pointer;"
+              />
+              <input
+                type="text"
+                id="${containerId}-lightColorHex"
+                value="${this.options.lightColor}"
+                placeholder="#FFFFFF"
+                class="form-input"
+                style="flex: 1; font-size: 0.85rem;"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div>
+            <label class="form-label" style="font-size: 0.9rem;">Size</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <input
+                type="range"
+                id="${containerId}-size"
+                min="100"
+                max="1000"
+                value="${this.options.size}"
+                step="50"
+                class="form-input"
+                style="flex: 1; cursor: pointer;"
+              />
+              <span id="${containerId}-sizeValue" style="min-width: 45px; text-align: right; font-weight: 600; font-size: 0.9rem;">
+                ${this.options.size}px
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label" style="font-size: 0.9rem;">Error Correction</label>
+            <select id="${containerId}-errorCorrection" class="form-select">
+              <option value="L" ${this.options.errorCorrection === "L" ? "selected" : ""}>Low (7%)</option>
+              <option value="M" ${this.options.errorCorrection === "M" ? "selected" : ""}>Medium (15%)</option>
+              <option value="Q" ${this.options.errorCorrection === "Q" ? "selected" : ""}>Quartile (25%)</option>
+              <option value="H" ${this.options.errorCorrection === "H" ? "selected" : ""}>High (30%)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+    this.attachEventListeners(containerId);
+  }
+
+  attachEventListeners(containerId) {
+    const darkColorInput = document.getElementById(`${containerId}-darkColor`);
+    const darkColorHex = document.getElementById(`${containerId}-darkColorHex`);
+    const lightColorInput = document.getElementById(
+      `${containerId}-lightColor`
+    );
+    const lightColorHex = document.getElementById(
+      `${containerId}-lightColorHex`
+    );
+    const sizeInput = document.getElementById(`${containerId}-size`);
+    const sizeValue = document.getElementById(`${containerId}-sizeValue`);
+    const errorCorrectionInput = document.getElementById(
+      `${containerId}-errorCorrection`
+    );
+
+    if (darkColorInput && darkColorHex) {
+      darkColorInput.addEventListener("input", (e) => {
+        darkColorHex.value = e.target.value;
+        this.options.darkColor = e.target.value;
+      });
+      darkColorHex.addEventListener("input", (e) => {
+        if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+          darkColorInput.value = e.target.value;
+          this.options.darkColor = e.target.value;
+        }
+      });
+    }
+
+    if (lightColorInput && lightColorHex) {
+      lightColorInput.addEventListener("input", (e) => {
+        lightColorHex.value = e.target.value;
+        this.options.lightColor = e.target.value;
+      });
+      lightColorHex.addEventListener("input", (e) => {
+        if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+          lightColorInput.value = e.target.value;
+          this.options.lightColor = e.target.value;
+        }
+      });
+    }
+
+    if (sizeInput && sizeValue) {
+      sizeInput.addEventListener("input", (e) => {
+        this.options.size = parseInt(e.target.value);
+        sizeValue.textContent = `${this.options.size}px`;
+      });
+    }
+
+    if (errorCorrectionInput) {
+      errorCorrectionInput.addEventListener("change", (e) => {
+        this.options.errorCorrection = e.target.value;
+      });
+    }
+
+    if (this.options.showTemplates) {
+      this.attachTemplates(containerId);
+    }
+  }
+
+  attachTemplates(containerId) {
+    const templatesContainer = document.getElementById(
+      `${containerId}-templates`
+    );
+    if (!templatesContainer || this.templates.length === 0) return;
+
+    const html = this.templates
+      .map(
+        (template) => `
+      <div
+        onclick="window.qrCustomizers && window.qrCustomizers['${containerId}'] && window.qrCustomizers['${containerId}'].applyTemplate('${template.darkColor}', '${template.lightColor}')"
+        style="
+          padding: 0.75rem;
+          border: 2px solid #ddd;
+          border-radius: 6px;
+          cursor: pointer;
+          text-align: center;
+          transition: all 0.3s;
+        "
+        onmouseover="this.style.borderColor='#667eea'; this.style.boxShadow='0 2px 8px rgba(102, 126, 234, 0.3)'"
+        onmouseout="this.style.borderColor='#ddd'; this.style.boxShadow='none'"
+      >
+        <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">${template.icon}</div>
+        <div style="font-weight: 600; font-size: 0.75rem;">${template.name}</div>
+      </div>
+    `
+      )
+      .join("");
+
+    templatesContainer.innerHTML = html;
+  }
+
+  applyTemplate(darkColor, lightColor) {
+    this.options.darkColor = darkColor;
+    this.options.lightColor = lightColor;
+
+    const darkColorInput = document.getElementById(
+      `${this.containerId}-darkColor`
+    );
+    const lightColorInput = document.getElementById(
+      `${this.containerId}-lightColor`
+    );
+
+    if (darkColorInput) darkColorInput.value = darkColor;
+    if (lightColorInput) lightColorInput.value = lightColor;
+  }
+}
+
+// Initialize customizers on DOMContentLoaded
+document.addEventListener("DOMContentLoaded", function () {
+  window.qrCustomizers = {};
+
+  // Initialize Basic QR Customizer
+  const basicCustomizer = new QRCustomizer({ showTemplates: true });
+  basicCustomizer.loadTemplates().then(() => {
+    basicCustomizer.generateHTML("basicQRCustomizer");
+    window.qrCustomizers["basicQRCustomizer"] = basicCustomizer;
+  });
+
+  // You can add similar initialization for other customizers here
 });
