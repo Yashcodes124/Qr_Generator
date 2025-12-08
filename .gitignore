@@ -1,2 +1,42 @@
-node_modules
-urls.txt
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+temp/
+tmp/
+*.log
+
+# Database
+*.sqlite
+*.sqlite3
+database/
+
+# Generated files
+qr_img.png
+url.png
+encrypted/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+build/
+
+# Logs
+logs/
