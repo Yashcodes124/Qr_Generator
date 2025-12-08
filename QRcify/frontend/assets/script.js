@@ -20,21 +20,35 @@ window.addEventListener("unhandledrejection", function (event) {
 });
 
 // ==================== UTILITY FUNCTIONS ====================
+// ==================== UTILITY FUNCTIONS ====================
 function getToken() {
-  return localStorage.getItem("userToken") || localStorage.getItem("token");
+  const token =
+    localStorage.getItem("userToken") || localStorage.getItem("token");
+  console.log(
+    "🔑 Token retrieved:",
+    token ? `${token.substring(0, 20)}...` : "NONE"
+  );
+  return token;
 }
 
 function isAuthenticated() {
-  return !!getToken();
+  const authenticated = !!getToken();
+  console.log("✅ Is Authenticated:", authenticated);
+  return authenticated;
 }
 
 async function apiFetch(endpoint, options = {}) {
   const token = getToken();
 
+  if (!token) {
+    console.warn("⚠️ No auth token found. User must login first.");
+    throw new Error("Authentication required. Please login first.");
+  }
+
   const defaultOptions = {
     headers: {
       "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
+      Authorization: `Bearer ${token}`, // ✅ ALWAYS INCLUDE
     },
   };
 
@@ -48,21 +62,30 @@ async function apiFetch(endpoint, options = {}) {
   };
 
   try {
+    console.log(`📡 API Request: ${options.method || "GET"} ${endpoint}`);
     const response = await fetch(endpoint, mergedOptions);
 
+    console.log(`📊 Response Status: ${response.status}`);
+
     if (response.status === 401) {
+      console.error("❌ Unauthorized - Session expired");
       localStorage.clear();
       window.location.href = "/index.html";
       throw new Error("Session expired. Please login again.");
     }
 
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("❌ API Error:", errorData);
+      throw new Error(errorData.error || `Server error: ${response.status}`);
+    }
+
     return response;
   } catch (error) {
-    console.error("API Fetch error:", error);
+    console.error("❌ API Fetch error:", error.message);
     throw error;
   }
 }
-
 // ==================== LOADER FUNCTIONS ====================
 let dotInterval;
 
@@ -269,8 +292,9 @@ async function handleRegister(event) {
       // ✅ Show OTP verification form
       document.getElementById("registerFormStep1").style.display = "none";
       document.getElementById("registerFormStep2").style.display = "block";
-      document.getElementById("verificationEmail").textContent =
-        `📧 OTP sent to: ${email}`;
+      document.getElementById(
+        "verificationEmail"
+      ).textContent = `📧 OTP sent to: ${email}`;
 
       showSuccess("Check your email for the OTP!");
 
@@ -567,7 +591,9 @@ function updateUIForLoggedInUser(user) {
   if (userMenuContainer) {
     userMenuContainer.innerHTML = `
       <button class="user-menu-trigger" onclick="toggleProfileMenu()">
-        <div class="user-avatar-small">${user.name.charAt(0).toUpperCase()}</div>
+        <div class="user-avatar-small">${user.name
+          .charAt(0)
+          .toUpperCase()}</div>
         <span>${user.name}</span>
       </button>
     `;
@@ -720,11 +746,14 @@ async function generateUrlQR() {
         </div>
       `;
     } else {
-      urlOutput.innerHTML = `<div class="error-message">Error: ${data.error || "Unknown error"}</div>`;
+      urlOutput.innerHTML = `<div class="error-message">Error: ${
+        data.error || "Unknown error"
+      }</div>`;
     }
   } catch (err) {
-    console.error("QR generation error:", err);
-    urlOutput.innerHTML = `<div class="error-message">Failed to generate QR: ${err.message}</div>`;
+    console.error("❌ QR generation error:", err);
+    urlOutput.innerHTML = `<div class="error-message">❌ Failed to generate QR: ${err.message}</div>`;
+    showNotification(`QR generation failed: ${err.message}`, "error");
   } finally {
     hideLoader("urlLoader");
   }
@@ -756,12 +785,14 @@ async function generateEncryptedQR() {
     });
 
     if (!res.ok) {
-      throw new Error(`Server error: ${res.status}`);
+      const errorData = await res.json();
+      throw new Error(errorData.error || `Server error: ${res.status}`);
     }
 
     const data = await res.json();
     if (data.error) {
       qrOutput.innerHTML = `<div class="error-message">${data.error}</div>`;
+      showNotification(data.error, "error");
       return;
     }
 
@@ -777,14 +808,15 @@ async function generateEncryptedQR() {
         </div>
       </div>
     `;
+    showNotification("✅ Encryption successful!", "success");
   } catch (err) {
-    console.error("Encryption error:", err);
-    qrOutput.innerHTML = `<div class="error-message">Failed to encrypt: ${err.message}</div>`;
+    console.error("❌ Encryption error:", err);
+    qrOutput.innerHTML = `<div class="error-message">❌ Failed to encrypt: ${err.message}</div>`;
+    showNotification(`Encryption failed: ${err.message}`, "error");
   } finally {
     hideLoader("textLoader");
   }
 }
-
 async function encryptFile() {
   const fileInput = document.getElementById("fileInput");
   const passphrase = document.getElementById("filePassphrase").value.trim();
@@ -808,7 +840,11 @@ async function encryptFile() {
     if (file.size > maxSize) {
       hideLoader("fileLoader");
       showNotification(
-        `File too large! Maximum size is 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB`,
+        `File too large! Maximum size is 10MB. Your file is ${(
+          file.size /
+          1024 /
+          1024
+        ).toFixed(2)}MB`,
         "error"
       );
       return;
@@ -821,6 +857,10 @@ async function encryptFile() {
         const base64 = e.target.result.split(",")[1];
         const filename = file.name;
 
+        console.log(
+          `📁 File ready: ${filename} (${(file.size / 1024).toFixed(2)}KB)`
+        );
+
         const response = await apiFetch("/api/encrypt-file", {
           method: "POST",
           body: JSON.stringify({
@@ -831,6 +871,13 @@ async function encryptFile() {
           }),
         });
 
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.error || `Server error: ${response.status}`
+          );
+        }
+
         const data = await response.json();
 
         if (data.success && data.qrCode) {
@@ -839,7 +886,9 @@ async function encryptFile() {
               <img src="${data.qrCode}" alt="Encrypted File QR Code">
               <p class="success-message">✅ File Encrypted & QR Generated!</p>
               <p><strong>File:</strong> ${filename}</p>
-              <p><strong>Size:</strong> ${(data.fileSize / 1024).toFixed(2)} KB</p>
+              <p><strong>Size:</strong> ${(data.fileSize / 1024).toFixed(
+                2
+              )} KB</p>
               ${
                 data.downloadUrl
                   ? `
@@ -850,7 +899,9 @@ async function encryptFile() {
                   : ""
               }
               <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button onclick="downloadQRImage('${data.qrCode}', 'encrypted-file-qr')" class="btn btn-outline">📥 Download QR</button>
+                <button onclick="downloadQRImage('${
+                  data.qrCode
+                }', 'encrypted-file-qr')" class="btn btn-outline">📥 Download QR</button>
                 ${
                   data.downloadUrl
                     ? `
@@ -862,13 +913,16 @@ async function encryptFile() {
             </div>
           `;
 
-          showNotification("File encrypted successfully!", "success");
+          showNotification("✅ File encrypted successfully!", "success");
         } else {
           throw new Error(data.error || "Failed to encrypt file");
         }
       } catch (error) {
-        console.error("File encryption failed:", error);
-        showNotification("Failed to encrypt file: " + error.message, "error");
+        console.error("❌ File encryption error:", error);
+        document.getElementById(
+          "fileOutput"
+        ).innerHTML = `<div class="error-message">❌ Encryption failed: ${error.message}</div>`;
+        showNotification(`File encryption failed: ${error.message}`, "error");
       } finally {
         hideLoader("fileLoader");
       }
@@ -877,11 +931,12 @@ async function encryptFile() {
     reader.onerror = function () {
       hideLoader("fileLoader");
       showNotification("Failed to read file", "error");
+      console.error("❌ FileReader error");
     };
 
     reader.readAsDataURL(file);
   } catch (error) {
-    console.error("File encryption failed:", error);
+    console.error("❌ File encryption failed:", error);
     showNotification("Failed to encrypt file: " + error.message, "error");
     hideLoader("fileLoader");
   }
@@ -1008,14 +1063,21 @@ async function decryptText() {
           <div style="background: ${bgColor}; padding: 1.5rem; border-radius: 8px; border: 1px solid ${borderColor}; margin-top: 1rem; word-wrap: break-word; white-space: pre-wrap; font-family: 'Courier New', monospace; color: ${textColor}; max-height: 400px; overflow-y: auto;">
             ${escapedText}
           </div>
-          <button onclick="copyDecryptedText(\`${data.decrypted.replace(/`/g, "\\`").replace(/\$/g, "\\$")}\`)" class="btn btn-outline" style="margin-top: 1rem; padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+          <button onclick="copyDecryptedText(\`${data.decrypted
+            .replace(/`/g, "\\`")
+            .replace(
+              /\$/g,
+              "\\$"
+            )}\`)" class="btn btn-outline" style="margin-top: 1rem; padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
             📋 Copy Text
           </button>
         </div>
       `;
       showNotification("Text decrypted successfully!", "success");
     } else {
-      decryptedOutput.innerHTML = `<div class="error-message">❌ ${data.error || "Decryption failed - wrong passphrase?"}</div>`;
+      decryptedOutput.innerHTML = `<div class="error-message">❌ ${
+        data.error || "Decryption failed - wrong passphrase?"
+      }</div>`;
       showNotification("Decryption failed", "error");
     }
   } catch (error) {
@@ -1084,10 +1146,16 @@ async function decryptFile() {
           decryptedOutput.innerHTML = `
             <div style="margin-top: 1rem; padding: 1.5rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 12px;">
               <h4 style="margin-bottom: 1rem; color: #155724;">✅ File Decryption Successful!</h4>
-              <p style="margin-bottom: 0.5rem;"><strong>Original File:</strong> ${file.name}</p>
-              <p style="margin-bottom: 1rem;"><strong>Decrypted File:</strong> ${data.suggestedFilename}</p>
+              <p style="margin-bottom: 0.5rem;"><strong>Original File:</strong> ${
+                file.name
+              }</p>
+              <p style="margin-bottom: 1rem;"><strong>Decrypted File:</strong> ${
+                data.suggestedFilename
+              }</p>
               <div style="margin-top: 1.5rem;">
-                <a href="${URL.createObjectURL(blob)}" download="${data.suggestedFilename}" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                <a href="${URL.createObjectURL(blob)}" download="${
+            data.suggestedFilename
+          }" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
                   📥 Download Decrypted File
                 </a>
               </div>
@@ -1095,7 +1163,9 @@ async function decryptFile() {
           `;
           showNotification("✅ File decrypted successfully!", "success");
         } else {
-          decryptedOutput.innerHTML = `<div class="error-message" style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px;">❌ ${data.error || "Decryption failed - wrong passphrase?"}</div>`;
+          decryptedOutput.innerHTML = `<div class="error-message" style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px;">❌ ${
+            data.error || "Decryption failed - wrong passphrase?"
+          }</div>`;
           showNotification("❌ Decryption failed", "error");
         }
       } catch (error) {
@@ -1250,8 +1320,12 @@ async function generateQuickText() {
         <div class="qr-result">
           <img src="${data.qrCode}" alt="QR Code">
           <p class="success-message">✅ Text QR Generated Successfully!</p>
-          <p><strong>Text:</strong> ${text.substring(0, 50)}${text.length > 50 ? "..." : ""}</p>
-          <button onclick="downloadQRImage('${data.qrCode}', 'text-qr')" class="btn btn-outline">📥 Download QR</button>
+          <p><strong>Text:</strong> ${text.substring(0, 50)}${
+        text.length > 50 ? "..." : ""
+      }</p>
+          <button onclick="downloadQRImage('${
+            data.qrCode
+          }', 'text-qr')" class="btn btn-outline">📥 Download QR</button>
         </div>
       `;
 
@@ -1781,9 +1855,13 @@ function displayUserShortenedURLs(urls) {
           .map(
             (url) => `
           <tr style="border-bottom: 1px solid #dee2e6;">
-            <td style="padding: 0.75rem; font-family: monospace; font-weight: 600;">${url.shortCode}</td>
+            <td style="padding: 0.75rem; font-family: monospace; font-weight: 600;">${
+              url.shortCode
+            }</td>
             <td style="padding: 0.75rem;">
-              <span title="${url.originalURL}" style="display: block; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+              <span title="${
+                url.originalURL
+              }" style="display: block; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
                 ${url.originalURL.substring(0, 40)}...
               </span>
             </td>
@@ -1796,8 +1874,12 @@ function displayUserShortenedURLs(urls) {
               ${new Date(url.createdAt).toLocaleDateString()}
             </td>
             <td style="padding: 0.75rem; text-align: center;">
-              <button onclick="copyToClipboard('${url.shortURL}')" class="btn btn-outline" style="padding: 0.5rem 0.75rem; font-size: 0.85rem; margin-right: 0.25rem;">📋</button>
-              <button onclick="deleteShortenedURL(${url.id})" class="btn btn-outline" style="padding: 0.5rem 0.75rem; font-size: 0.85rem; background: #f8d7da; color: #721c24;">🗑️</button>
+              <button onclick="copyToClipboard('${
+                url.shortURL
+              }')" class="btn btn-outline" style="padding: 0.5rem 0.75rem; font-size: 0.85rem; margin-right: 0.25rem;">📋</button>
+              <button onclick="deleteShortenedURL(${
+                url.id
+              })" class="btn btn-outline" style="padding: 0.5rem 0.75rem; font-size: 0.85rem; background: #f8d7da; color: #721c24;">🗑️</button>
             </td>
           </tr>
         `
@@ -1868,7 +1950,11 @@ async function shortenBatchURLs() {
           <h4 style="margin-top: 0; color: #155724;">✅ Batch URLs Shortened!</h4>
           <p style="color: #155724; margin: 0.5rem 0;">
             <strong>Successful:</strong> ${shortenedURLs.length}<br>
-            ${errors.length > 0 ? `<strong>Failed:</strong> ${errors.length}<br>` : ""}
+            ${
+              errors.length > 0
+                ? `<strong>Failed:</strong> ${errors.length}<br>`
+                : ""
+            }
             <strong>Total:</strong> ${data.data.total}
           </p>
 
@@ -1885,7 +1971,9 @@ async function shortenBatchURLs() {
                   .map(
                     (url) => `
                   <tr style="border-bottom: 1px solid #dee2e6;">
-                    <td style="padding: 0.5rem; font-family: monospace;">${url.shortCode}</td>
+                    <td style="padding: 0.5rem; font-family: monospace;">${
+                      url.shortCode
+                    }</td>
                     <td style="padding: 0.5rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
                       ${url.originalURL.substring(0, 30)}...
                     </td>
@@ -2052,21 +2140,36 @@ async function generateCustomQRCode() {
           <h4 style="margin-top: 0; color: #155724;">✅ Custom QR Generated!</h4>
           
           <div style="text-align: center; margin: 1rem 0;">
-            <img src="${result.qrCode}" alt="Custom QR" style="max-width: 300px; border: 2px solid #155724; border-radius: 8px; padding: 1rem; background: white;" />
+            <img src="${
+              result.qrCode
+            }" alt="Custom QR" style="max-width: 300px; border: 2px solid #155724; border-radius: 8px; padding: 1rem; background: white;" />
           </div>
 
           <div style="background: white; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
             <p style="margin: 0.5rem 0;"><strong>Configuration:</strong></p>
             <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
-              <li>Dark Color: <span style="display: inline-block; width: 20px; height: 20px; background: ${result.options.darkColor}; border: 1px solid #999; border-radius: 3px; vertical-align: middle;"></span> ${result.options.darkColor}</li>
-              <li>Light Color: <span style="display: inline-block; width: 20px; height: 20px; background: ${result.options.lightColor}; border: 1px solid #999; border-radius: 3px; vertical-align: middle;"></span> ${result.options.lightColor}</li>
+              <li>Dark Color: <span style="display: inline-block; width: 20px; height: 20px; background: ${
+                result.options.darkColor
+              }; border: 1px solid #999; border-radius: 3px; vertical-align: middle;"></span> ${
+        result.options.darkColor
+      }</li>
+              <li>Light Color: <span style="display: inline-block; width: 20px; height: 20px; background: ${
+                result.options.lightColor
+              }; border: 1px solid #999; border-radius: 3px; vertical-align: middle;"></span> ${
+        result.options.lightColor
+      }</li>
               <li>Size: ${result.options.size}px</li>
               <li>Format: ${result.options.format.toUpperCase()}</li>
             </ul>
           </div>
 
-          <button onclick="downloadQRImage('${result.qrCode}', 'custom-qr')" class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;">📥 Download QR Code</button>
-          <button onclick="copyToClipboard('${result.qrCode.replace(/'/g, "\\'")}'); showNotification('QR code copied!', 'success');" class="btn btn-outline" style="width: 100%;">📋 Copy QR Code</button>
+          <button onclick="downloadQRImage('${
+            result.qrCode
+          }', 'custom-qr')" class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;">📥 Download QR Code</button>
+          <button onclick="copyToClipboard('${result.qrCode.replace(
+            /'/g,
+            "\\'"
+          )}'); showNotification('QR code copied!', 'success');" class="btn btn-outline" style="width: 100%;">📋 Copy QR Code</button>
         </div>
       `;
 
@@ -2085,278 +2188,6 @@ async function generateCustomQRCode() {
 document.addEventListener("DOMContentLoaded", function () {
   loadQRTemplates();
 });
-// ==================== REUSABLE QR CUSTOMIZER ====================
-
-class QRCustomizer {
-  constructor(options = {}) {
-    this.options = {
-      darkColor: options.darkColor || "#000000",
-      lightColor: options.lightColor || "#FFFFFF",
-      size: options.size || 300,
-      errorCorrection: options.errorCorrection || "H",
-      showTemplates: options.showTemplates !== false,
-      ...options,
-    };
-    this.templates = [];
-  }
-
-  // Load templates
-  async loadTemplates() {
-    try {
-      const response = await fetch("/api/qr-templates");
-      const data = await response.json();
-      this.templates = data.templates;
-    } catch (error) {
-      console.error("Failed to load templates:", error);
-    }
-  }
-
-  // Get current options
-  getOptions() {
-    return {
-      darkColor: this.options.darkColor,
-      lightColor: this.options.lightColor,
-      size: this.options.size,
-      errorCorrection: this.options.errorCorrection,
-    };
-  }
-
-  // Set options
-  setOptions(newOptions) {
-    this.options = { ...this.options, ...newOptions };
-  }
-
-  // Generate HTML
-  generateHTML(containerId) {
-    const container = document.getElementById(containerId);
-    if (!container) {
-      console.error(`Container ${containerId} not found`);
-      return;
-    }
-
-    const templatesHTML = this.options.showTemplates
-      ? `
-        <div style="margin-bottom: 1.5rem;">
-          <label class="form-label" style="font-weight: 600; margin-bottom: 0.75rem; display: block;">
-            🎨 Quick Templates
-          </label>
-          <div id="${containerId}-templates" style="
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-            gap: 0.75rem;
-          "></div>
-        </div>
-      `
-      : "";
-
-    const html = `
-      ${templatesHTML}
-      
-      <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; border-left: 4px solid #667eea;">
-        <h5 style="margin-top: 0; margin-bottom: 1rem; color: #2c3e50;">🎯 QR Code Style</h5>
-        
-        <!-- Colors -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-          <div>
-            <label class="form-label" style="font-size: 0.9rem;">Dark Color</label>
-            <div style="display: flex; gap: 0.5rem;">
-              <input
-                type="color"
-                id="${containerId}-darkColor"
-                value="${this.options.darkColor}"
-                class="form-input"
-                style="flex: 1; height: 45px; cursor: pointer;"
-              />
-              <input
-                type="text"
-                id="${containerId}-darkColorHex"
-                value="${this.options.darkColor}"
-                placeholder="#000000"
-                class="form-input"
-                style="flex: 1; font-size: 0.85rem;"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label class="form-label" style="font-size: 0.9rem;">Light Color</label>
-            <div style="display: flex; gap: 0.5rem;">
-              <input
-                type="color"
-                id="${containerId}-lightColor"
-                value="${this.options.lightColor}"
-                class="form-input"
-                style="flex: 1; height: 45px; cursor: pointer;"
-              />
-              <input
-                type="text"
-                id="${containerId}-lightColorHex"
-                value="${this.options.lightColor}"
-                placeholder="#FFFFFF"
-                class="form-input"
-                style="flex: 1; font-size: 0.85rem;"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- Size & Error Correction -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div>
-            <label class="form-label" style="font-size: 0.9rem;">Size</label>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <input
-                type="range"
-                id="${containerId}-size"
-                min="100"
-                max="1000"
-                value="${this.options.size}"
-                step="50"
-                class="form-input"
-                style="flex: 1; cursor: pointer;"
-              />
-              <span id="${containerId}-sizeValue" style="min-width: 45px; text-align: right; font-weight: 600; font-size: 0.9rem;">
-                ${this.options.size}px
-              </span>
-            </div>
-          </div>
-
-          <div>
-            <label class="form-label" style="font-size: 0.9rem;">Error Correction</label>
-            <select id="${containerId}-errorCorrection" class="form-select">
-              <option value="L" ${this.options.errorCorrection === "L" ? "selected" : ""}>Low (7%)</option>
-              <option value="M" ${this.options.errorCorrection === "M" ? "selected" : ""}>Medium (15%)</option>
-              <option value="Q" ${this.options.errorCorrection === "Q" ? "selected" : ""}>Quartile (25%)</option>
-              <option value="H" ${this.options.errorCorrection === "H" ? "selected" : ""}>High (30%)</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    `;
-
-    container.innerHTML = html;
-    this.attachEventListeners(containerId);
-  }
-
-  // Attach event listeners
-  attachEventListeners(containerId) {
-    const darkColorInput = document.getElementById(`${containerId}-darkColor`);
-    const darkColorHex = document.getElementById(`${containerId}-darkColorHex`);
-    const lightColorInput = document.getElementById(
-      `${containerId}-lightColor`
-    );
-    const lightColorHex = document.getElementById(
-      `${containerId}-lightColorHex`
-    );
-    const sizeInput = document.getElementById(`${containerId}-size`);
-    const sizeValue = document.getElementById(`${containerId}-sizeValue`);
-    const errorCorrectionInput = document.getElementById(
-      `${containerId}-errorCorrection`
-    );
-
-    // Dark color sync
-    if (darkColorInput && darkColorHex) {
-      darkColorInput.addEventListener("input", (e) => {
-        darkColorHex.value = e.target.value;
-        this.options.darkColor = e.target.value;
-      });
-      darkColorHex.addEventListener("input", (e) => {
-        if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
-          darkColorInput.value = e.target.value;
-          this.options.darkColor = e.target.value;
-        }
-      });
-    }
-
-    // Light color sync
-    if (lightColorInput && lightColorHex) {
-      lightColorInput.addEventListener("input", (e) => {
-        lightColorHex.value = e.target.value;
-        this.options.lightColor = e.target.value;
-      });
-      lightColorHex.addEventListener("input", (e) => {
-        if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
-          lightColorInput.value = e.target.value;
-          this.options.lightColor = e.target.value;
-        }
-      });
-    }
-
-    // Size
-    if (sizeInput && sizeValue) {
-      sizeInput.addEventListener("input", (e) => {
-        this.options.size = parseInt(e.target.value);
-        sizeValue.textContent = `${this.options.size}px`;
-      });
-    }
-
-    // Error correction
-    if (errorCorrectionInput) {
-      errorCorrectionInput.addEventListener("change", (e) => {
-        this.options.errorCorrection = e.target.value;
-      });
-    }
-
-    // Load and attach templates
-    if (this.options.showTemplates) {
-      this.attachTemplates(containerId);
-    }
-  }
-
-  // Attach templates
-  attachTemplates(containerId) {
-    const templatesContainer = document.getElementById(
-      `${containerId}-templates`
-    );
-    if (!templatesContainer || this.templates.length === 0) return;
-
-    const html = this.templates
-      .map(
-        (template) => `
-      <div
-        onclick="window.qrCustomizers && window.qrCustomizers['${containerId}'] && window.qrCustomizers['${containerId}'].applyTemplate('${template.darkColor}', '${template.lightColor}')"
-        style="
-          padding: 0.75rem;
-          border: 2px solid #ddd;
-          border-radius: 6px;
-          cursor: pointer;
-          text-align: center;
-          transition: all 0.3s;
-        "
-        onmouseover="this.style.borderColor='#667eea'; this.style.boxShadow='0 2px 8px rgba(102, 126, 234, 0.3)'"
-        onmouseout="this.style.borderColor='#ddd'; this.style.boxShadow='none'"
-      >
-        <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">${template.icon}</div>
-        <div style="font-weight: 600; font-size: 0.75rem;">${template.name}</div>
-      </div>
-    `
-      )
-      .join("");
-
-    templatesContainer.innerHTML = html;
-  }
-
-  // Apply template
-  applyTemplate(darkColor, lightColor) {
-    this.options.darkColor = darkColor;
-    this.options.lightColor = lightColor;
-
-    const darkColorInput = document.getElementById(
-      `${this.containerId}-darkColor`
-    );
-    const lightColorInput = document.getElementById(
-      `${this.containerId}-lightColor`
-    );
-
-    if (darkColorInput) darkColorInput.value = darkColor;
-    if (lightColorInput) lightColorInput.value = lightColor;
-
-    // Trigger any callback
-    if (this.onTemplateApply) {
-      this.onTemplateApply();
-    }
-  }
-}
 // ==================== INITIALIZATION ====================
 document.addEventListener("DOMContentLoaded", function () {
   console.log("🚀 QRcify Pro initialized successfully!");
@@ -2617,10 +2448,18 @@ class QRCustomizer {
           <div>
             <label class="form-label" style="font-size: 0.9rem;">Error Correction</label>
             <select id="${containerId}-errorCorrection" class="form-select">
-              <option value="L" ${this.options.errorCorrection === "L" ? "selected" : ""}>Low (7%)</option>
-              <option value="M" ${this.options.errorCorrection === "M" ? "selected" : ""}>Medium (15%)</option>
-              <option value="Q" ${this.options.errorCorrection === "Q" ? "selected" : ""}>Quartile (25%)</option>
-              <option value="H" ${this.options.errorCorrection === "H" ? "selected" : ""}>High (30%)</option>
+              <option value="L" ${
+                this.options.errorCorrection === "L" ? "selected" : ""
+              }>Low (7%)</option>
+              <option value="M" ${
+                this.options.errorCorrection === "M" ? "selected" : ""
+              }>Medium (15%)</option>
+              <option value="Q" ${
+                this.options.errorCorrection === "Q" ? "selected" : ""
+              }>Quartile (25%)</option>
+              <option value="H" ${
+                this.options.errorCorrection === "H" ? "selected" : ""
+              }>High (30%)</option>
             </select>
           </div>
         </div>

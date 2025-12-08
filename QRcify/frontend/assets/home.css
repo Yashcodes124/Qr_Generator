@@ -7,19 +7,23 @@
 }
 html {
   scroll-behavior: smooth;
+  height: 100%;
 }
 
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #333;
-  min-height: 100vh;
-  line-height: 1.6;
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ======= CONTAINER ======= */
 .container {
-  max-width: 1100px;
+  max-width: 1300px;
+  max-height: 120px;
   margin: 0 auto;
   padding: 0 1.5rem;
 }
@@ -39,19 +43,17 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.2rem 0;
+  padding: 1rem 1rem;
 }
 
 .logo h1 {
-  color: #fff;
+  color: #313030;
   font-weight: 700;
-  font-size: 2rem;
-  letter-spacing: 1px;
-  margin-bottom: 0.2rem;
+  font-size: 1.8rem;
 }
 
 .tagline {
-  color: #d1c7f9;
+  color: #707074;
   font-size: 1rem;
   font-weight: 400;
   letter-spacing: 0.03em;
@@ -89,6 +91,10 @@ nav #authButtons .btn:hover {
   box-shadow: 0 0 20px rgba(104, 85, 224, 0.2);
   background-color: rgba(104, 85, 224, 1);
 }
+#authButtons {
+  display: flex;
+  gap: 1rem;
+}
 .btn,
 .btn-primary,
 .btn-secondary,
@@ -103,9 +109,7 @@ nav #authButtons .btn:hover {
   background: linear-gradient(90deg, #3498db, #667eea);
   color: #fff;
   box-shadow: 0 2px 8px rgba(52, 152, 219, 0.13);
-  transition:
-    box-shadow 0.18s,
-    background 0.18s;
+  transition: box-shadow 0.18s, background 0.18s;
   outline: none;
 }
 .btn:hover,
@@ -302,11 +306,9 @@ nav #authButtons .btn:hover {
 
 .feature:hover {
   background: linear-gradient(0deg, #a47cf3, #683fea);
-  box-shadow:
-    inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4),
+  box-shadow: inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4),
     inset 0px -4px 0px 0px rgba(0, 0, 0, 0.2),
-    0px 0px 0px 4px rgba(255, 255, 255, 0.2),
-    0px 0px 180px 0px #9917ff;
+    0px 0px 0px 4px rgba(255, 255, 255, 0.2), 0px 0px 180px 0px #9917ff;
   transform: translateY(-2px);
 }
 
@@ -638,8 +640,9 @@ textarea.error {
 }
 
 /* ------------------------ Main Content ------------------------------ */
-.main {
+main {
   padding: 2rem 0;
+  flex: 1;
 }
 
 .hero {
@@ -1315,6 +1318,8 @@ textarea.error {
 
 /* ======= FOOTER ======= */
 .footer {
+  width: 100%;
+  position: fixed;
   color: #eee;
   background: #312760;
   padding: 1.5rem 0;
@@ -1323,6 +1328,7 @@ textarea.error {
   border-radius: 20px 20px 0 0;
   margin-top: 2.9rem;
   box-shadow: 0 -3px 24px #2c3e500d;
+  margin: 0 auto;
 }
 
 /* ======= RESPONSIVENESS ======= */

@@ -1,6 +1,6 @@
 import * as validators from "../middleware/validateInput.js";
 import express from "express";
-import fs from "fs/promises";
+import fs from "fs";
 import path from "path";
 import qr from "qr-image";
 import { encryptData, decryptData } from "../utils/cryptoUtils.js";
@@ -45,55 +45,72 @@ router.use(
   qrGenerationLimiter
 );
 
-// 1️⃣ Generate QR from URL (Updated)
 router.post(
   "/generate",
   authMiddleware,
   qrGenerationLimiter,
-  validators.validateUrlInput,
+  validators.validateUrlInput, // ✅ Should be here
   async (req, res) => {
     try {
       const { url } = req.body;
+
+      console.log(`🔗 Generating QR for URL: ${url}`);
+
       const qrPng = qr.imageSync(url, { type: "png" });
       const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
 
       await logQRGeneration("url", url.length, req);
-
       fs.appendFileSync("urls.txt", url + "\n");
+
+      console.log(`✅ QR generated successfully`);
       res.json({ success: true, qrCode: qrBase64 });
     } catch (error) {
-      console.error("QR generation failed:", error);
-      res.status(500).json({ error: "QR generation failed" });
+      console.error("❌ QR generation failed:", error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message || "QR generation failed",
+        details:
+          process.env.NODE_ENV === "development" ? error.stack : undefined,
+      });
     }
   }
 );
 
-// 🟦 2️⃣ Encrypt text → generate QR
 router.post(
   "/generate-encryptedText",
   authMiddleware,
   qrGenerationLimiter,
-  validators.validateEncryption,
+  validators.validateEncryption, // ✅ MUST HAVE validators
   async (req, res) => {
     try {
       const { secretData, passphrase } = req.body;
+
+      console.log(`🔒 Encrypting text (${secretData.length} chars)`);
+
       const combined = encryptData(secretData, passphrase);
-      // Prevent overlong QR payload
-      if (combined.length > 1200)
+
+      if (combined.length > 1200) {
         return res.json({
           success: false,
           error: "Data too large for QR. Please use file download instead.",
         });
+      }
 
       const qrPng = qr.imageSync(combined, { type: "png" });
       const qrBase64 = "data:image/png;base64," + qrPng.toString("base64");
-      // Adding DB logging
+
       await logQRGeneration("encrypted_text", secretData.length, req);
 
+      console.log(`✅ Encryption successful`);
       res.json({ success: true, qrCode: qrBase64, encrypted: combined });
     } catch (error) {
-      console.error("Text encryption failed at Server.", error);
-      res.status(500).json({ error: "Text encryption failed" });
+      console.error("❌ Encryption failed:", error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message || "Encryption failed",
+        details:
+          process.env.NODE_ENV === "development" ? error.stack : undefined,
+      });
     }
   }
 );
@@ -102,11 +119,13 @@ router.post(
   "/encrypt-file",
   authMiddleware,
   qrGenerationLimiter,
-  validators.validateFileUpload,
+  validators.validateFileUpload, // ✅ VALIDATION REQUIRED
   async (req, res) => {
-    try {
-      const { base64, passphrase, filename, fileType } = req.body;
+    const { base64, passphrase, filename } = req.body;
 
+    console.log(`📁 Encrypting file: ${filename}`);
+
+    try {
       const combined = encryptData(base64, passphrase);
       const fileId = Math.floor(100000 + Math.random() * 900000);
       const encryptedDir = path.join(__dirname, "../encrypted");
@@ -118,7 +137,6 @@ router.post(
       const filePath = path.join(encryptedDir, `${filename}_${fileId}.enc`);
       fs.writeFileSync(filePath, combined);
 
-      // ✅ IMPROVED: Dynamic URL based on environment
       const baseUrl =
         process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
 
@@ -133,6 +151,7 @@ router.post(
 
       await logQRGeneration("file", base64.length, req);
 
+      console.log(`✅ File encrypted successfully: ${filename}`);
       res.json({
         success: true,
         qrCode: qrBase64,
@@ -142,8 +161,13 @@ router.post(
         message: "Encrypted file saved successfully.",
       });
     } catch (error) {
-      console.error("File encryption failed:", error);
-      res.status(500).json({ error: "File encryption failed" });
+      console.error("❌ File encryption failed:", error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message || "File encryption failed",
+        details:
+          process.env.NODE_ENV === "development" ? error.stack : undefined,
+      });
     }
   }
 );
