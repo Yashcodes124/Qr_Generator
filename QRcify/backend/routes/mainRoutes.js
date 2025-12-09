@@ -44,7 +44,7 @@ router.use(
   authMiddleware,
   qrGenerationLimiter
 );
-
+//generate
 router.post(
   "/generate",
   authMiddleware,
@@ -75,7 +75,7 @@ router.post(
     }
   }
 );
-
+//encrypted text
 router.post(
   "/generate-encryptedText",
   authMiddleware,
@@ -114,7 +114,7 @@ router.post(
     }
   }
 );
-
+//encrypted file
 router.post(
   "/encrypt-file",
   authMiddleware,
@@ -171,6 +171,7 @@ router.post(
     }
   }
 );
+//generate vcard
 router.post(
   "/generate-vcard",
   authMiddleware,
@@ -201,7 +202,7 @@ END:VCARD`;
     }
   }
 );
-
+//generate wifi
 router.post(
   "/generate-wifi",
   authMiddleware,
@@ -439,60 +440,105 @@ router.post("/batch-from-csv", authMiddleware, async (req, res) => {
     });
   }
 });
+//decrypt text
+router.post(
+  "/decrypt",
+  validators.validateDecryption, // ✅ ADD VALIDATION
+  (req, res) => {
+    try {
+      const { cipher, passphrase } = req.body;
 
-router.post("/decrypt", validators.validateDecryption, (req, res) => {
-  try {
-    const { cipher, passphrase } = req.body;
-    const decrypted = decryptData(cipher.trim(), passphrase.trim());
-    if (!decrypted) {
-      return res.status(400).json({
+      console.log(`🔓 Attempting text decryption`);
+      console.log(`   Cipher length: ${cipher.length}`);
+      console.log(`   Passphrase length: ${passphrase.length}`);
+
+      // Validate format
+      if (!cipher.includes("::")) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid cipher format: missing :: separators",
+        });
+      }
+
+      const decrypted = decryptData(cipher.trim(), passphrase.trim());
+
+      if (!decrypted) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid passphrase or corrupted ciphertext.",
+        });
+      }
+
+      console.log(`✅ Text decryption successful (${decrypted.length} chars)`);
+      res.json({
+        success: true,
+        decrypted: decrypted,
+        message: "Decryption successful.",
+      });
+    } catch (error) {
+      console.error("❌ TEXT DECRYPTION ERROR:", error.message);
+      res.status(400).json({
         success: false,
-        error: "Invalid passphrase or corrupted ciphertext.",
+        error: error.message || "Decryption failed",
+        details:
+          process.env.NODE_ENV === "development" ? error.stack : undefined,
       });
     }
-    res.json({
-      success: true,
-      decrypted: decrypted,
-      message: "Decryption successfull.",
-    });
-  } catch (error) {
-    console.log(" TXET DECRYTION ERROR:", error);
-    return res.status(400).json({
-      success: false,
-      error: error.message || "Decryption failed",
-    });
   }
-});
+);
+//decrypt file
+router.post(
+  "/decrypt-file",
+  validators.validateFileDecryption, // ✅ ADD VALIDATION
+  (req, res) => {
+    try {
+      const { encryptedData, passphrase, filename } = req.body;
 
-router.post("/decrypt-file", validators.validateDecryption, (req, res) => {
-  try {
-    const { encryptedData, passphrase, filename } = req.body;
-    const decryptedBase64 = decryptData(
-      encryptedData.trim(),
-      passphrase.trim()
-    );
-    if (!decryptedBase64) {
-      return res.status(400).json({
+      console.log(`📁 Attempting file decryption: ${filename}`);
+      console.log(`   Encrypted data length: ${encryptedData.length}`);
+      console.log(`   Passphrase length: ${passphrase.length}`);
+
+      // Validate format
+      if (!encryptedData.includes("::")) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid cipher format: missing :: separators",
+        });
+      }
+
+      const decryptedBase64 = decryptData(
+        encryptedData.trim(),
+        passphrase.trim()
+      );
+
+      if (!decryptedBase64) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid passphrase or corrupted file",
+        });
+      }
+
+      // Clean filename
+      const cleanFilename = filename.replace(".enc", "").replace(/_\d+$/, "");
+
+      console.log(`✅ File decryption successful: ${cleanFilename}`);
+      res.json({
+        success: true,
+        decryptedBase64,
+        suggestedFilename: cleanFilename,
+      });
+    } catch (error) {
+      console.error("❌ FILE DECRYPTION ERROR:", error.message);
+      res.status(500).json({
         success: false,
-        error: "Invalid passphrase or corrupted file",
+        error: error.message || "File decryption failed",
+        details:
+          process.env.NODE_ENV === "development" ? error.stack : undefined,
       });
     }
-    // 4️⃣ Send Base64 data back to frontend
-    const cleanFilename = filename.replace(".enc", "").replace(/_\d+$/, "");
-    res.json({
-      success: true,
-      decryptedBase64,
-      suggestedFilename: cleanFilename,
-    });
-  } catch (error) {
-    console.error("File decryption failed at server:", error);
-    res.status(500).json({
-      success: false,
-      error: error.message || "File decryption failed",
-    });
   }
-});
-
+);
+//url shortening
 router.post(
   "/shorten",
   authMiddleware,

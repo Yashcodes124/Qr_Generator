@@ -106,7 +106,11 @@ export const validateFileUpload = [
 
       if (fileSizeBytes > maxSizeBytes) {
         throw new Error(
-          `File too large. Maximum size is 50MB (your file: ${(fileSizeBytes / 1024 / 1024).toFixed(2)}MB)`
+          `File too large. Maximum size is 50MB (your file: ${(
+            fileSizeBytes /
+            1024 /
+            1024
+          ).toFixed(2)}MB)`
         );
       }
 
@@ -264,6 +268,37 @@ export const validateDecryption = [
 
   handleValidationErrors,
 ];
+// ==================== FILE DECRYPTION VALIDATORS ====================
+export const validateFileDecryption = [
+  body("encryptedData")
+    .trim()
+    .notEmpty()
+    .withMessage("Encrypted data is required")
+    .custom((encryptedData) => {
+      // Check format: salt::iv::ciphertext
+      if (!encryptedData.includes("::")) {
+        throw new Error("Invalid cipher format. Missing :: separators");
+      }
+      const parts = encryptedData.split("::");
+      if (parts.length !== 3) {
+        throw new Error(
+          "Invalid cipher format. Expected: salt::iv::ciphertext"
+        );
+      }
+      return true;
+    }),
+
+  body("passphrase")
+    .trim()
+    .notEmpty()
+    .withMessage("Passphrase is required")
+    .isLength({ min: 8 })
+    .withMessage("Passphrase must be at least 8 characters"),
+
+  body("filename").trim().notEmpty().withMessage("Filename is required"),
+
+  handleValidationErrors,
+];
 
 // ==================== URL SHORTENER VALIDATORS ====================
 export const validateUrlShorten = [
@@ -300,6 +335,7 @@ export default {
   validateVCard,
   validateWiFi,
   validateDecryption,
+  validateFileDecryption,
   validateUrlShorten,
   handleValidationErrors,
 };
