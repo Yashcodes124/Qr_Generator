@@ -46,6 +46,8 @@ export const getStats = async (req) => {
     });
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
     // 2. BREAKDOWN BY QR TYPE
     const byType = await QRHistory.findAll({
       where: { userId },
@@ -69,8 +71,12 @@ export const getStats = async (req) => {
     const todayActivity = await QRHistory.count({
       where: {
         userId,
+        // createdAt: {
+        //   [Sequelize.Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000), //last 24 hpurs
+        // },
         createdAt: {
-          [Sequelize.Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000),
+          [Sequelize.Op.gte]: today,
+          [Sequelize.Op.lt]: tomorrow,
         },
       },
     });

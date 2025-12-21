@@ -61,7 +61,8 @@ export const validateEncryption = [
     .withMessage("Passphrase is required")
     .isLength({ min: 8, max: 128 })
     .withMessage("Passphrase must be 8-128 characters")
-    .matches(/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/)
+    // .matches(/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/)
+    .matches(/^[\x20-\x7E]{8,}$/)
     .withMessage("Passphrase contains invalid characters")
     .custom((passphrase) => {
       // Require mix of character types
@@ -125,12 +126,17 @@ export const validateFileUpload = [
     .withMessage("Filename too long")
     .custom((filename) => {
       // Prevent path traversal
-      if (
-        filename.includes("/") ||
-        filename.includes("\\") ||
-        filename.includes("..")
-      ) {
-        throw new Error("Invalid filename. No path characters allowed");
+      const baseName = filename.split(/[\/\\]/).pop();
+
+      if (!baseName || baseName.length === 0) {
+        throw new Error("Invalid filename");
+      }
+
+      // Remove special characters except . and -
+      const sanitized = baseName.replace(/[^a-zA-Z0-9._-]/g, "");
+
+      if (sanitized.length === 0) {
+        throw new Error("Filename contains no valid characters");
       }
 
       // Check file extension whitelist

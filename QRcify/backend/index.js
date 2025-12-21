@@ -31,17 +31,24 @@ if (
 
 // CORS Configuration
 const corsOptions = {
-  origin:
-    process.env.NODE_ENV === "production"
-      ? process.env.FRONTEND_URL || "*"
-      : [
-          "http://localhost:3000",
-          "http://localhost:5173",
-          "http://127.0.0.1:3000",
-        ],
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://127.0.0.1:3000",
+      process.env.NODE_ENV === "production" ? process.env.FRONTEND_URL : null,
+    ].filter(Boolean); // Remove null values
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed"));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  maxAge: 86400,
 };
 
 app.use(cors(corsOptions));

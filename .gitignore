@@ -9,6 +9,9 @@ yarn-error.log*
 .env.local
 .env.*.local
 
+# text files
+urls.txt
+
 # Temporary files
 temp/
 tmp/

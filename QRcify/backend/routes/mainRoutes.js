@@ -235,111 +235,124 @@ router.post(
   }
 );
 
-router.post("/batch-generate", authMiddleware, async (req, res) => {
-  const { urls } = req.body;
-  const fs = await import("fs/promises");
+router.post(
+  "/batch-generate",
+  authMiddleware,
+  qrGenerationLimiter,
+  async (req, res) => {
+    const { urls } = req.body;
+    const fs = await import("fs/promises");
 
-  console.log("📦 Batch QR request received");
-  console.log("   URLs count:", urls ? urls.length : 0);
+    console.log("📦 Batch QR request received");
+    console.log("   URLs count:", urls ? urls.length : 0);
 
-  if (!urls || !Array.isArray(urls) || urls.length === 0) {
-    return res.status(400).json({
-      error: "URLs array is required",
-      example: { urls: ["https://example.com", "https://google.com"] },
-    });
-  }
-
-  if (urls.length > 100) {
-    return res.status(400).json({
-      error: "Maximum 100 URLs per batch",
-    });
-  }
-
-  let tempDir = null;
-  let zipPath = null;
-
-  try {
-    // Create temporary directory for this batch
-    const batchId = Date.now();
-    tempDir = path.join(__dirname, `../temp/batch_${batchId}`);
-    zipPath = path.join(__dirname, `../temp/qr_codes_${batchId}.zip`);
-
-    console.log(`📂 Batch ID: ${batchId}`);
-
-    // Generate QR codes
-    const { generateBatchQRs, createZipFile } = await import(
-      "../services/batchService.js"
-    );
-
-    const qrFiles = await generateBatchQRs(urls, tempDir);
-
-    if (qrFiles.length === 0) {
+    if (!urls || !Array.isArray(urls) || urls.length === 0) {
       return res.status(400).json({
-        error: "No valid URLs to process",
+        error: "URLs array is required",
+        example: { urls: ["https://example.com", "https://google.com"] },
       });
     }
 
-    // Create ZIP file
-    await createZipFile(tempDir, zipPath);
-
-    // Verify ZIP file exists and has size
-    const stats = await fs.stat(zipPath);
-    console.log(`✅ ZIP file verified: ${stats.size} bytes`);
-
-    // Log to database (if you have this function)
-    await logQRGeneration("batch", urls.length, req, {
-      batchSize: urls.length,
-      filesGenerated: qrFiles.length,
-    });
-
-    // Send ZIP file with proper headers
-    const filename = `qr_codes_batch_${batchId}.zip`;
-
-    res.setHeader("Content-Type", "application/zip");
-    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-    res.setHeader("Content-Length", stats.size);
-
-    // Send the file
-    const fileStream = await fs.readFile(zipPath);
-    res.send(fileStream);
-
-    console.log("✅ ZIP file sent to user");
-
-    // Cleanup after response is sent
-    setImmediate(async () => {
-      try {
-        await fs.rm(tempDir, { recursive: true, force: true });
-        await fs.unlink(zipPath);
-        console.log("🧹 Cleaned up temporary files");
-      } catch (cleanupErr) {
-        console.warn("⚠️  Cleanup warning:", cleanupErr.message);
-      }
-    });
-  } catch (error) {
-    console.error("❌ Batch generation error:", error);
-
-    // Cleanup on error
-    if (tempDir) {
-      try {
-        await fs.rm(tempDir, { recursive: true, force: true });
-      } catch (e) {
-        console.warn("Cleanup error:", e.message);
-      }
-    }
-    if (zipPath) {
-      try {
-        await fs.unlink(zipPath);
-      } catch (e) {
-        console.warn("Cleanup error:", e.message);
-      }
+    if (urls.length > 100) {
+      return res.status(400).json({
+        error: "Maximum 100 URLs per batch",
+      });
     }
 
-    res.status(500).json({
-      error: "Failed to generate batch QR codes",
-      message: error.message,
-    });
+    let tempDir = null;
+    let zipPath = null;
+
+    try {
+      // Create temporary directory for this batch
+      const batchId = Date.now();
+      tempDir = path.join(__dirname, `../temp/batch_${batchId}`);
+      zipPath = path.join(__dirname, `../temp/qr_codes_${batchId}.zip`);
+
+      console.log(`📂 Batch ID: ${batchId}`);
+
+      // Generate QR codes
+      const { generateBatchQRs, createZipFile } = await import(
+        "../services/batchService.js"
+      );
+
+      const qrFiles = await generateBatchQRs(urls, tempDir);
+
+      if (qrFiles.length === 0) {
+        return res.status(400).json({
+          error: "No valid URLs to process",
+        });
+      }
+
+      // Create ZIP file
+      await createZipFile(tempDir, zipPath);
+
+      // Verify ZIP file exists and has size
+      const stats = await fs.stat(zipPath);
+      console.log(`✅ ZIP file verified: ${stats.size} bytes`);
+
+      // Log to database (if you have this function)
+      await logQRGeneration("batch", urls.length, req, {
+        batchSize: urls.length,
+        filesGenerated: qrFiles.length,
+      });
+
+      // Send ZIP file with proper headers
+      const filename = `qr_codes_batch_${batchId}.zip`;
+
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${filename}"`
+      );
+      res.setHeader("Content-Length", stats.size);
+
+      // Send the file
+      const fileStream = await fs.readFile(zipPath);
+      res.send(fileStream);
+
+      console.log("✅ ZIP file sent to user");
+
+      // Cleanup after response is sent
+      setImmediate(async () => {
+        try {
+          // Remove files first
+          if (zipPath && fs.existsSync(zipPath)) {
+            await fs.unlink(zipPath);
+          } // Then remove directory
+          if (tempDir && fs.existsSync(tempDir)) {
+            await fs.rm(tempDir, { recursive: true, force: true });
+          }
+          console.log("🧹 Cleaned up temporary files");
+        } catch (cleanupErr) {
+          console.warn("⚠️  Cleanup Failed:", cleanupErr.message);
+        }
+      });
+    } catch (error) {
+      console.error("❌ Batch generation error:", error);
+
+      // Cleanup on error
+      if (tempDir) {
+        try {
+          await fs.rm(tempDir, { recursive: true, force: true });
+        } catch (e) {
+          console.warn("Cleanup error:", e.message);
+        }
+      }
+      if (zipPath) {
+        try {
+          await fs.unlink(zipPath);
+        } catch (e) {
+          console.warn("Cleanup error:", e.message);
+        }
+      }
+
+      res.status(500).json({
+        error: "Failed to generate batch QR codes",
+        message: error.message,
+      });
+    }
   }
-});
+);
 
 // POST /api/batch-from-csv
 router.post("/batch-from-csv", authMiddleware, async (req, res) => {
@@ -443,7 +456,8 @@ router.post("/batch-from-csv", authMiddleware, async (req, res) => {
 //decrypt text
 router.post(
   "/decrypt",
-  validators.validateDecryption, // ✅ ADD VALIDATION
+  authMiddleware,
+  validators.validateDecryption,
   (req, res) => {
     try {
       const { cipher, passphrase } = req.body;
@@ -489,6 +503,7 @@ router.post(
 //decrypt file
 router.post(
   "/decrypt-file",
+  authMiddleware,
   validators.validateFileDecryption, // ✅ ADD VALIDATION
   (req, res) => {
     try {
@@ -719,106 +734,116 @@ router.get("/stats", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/generate-custom-qr", authMiddleware, async (req, res) => {
-  try {
-    const {
-      data,
-      darkColor,
-      lightColor,
-      size,
-      margin,
-      format,
-      errorCorrection,
-    } = req.body;
-
-    console.log("🎨 Custom QR request received");
-
-    if (!data) {
-      return res.status(400).json({ error: "Data is required" });
-    }
-
-    // Validate options
-    const validation = validateQROptions({
-      darkColor,
-      lightColor,
-      size,
-      margin,
-      format,
-      errorCorrection,
-    });
-
-    if (!validation.valid) {
-      return res.status(400).json({
-        error: "Invalid options",
-        details: validation.errors,
-      });
-    }
-
-    // Generate custom QR
-    const result = await generateCustomQR(data, {
-      darkColor: darkColor || "#000000",
-      lightColor: lightColor || "#FFFFFF",
-      size: size || 300,
-      margin: margin || 2,
-      format: format || "png",
-      errorCorrection: errorCorrection || "H",
-    });
-
-    // Log to database
-    await logQRGeneration("custom_qr", data.length, req, {
-      customOptions: {
+router.post(
+  "/generate-custom-qr",
+  authMiddleware,
+  qrGenerationLimiter,
+  async (req, res) => {
+    try {
+      const {
+        data,
         darkColor,
         lightColor,
         size,
+        margin,
         format,
-      },
-    });
+        errorCorrection,
+      } = req.body;
 
-    res.json({
-      success: true,
-      qrCode: result.qrCode,
-      options: {
-        darkColor: result.darkColor,
-        lightColor: result.lightColor,
-        size: result.size,
-        format: result.format,
-      },
-    });
-  } catch (error) {
-    console.error("❌ Custom QR error:", error);
-    res.status(500).json({
-      error: "Failed to generate custom QR",
-      message: error.message,
-    });
+      console.log("🎨 Custom QR request received");
+
+      if (!data) {
+        return res.status(400).json({ error: "Data is required" });
+      }
+
+      // Validate options
+      const validation = validateQROptions({
+        darkColor,
+        lightColor,
+        size,
+        margin,
+        format,
+        errorCorrection,
+      });
+
+      if (!validation.valid) {
+        return res.status(400).json({
+          error: "Invalid options",
+          details: validation.errors,
+        });
+      }
+
+      // Generate custom QR
+      const result = await generateCustomQR(data, {
+        darkColor: darkColor || "#000000",
+        lightColor: lightColor || "#FFFFFF",
+        size: size || 300,
+        margin: margin || 2,
+        format: format || "png",
+        errorCorrection: errorCorrection || "H",
+      });
+
+      // Log to database
+      await logQRGeneration("custom_qr", data.length, req, {
+        customOptions: {
+          darkColor,
+          lightColor,
+          size,
+          format,
+        },
+      });
+
+      res.json({
+        success: true,
+        qrCode: result.qrCode,
+        options: {
+          darkColor: result.darkColor,
+          lightColor: result.lightColor,
+          size: result.size,
+          format: result.format,
+        },
+      });
+    } catch (error) {
+      console.error("❌ Custom QR error:", error);
+      res.status(500).json({
+        error: "Failed to generate custom QR",
+        message: error.message,
+      });
+    }
   }
-});
+);
 
 // POST /api/generate-qr-preview
 // Preview without saving
-router.post("/generate-qr-preview", async (req, res) => {
-  try {
-    const { data, darkColor, lightColor } = req.body;
+router.post(
+  "/generate-qr-preview",
+  authMiddleware,
+  qrGenerationLimiter,
+  async (req, res) => {
+    try {
+      const { data, darkColor, lightColor } = req.body;
 
-    if (!data) {
-      return res.status(400).json({ error: "Data is required" });
+      if (!data) {
+        return res.status(400).json({ error: "Data is required" });
+      }
+
+      const result = await generateCustomQR(data, {
+        darkColor: darkColor || "#000000",
+        lightColor: lightColor || "#FFFFFF",
+        size: 200,
+        format: "png",
+      });
+
+      res.json({
+        success: true,
+        qrCode: result.qrCode,
+      });
+    } catch (error) {
+      console.error("❌ QR preview error:", error);
+      res.status(500).json({ error: "Failed to generate QR preview" });
     }
-
-    const result = await generateCustomQR(data, {
-      darkColor: darkColor || "#000000",
-      lightColor: lightColor || "#FFFFFF",
-      size: 200,
-      format: "png",
-    });
-
-    res.json({
-      success: true,
-      qrCode: result.qrCode,
-    });
-  } catch (error) {
-    console.error("❌ QR preview error:", error);
-    res.status(500).json({ error: "Failed to generate QR preview" });
   }
-});
+);
 
 // GET /api/qr-templates
 // Get preset color templates

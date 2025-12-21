@@ -1,5 +1,7 @@
 import ShortenedURL from "../models/ShortenedURL.js";
 import qr from "qr-image";
+import QRHistory from "../models/QRHistory.js";
+import { where } from "sequelize";
 
 // Generate random short code (6-10 characters)
 function generateShortCode(length = 6) {
@@ -123,8 +125,12 @@ export async function resolveShortURL(shortCode) {
     }
 
     // Increment click count
-    await record.update({
-      clicks: record.clicks + 1,
+    // await record.update({
+    //   clicks: record.clicks + 1,
+    // });
+    await QRHistory.increment("clicks", {
+      where: { id: record.id },
+      by: 1,
     });
 
     return record;

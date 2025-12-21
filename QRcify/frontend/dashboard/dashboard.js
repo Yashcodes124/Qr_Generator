@@ -2,6 +2,11 @@
 const token =
   localStorage.getItem("token") || localStorage.getItem("userToken");
 const userData = localStorage.getItem("userData");
+if (!userData) {
+  console.warn("No user data found");
+  window.location.href = "/index.html";
+  return;
+}
 
 console.log("🔑 Token found:", token ? "Yes" : "No");
 console.log("👤 User data:", userData);
@@ -88,6 +93,9 @@ window.addEventListener("DOMContentLoaded", () => {
   // Load user name
   try {
     const user = JSON.parse(userData);
+    if (!user || !user.name) {
+      throw new Error("Invalid user data structure");
+    }
     const headerTitle = document.querySelector(".header-title h1");
     if (headerTitle) {
       headerTitle.textContent = `Welcome back, ${user.name}! 👋`;
@@ -95,6 +103,8 @@ window.addEventListener("DOMContentLoaded", () => {
     console.log("✅ User loaded:", user.name);
   } catch (e) {
     console.error("❌ Failed to parse user data:", e);
+    localStorage.clear();
+    window.location.href = "/index.html";
   }
 
   // ✅ LOAD REAL DATA FROM BACKEND
@@ -342,7 +352,15 @@ function showNotification(message, type = "info") {
     top: 80px;
     right: 20px;
     padding: 16px 24px;
-    background: ${type === "success" ? "#10b981" : type === "warning" ? "#f59e0b" : type === "error" ? "#ef4444" : "#3b82f6"};
+    background: ${
+      type === "success"
+        ? "#10b981"
+        : type === "warning"
+        ? "#f59e0b"
+        : type === "error"
+        ? "#ef4444"
+        : "#3b82f6"
+    };
     color: white;
     border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);

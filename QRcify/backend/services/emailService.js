@@ -37,7 +37,7 @@ export function generateOTP() {
 // ✅ Calculate OTP expiry (30sec from now)
 export function getOTPExpiry() {
   const expiry = new Date();
-  expiry.setMinutes(expiry.getMinutes() + 30);
+  expiry.setMinutes(expiry.getMinutes() + 15);
   return expiry;
 }
 

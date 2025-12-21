@@ -48,6 +48,9 @@ const ShortenedURL = sequelize.define(
     clicks: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
+      validate: {
+        min: 0,
+      },
     },
     qrCode: {
       type: DataTypes.TEXT, // Base64 encoded QR code
